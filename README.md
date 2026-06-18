@@ -11,8 +11,8 @@ Ce projet propose :
 - une **fiche Individu** interactive  
 - une **fiche Famille** interactive  
 - une **navigation par clic** entre individus et familles  
-- une **barre de séparation déplaçable** entre les zones gauche/droite  
-- un **redimensionnement dynamique** de l’interface  
+- une **barre de séparation déplaçable**  
+- un **redimensionnement dynamique**  
 - un lanceur Linux (`run.sh`) robuste  
 - une fonctionnalité dédiée : **affichage de l’en‑tête GEDCOM (0 HEAD)**  
 
@@ -37,8 +37,6 @@ Les types d’entités sont affichés dans l’ordre suivant :
 5. SOUR — Source  
 6. SUBM — Fournisseur d'information  
 7. REPO — Dépôt  
-
-Le changement de type met automatiquement à jour la liste.
 
 ---
 
@@ -162,24 +160,42 @@ python main.py
 
 ## 📁 Structure du projet
 
+Arborescence complète :
+
 ```
 .
-├── assets/
-│   └── icons/
-├── cretel_ancestris.ged
-├── gedcom/
+├── assets
+│   ├── icons
+│   └── themes
+├── controllers
+│   ├── app_controller.py
+│   ├── entity_controller.py
+│   ├── search_controller.py
+│   └── __pycache__
+├── gedcom
+│   ├── entity.py
+│   ├── models
+│   │   ├── event.py
+│   │   ├── family.py
+│   │   ├── individual.py
+│   │   └── source.py
 │   ├── parser.py
 │   ├── search.py
-│   └── __init__.py
-├── ui/
+│   └── utils.py
+├── ui
 │   ├── main_window.py
 │   ├── menus.py
 │   ├── syntax_highlighter.py
 │   ├── themes.py
-│   ├── views/
-│   │   ├── individual_view.py
-│   │   └── family_view.py
-│   └── __init__.py
+│   ├── views
+│   │   ├── family_view.py
+│   │   ├── header_view.py
+│   │   └── individual_view.py
+│   └── widgets
+│       ├── entity_listbox.py
+│       ├── entity_type_selector.py
+│       ├── gedcom_text_view.py
+│       └── search_bar.py
 ├── main.py
 ├── run.sh
 └── README.md
@@ -192,29 +208,49 @@ python main.py
 ### `main.py`
 Point d’entrée de l’application.
 
-### `gedcom/parser.py`
-Parser GEDCOM minimaliste :  
-- lecture du fichier  
-- extraction des entités  
-- gestion de HEAD  
-- accès aux lignes brutes  
+---
 
-### `ui/main_window.py`
-Interface principale :  
-- liste des entités  
-- affichage GEDCOM  
-- onglets Individu / Famille  
-- navigation par clic  
-- barre de séparation  
+### 📂 `controllers/`
+Couche contrôleur (architecture MVC) :
 
-### `ui/views/individual_view.py`
-Affichage détaillé d’un individu + navigation FAMC/FAMS.
+- `app_controller.py` — coordination générale  
+- `entity_controller.py` — gestion des entités INDI/FAM  
+- `search_controller.py` — logique de recherche  
 
-### `ui/views/family_view.py`
-Affichage détaillé d’une famille + navigation HUSB/WIFE/CHIL.
+---
 
-### `ui/syntax_highlighter.py`
-Coloration syntaxique du GEDCOM.
+### 📂 `gedcom/`
+Contient le parser et les modèles :
+
+- `parser.py` — extraction des entités  
+- `entity.py` — représentation brute d’une entité  
+- `models/individual.py` — modèle Individu  
+- `models/family.py` — modèle Famille  
+- `models/source.py` — modèle Source  
+- `utils.py` — fonctions utilitaires  
+
+---
+
+### 📂 `ui/`
+Interface graphique Tkinter :
+
+- `main_window.py` — fenêtre principale  
+- `menus.py` — menus Fichier / Aide  
+- `syntax_highlighter.py` — coloration GEDCOM  
+- `themes.py` — gestion des thèmes  
+
+#### `ui/views/`
+- `individual_view.py` — fiche individu + navigation  
+- `family_view.py` — fiche famille + navigation  
+- `header_view.py` — affichage de HEAD  
+
+#### `ui/widgets/`
+Widgets réutilisables :
+
+- `entity_listbox.py` — liste des entités  
+- `entity_type_selector.py` — sélection du type d’entité  
+- `gedcom_text_view.py` — zone GEDCOM avec couleurs  
+- `search_bar.py` — barre de recherche  
 
 ---
 
