@@ -135,3 +135,38 @@ class GedcomEntity:
 
     def raw_block(self):
         return "".join(self.lines)
+    
+    def get_tag_value(self, tag):
+        """
+        Retourne la valeur assemblée d'un tag GEDCOM (ex: NAME, NOTE, PLAC),
+        en gérant CONC et CONT.
+        """
+        values = []
+        collecting = False
+
+        for line in self.lines:
+            stripped = line.strip()
+            parts = stripped.split(" ", 2)
+
+            if len(parts) < 2:
+                continue
+
+            level = parts[0]
+
+            # Ligne principale : ex "1 NOTE Texte..."
+            if len(parts) == 3 and parts[1] == tag:
+                collecting = True
+                values.append(parts[2])
+                continue
+
+            # Si on est en train de collecter, regarder CONC / CONT
+            if collecting:
+                if len(parts) >= 3 and parts[1] == "CONC":
+                    values[-1] += parts[2]  # même ligne
+                elif len(parts) >= 3 and parts[1] == "CONT":
+                    values.append(parts[2])  # nouvelle ligne
+                else:
+                    # Fin du bloc
+                    break
+
+        return "\n".join(values).strip()
