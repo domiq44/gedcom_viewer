@@ -137,10 +137,6 @@ class GedcomEntity:
         return "".join(self.lines)
     
     def get_tag_value(self, tag):
-        """
-        Retourne la valeur assemblée d'un tag GEDCOM (ex: NAME, NOTE, PLAC),
-        en gérant CONC et CONT.
-        """
         values = []
         collecting = False
 
@@ -151,22 +147,50 @@ class GedcomEntity:
             if len(parts) < 2:
                 continue
 
-            level = parts[0]
-
-            # Ligne principale : ex "1 NOTE Texte..."
+            # Ligne principale
             if len(parts) == 3 and parts[1] == tag:
                 collecting = True
                 values.append(parts[2])
                 continue
 
-            # Si on est en train de collecter, regarder CONC / CONT
+            # CONC / CONT
             if collecting:
                 if len(parts) >= 3 and parts[1] == "CONC":
-                    values[-1] += parts[2]  # même ligne
+                    values[-1] += parts[2]
                 elif len(parts) >= 3 and parts[1] == "CONT":
-                    values.append(parts[2])  # nouvelle ligne
+                    values.append(parts[2])
                 else:
-                    # Fin du bloc
                     break
 
         return "\n".join(values).strip()
+
+    def get_subtag_value(self, parent_tag, child_tag):
+        """
+        Extrait un sous-tag (ex: DATE sous BIRT).
+        """
+        inside = False
+
+        for line in self.lines:
+            stripped = line.strip()
+            parts = stripped.split(" ", 2)
+
+            if len(parts) < 2:
+                continue
+
+            level = parts[0]
+
+            # Début du bloc parent
+            if len(parts) >= 2 and parts[1] == parent_tag:
+                inside = True
+                continue
+
+            # Si on est dans le bloc parent, chercher le sous-tag
+            if inside:
+                if len(parts) >= 3 and parts[1] == child_tag:
+                    return parts[2]
+
+                # Si on retombe sur un niveau 1, fin du bloc
+                if parts[0] == "1":
+                    break
+
+        return ""
