@@ -1,3 +1,4 @@
+from operator import index
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
@@ -126,8 +127,12 @@ class GedcomViewer:
         self.current_entities = self.parser.entities[entity_type]
         self.filtered_entities = list(self.current_entities)
 
-        for pointer in self.filtered_entities:
-            self.entity_listbox.insert(tk.END, pointer)
+        self.entity_listbox.delete(0, tk.END)
+
+        for entity in self.filtered_entities:
+            label = entity.pointer or f"(sans pointeur @ {entity.start_index})"
+            self.entity_listbox.insert(tk.END, label)
+
 
     # -----------------------------
     # Filtrer les entités
@@ -139,11 +144,12 @@ class GedcomViewer:
 
         self.filtered_entities = [
             e for e in self.current_entities
-            if query in e.lower()
+            if e.pointer and query in e.pointer.lower()
         ]
 
-        for e in self.filtered_entities:
-            self.entity_listbox.insert(tk.END, e)
+        for entity in self.filtered_entities:
+            label = entity.pointer or f"(sans pointeur @ {entity.start_index})"
+            self.entity_listbox.insert(tk.END, label)
 
     # -----------------------------
     # Afficher le bloc GEDCOM brut
@@ -153,9 +159,9 @@ class GedcomViewer:
             return
 
         index = self.entity_listbox.curselection()[0]
-        pointer = self.filtered_entities[index]
-
-        block = self.parser.extract_block(pointer)
+        entity = self.filtered_entities[index]
+        
+        block = entity.raw_block()
 
         self.text_area.delete("1.0", tk.END)
         self.text_area.insert(tk.END, block)
@@ -167,45 +173,10 @@ class GedcomViewer:
     # Afficher le bloc d'en-tête GEDCOM (0 HEAD)
     # -----------------------------
     def show_header(self):
-        # Normaliser les lignes (supprimer BOM, espaces insécables, retours)
-        lines = [
-            line.replace("\ufeff", "").replace("\xa0", " ").rstrip("\n\r")
-            for line in getattr(self.parser, "lines", [])
-        ]
-
-        if not lines:
-            messagebox.showerror("Erreur", "Le parser n'a chargé aucune ligne.")
-            return
-
-        # 1) Essayer via extract_block
-        try:
-            block = self.parser.extract_block("HEAD")
-        except Exception:
-            block = None
-
-        # 2) Extraction manuelle robuste
-        if not block:
-            head_lines = []
-            inside = False
-
-            for line in lines:
-                stripped = line.strip()
-
-                # Début du bloc HEAD
-                if stripped.startswith("0 HEAD"):
-                    inside = True
-
-                if inside:
-                    head_lines.append(stripped)
-
-                    # Début d'une nouvelle entité niveau 0 (sauf HEAD)
-                    if (
-                        stripped.startswith("0 ") or stripped.startswith("0@")
-                    ) and not stripped.startswith("0 HEAD") and len(head_lines) > 1:
-                        head_lines.pop()  # retirer la ligne de la prochaine entité
-                        break
-
-            block = "\n".join(head_lines).strip()
+        """
+        Affiche le bloc HEAD extrait par le parser.
+        """
+        block = self.parser.extract_head()
 
         if not block:
             messagebox.showerror("Erreur", "Aucun en-tête HEAD trouvé dans le fichier.")
