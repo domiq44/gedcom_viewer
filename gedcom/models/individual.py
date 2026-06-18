@@ -1,28 +1,36 @@
-# gedcom/individual.py
-
 class Individual:
-    """
-    Représente un individu extrait d'une entité GEDCOM INDI.
-    """
     def __init__(self, entity):
         self.entity = entity
-
-        # Champs simples
         self.pointer = entity.pointer
-        self.name = entity.get_tag_value("NAME")
-        self.sex = entity.get_tag_value("SEX")
 
-        # Naissance
-        self.birth_date = entity.get_subtag_value("BIRT", "DATE")
-        self.birth_place = entity.get_subtag_value("BIRT", "PLAC")
+        self.name = None
+        self.sex = None
+        self.birth_date = None
+        self.birth_place = None
+        self.death_date = None
+        self.death_place = None
 
-        # Décès
-        self.death_date = entity.get_subtag_value("DEAT", "DATE")
-        self.death_place = entity.get_subtag_value("DEAT", "PLAC")
+        self.famc = None      # une seule famille d’enfance
+        self.fams = []        # plusieurs familles comme parent
 
-        # Familles
-        self.famc = entity.get_tag_value("FAMC")  # famille où il est enfant
-        self.fams = entity.get_tag_value("FAMS")  # familles où il est parent
+        self._parse_lines(entity.lines)
 
-    def __repr__(self):
-        return f"<Individual {self.pointer} {self.name}>"
+    def _parse_lines(self, lines):
+        for line in lines:
+            parts = line.strip().split(" ", 2)
+            if len(parts) < 2:
+                continue
+
+            level = parts[0]
+            tag = parts[1]
+            value = parts[2] if len(parts) > 2 else None
+
+            if level == "1":
+                if tag == "NAME":
+                    self.name = value
+                elif tag == "SEX":
+                    self.sex = value
+                elif tag == "FAMC":
+                    self.famc = value
+                elif tag == "FAMS":
+                    self.fams.append(value)   # 🔥 CORRECTION ICI

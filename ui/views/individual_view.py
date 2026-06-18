@@ -9,8 +9,10 @@ class IndividualView(ttk.Frame):
     Affiche une fiche détaillée d'un individu (modèle Individual).
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, viewer):
         super().__init__(parent)
+
+        self.viewer = viewer  # 🔥 référence directe au GedcomViewer
 
         self.configure(padding=10)
 
@@ -49,15 +51,51 @@ class IndividualView(ttk.Frame):
         """
         Remplit la fiche avec un objet Individual ou efface si None.
         """
+        # Effacement
         if not individual:
             self.title_label.config(text="Fiche individu")
             for widget in self.labels.values():
-                widget.config(text="—")
+                widget.config(text="—", foreground="black", cursor="")
+                widget.unbind("<Button-1>")
             return
 
         self.title_label.config(text=f"Fiche : {individual.pointer}")
 
+        # Fonction utilitaire pour rendre un label cliquable
+        def make_clickable(widget, pointer):
+            widget.config(foreground="blue", cursor="hand2")
+            widget.bind("<Button-1>", lambda e, ptr=pointer: self.on_pointer_click(ptr))
+
+        # Mise à jour des champs
         for key, widget in self.labels.items():
             value = getattr(individual, key, "")
-            widget.config(text=value if value else "—")
 
+            # Nettoyage des anciens bindings
+            widget.unbind("<Button-1>")
+            widget.config(cursor="", foreground="black")
+
+            # Champs simples
+            if key not in ("famc", "fams"):
+                widget.config(text=value if value else "—")
+                continue
+
+            # FAMC (famille où l'individu est enfant)
+            if key == "famc":
+                widget.config(text=value if value else "—")
+                if value:
+                    make_clickable(widget, value)
+
+            # FAMS (familles où l'individu est parent)
+            elif key == "fams":
+                if value:
+                    text = ", ".join(value)
+                    widget.config(text=text)
+                    make_clickable(widget, value[0])  # ouvre la première famille
+                else:
+                    widget.config(text="—")
+
+    # ---------------------------------------------------------
+    # Navigation par clic
+    # ---------------------------------------------------------
+    def on_pointer_click(self, pointer):
+        self.viewer.navigate_to(pointer)

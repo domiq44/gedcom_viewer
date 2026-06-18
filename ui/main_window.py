@@ -86,7 +86,7 @@ class GedcomViewer:
         self.individual_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.individual_tab, text="Individu")
 
-        self.individual_view = IndividualView(self.individual_tab)
+        self.individual_view = IndividualView(self.individual_tab, self)
         self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.highlighter = GedcomHighlighter(self.text_area)
@@ -98,7 +98,7 @@ class GedcomViewer:
         self.family_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.family_tab, text="Famille")
 
-        self.family_view = FamilyView(self.family_tab)
+        self.family_view = FamilyView(self.family_tab, self)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Liste filtrée
@@ -242,3 +242,26 @@ class GedcomViewer:
     def hide_individual_view(self):
         """Efface la fiche individu."""
         self.individual_view.display(None)
+
+    def navigate_to(self, pointer):
+        # INDIVIDU ?
+        if pointer in self.controller.individuals:
+            ind = self.controller.individuals[pointer]
+            self.individual_view.display(ind)
+            self.notebook.select(self.individual_tab)
+            self.text_area.delete("1.0", tk.END)
+            self.text_area.insert(tk.END, ind.entity.raw_block())
+            self.highlighter.highlight()
+            return
+
+        # FAMILLE ?
+        if pointer in self.controller.families:
+            fam = self.controller.families[pointer]
+            self.family_view.display(fam)
+            self.notebook.select(self.family_tab)
+            self.text_area.delete("1.0", tk.END)
+            self.text_area.insert(tk.END, fam.entity.raw_block())
+            self.highlighter.highlight()
+            return
+
+        messagebox.showerror("Erreur", f"Impossible de trouver l'entité {pointer}")

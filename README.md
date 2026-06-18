@@ -5,9 +5,12 @@ Un visualiseur GEDCOM moderne écrit en **Python + Tkinter**, permettant d’exp
 Ce projet propose :
 
 - une interface simple et claire  
-- une liste des entités GEDCOM (INDI, FAM, OBJE, etc.)  
+- une liste des entités GEDCOM (INDI, FAM, OBJE, NOTE, SOUR…)  
 - un affichage du bloc GEDCOM brut  
 - une **coloration syntaxique** pour une meilleure lisibilité  
+- une **fiche Individu** interactive  
+- une **fiche Famille** interactive  
+- une **navigation par clic** entre individus et familles  
 - une **barre de séparation déplaçable** entre les zones gauche/droite  
 - un **redimensionnement dynamique** de l’interface  
 - un lanceur Linux (`run.sh`) robuste  
@@ -20,9 +23,11 @@ Ce projet propose :
 ### ✔ Chargement de fichiers GEDCOM
 Le menu *Fichier → Ouvrir* permet de charger un fichier `.ged`.
 
-Le programme extrait automatiquement les types d’entités présents dans le fichier.
+Le programme extrait automatiquement les entités présentes dans le fichier.
 
-### ✔ Liste des entités par type
+---
+
+## ✔ Liste des entités par type
 Les types d’entités sont affichés dans l’ordre suivant :
 
 1. INDI — Individu  
@@ -35,13 +40,19 @@ Les types d’entités sont affichés dans l’ordre suivant :
 
 Le changement de type met automatiquement à jour la liste.
 
-### ✔ Recherche instantanée
+---
+
+## ✔ Recherche instantanée
 Une barre de recherche permet de filtrer les identifiants d’entités en temps réel.
 
-### ✔ Affichage du bloc GEDCOM
+---
+
+## ✔ Affichage du bloc GEDCOM
 Un clic sur une entité affiche son bloc GEDCOM brut dans la zone de droite.
 
-### ✔ Coloration syntaxique
+---
+
+## ✔ Coloration syntaxique
 Le code GEDCOM est mis en couleur :
 
 - niveaux (0, 1, 2…)  
@@ -49,7 +60,46 @@ Le code GEDCOM est mis en couleur :
 - identifiants (@I123@)  
 - dates (12 JAN 1900)  
 
-### ✔ Affichage de l’en‑tête GEDCOM (0 HEAD)
+---
+
+## ✔ Fiche Individu (INDI)
+L’onglet **Individu** affiche :
+
+- nom  
+- sexe  
+- dates et lieux de naissance / décès  
+- **Famille (enfant)** — lien cliquable vers la famille FAMC  
+- **Familles (parent)** — liens cliquables vers les familles FAMS  
+
+### 🔗 Navigation par clic
+Les pointeurs GEDCOM (`@I123@`, `@F456@`) sont **cliquables** :
+
+- cliquer sur une famille → ouvre l’onglet Famille  
+- cliquer sur un individu → ouvre l’onglet Individu  
+
+---
+
+## ✔ Fiche Famille (FAM)
+L’onglet **Famille** affiche :
+
+- mari  
+- femme  
+- enfants  
+- dates et lieux de mariage / divorce  
+
+Tous les individus sont **cliquables**.
+
+---
+
+## ✔ Navigation bidirectionnelle
+La navigation est fluide :
+
+- Individu → Famille (FAMC / FAMS)  
+- Famille → Individu (HUSB / WIFE / CHIL)  
+
+---
+
+## ✔ Affichage de l’en‑tête GEDCOM (0 HEAD)
 Le menu *Fichier → Afficher l’en‑tête GEDCOM* permet d’afficher :
 
 - la version GEDCOM  
@@ -57,15 +107,16 @@ Le menu *Fichier → Afficher l’en‑tête GEDCOM* permet d’afficher :
 - la date de création  
 - le charset  
 - les informations du logiciel ayant généré le fichier  
-- les métadonnées diverses  
 
 L’extraction est **robuste**, même si :
 
-- le fichier contient un **BOM UTF‑8** (`\ufeff`)  
-- HEAD n’est pas stocké comme entité dans le parser  
-- HEAD est suivi immédiatement d’une autre entité (`0 @X@ TAG`)  
+- le fichier contient un **BOM UTF‑8**  
+- HEAD n’est pas stocké comme entité  
+- HEAD est suivi immédiatement d’une autre entité  
 
-### ✔ Interface redimensionnable
+---
+
+## ✔ Interface redimensionnable
 - La zone de droite s’adapte automatiquement à la taille de la fenêtre  
 - Une **barre de séparation déplaçable** permet d’ajuster la largeur de la zone de gauche  
 
@@ -82,8 +133,7 @@ cd gedcom-viewer
 
 ### 2. Installer les dépendances
 
-Le projet utilise uniquement Tkinter (inclus dans Python) et un parser GEDCOM interne.
-
+Le projet utilise uniquement Tkinter (inclus dans Python).  
 Aucune installation supplémentaire n’est requise.
 
 ---
@@ -112,28 +162,27 @@ python main.py
 
 ## 📁 Structure du projet
 
-Arborescence actuelle :
-
 ```
 .
-├── assets
-│   └── icons
+├── assets/
+│   └── icons/
 ├── cretel_ancestris.ged
-├── gedcom
-│   ├── __init__.py
+├── gedcom/
 │   ├── parser.py
 │   ├── search.py
-│   └── __pycache__/
+│   └── __init__.py
+├── ui/
+│   ├── main_window.py
+│   ├── menus.py
+│   ├── syntax_highlighter.py
+│   ├── themes.py
+│   ├── views/
+│   │   ├── individual_view.py
+│   │   └── family_view.py
+│   └── __init__.py
 ├── main.py
-├── README.md
 ├── run.sh
-└── ui
-    ├── __init__.py
-    ├── main_window.py
-    ├── menus.py
-    ├── syntax_highlighter.py
-    ├── themes.py
-    └── __pycache__/
+└── README.md
 ```
 
 ---
@@ -144,36 +193,28 @@ Arborescence actuelle :
 Point d’entrée de l’application.
 
 ### `gedcom/parser.py`
-Parser GEDCOM minimaliste utilisé pour extraire les blocs d’entités.  
-Il gère :
-
-- la lecture du fichier  
-- la normalisation des lignes  
-- l’extraction des entités par pointeur  
-- l’accès aux lignes brutes pour HEAD  
-
-### `gedcom/search.py`
-Fonctions utilitaires pour la recherche dans les données GEDCOM.
+Parser GEDCOM minimaliste :  
+- lecture du fichier  
+- extraction des entités  
+- gestion de HEAD  
+- accès aux lignes brutes  
 
 ### `ui/main_window.py`
 Interface principale :  
 - liste des entités  
-- zone d’affichage  
-- gestion des événements  
-- barre de séparation déplaçable  
-- extraction robuste de l’en‑tête HEAD  
+- affichage GEDCOM  
+- onglets Individu / Famille  
+- navigation par clic  
+- barre de séparation  
+
+### `ui/views/individual_view.py`
+Affichage détaillé d’un individu + navigation FAMC/FAMS.
+
+### `ui/views/family_view.py`
+Affichage détaillé d’une famille + navigation HUSB/WIFE/CHIL.
 
 ### `ui/syntax_highlighter.py`
-Coloration syntaxique du contenu GEDCOM.
-
-### `ui/menus.py`
-Gestion des menus (Fichier, Aide…).
-
-### `ui/themes.py`
-Gestion des thèmes graphiques (si activés).
-
-### `assets/icons/`
-Icônes de l’application.
+Coloration syntaxique du GEDCOM.
 
 ---
 
@@ -185,13 +226,13 @@ Le dépôt contient un fichier :
 cretel_ancestris.ged
 ```
 
-Il peut être utilisé pour tester l’application.
+Pour tester l’application.
 
 ---
 
 ## 🛡️ Script de lancement (`run.sh`)
 
-Le script `run.sh` :
+Le script :
 
 - détecte automatiquement `python3` ou `python`  
 - vérifie la présence de `main.py`  
@@ -215,4 +256,4 @@ corrections, améliorations, nouvelles fonctionnalités…
 
 ## 📧 Contact
 
-Pour toute question ou suggestion, n’hésitez pas à ouvrir une issue ou à me contacter.
+Pour toute question ou suggestion, ouvrez une issue ou contactez-moi.
