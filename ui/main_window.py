@@ -2,14 +2,12 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 
-from gedcom.parser import GedcomParser
-from controllers.entity_controller import EntityController
+from app.use_cases.load_gedcom import load_gedcom
 
 from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
 from ui.views.family_view import FamilyView
-
 
 ENTITY_LABELS = {
     "INDI": "Individu",
@@ -27,12 +25,10 @@ class GedcomViewer:
         self.root = root
         self.root.title("GEDCOM Viewer 5.5.1")
 
-        # Barre de menus
         MenuBar(self.root, self)
 
-        # Parser GEDCOM
-        self.parser = GedcomParser()
-        self.controller = None  # sera créé après chargement du fichier
+        # Session applicative (parser + index + modèles)
+        self.session = None
 
         # --- PANED WINDOW PRINCIPAL ---
         main_pane = tk.PanedWindow(root, orient="horizontal")
@@ -74,7 +70,6 @@ class GedcomViewer:
         self.notebook.grid(row=1, column=0, sticky="nsew")
 
         tk.Label(right_frame, text="Contenu GEDCOM :").grid(row=0, column=0, sticky="nw")
-        # Onglet GEDCOM brut
         self.gedcom_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.gedcom_frame, text="GEDCOM brut")
 
@@ -82,7 +77,6 @@ class GedcomViewer:
         self.text_area.pack(fill="both", expand=True)
 
         # Vue fiche individu
-        # Onglet Individu
         self.individual_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.individual_tab, text="Individu")
 
@@ -101,14 +95,12 @@ class GedcomViewer:
         self.family_view = FamilyView(self.family_tab, self)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Liste filtrée
         self.filtered_entities = []
 
     # -----------------------------
     # Déclenchement automatique quand le type change
     # -----------------------------
     def on_entity_type_change(self, *args):
-        # Si on quitte INDI → cacher la fiche
         if not self.entity_type_var.get().startswith("INDI"):
             self.hide_individual_view()
 
@@ -120,25 +112,28 @@ class GedcomViewer:
     def load_file(self):
         filename = filedialog.askopenfilename(
             title="Choisir un fichier GEDCOM",
-            ###filetypes=[("GEDCOM files", "*.ged"), ("All files", "*.*")]
             filetypes=[("GEDCOM files", "*.ged")]
         )
         if not filename:
             return
 
-        self.parser.load(filename)
-        self.controller = EntityController(self.parser)
-        self.hide_individual_view()  # Réinitialise la fiche
+        try:
+            self.session = load_gedcom(filename)
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Impossible de charger le fichier GEDCOM :\n{e}")
+            return
 
-        # Ordre imposé
+        self.hide_individual_view()
+
         ordered_types = list(ENTITY_LABELS.keys())
-        types = [t for t in ordered_types if t in self.parser.entities]
+        types = [t for t in ordered_types if t in self.session.parser.entities]
 
         if not types:
             messagebox.showerror("Erreur", "Aucune entité trouvée")
             return
 
         self.entity_type_var.set(types[0])
+
         menu = self.entity_type_menu["menu"]
         menu.delete(0, "end")
 
@@ -153,13 +148,16 @@ class GedcomViewer:
     # Lister les entités du type choisi
     # -----------------------------
     def list_entities(self):
+        if not self.session:
+            return
+
         entity_type = self.entity_type_var.get().split(" – ")[0]
         self.entity_listbox.delete(0, tk.END)
 
-        if entity_type == "INDI" and self.controller:
-            self.current_entities = self.controller.list_individuals()
+        if entity_type == "INDI":
+            self.current_entities = self.session.list_individuals()
         else:
-            self.current_entities = self.parser.entities.get(entity_type, [])
+            self.current_entities = self.session.parser.entities.get(entity_type, [])
 
         self.filtered_entities = list(self.current_entities)
 
@@ -171,14 +169,14 @@ class GedcomViewer:
     # Filtrer les entités
     # -----------------------------
     def filter_entities(self, *args):
+        if not self.session:
+            return
+
         query = self.search_var.get().lower()
         self.entity_listbox.delete(0, tk.END)
 
-        if not self.controller:
-            return
-
         if self.entity_type_var.get().startswith("INDI"):
-            self.filtered_entities = self.controller.search_individuals(query)
+            self.filtered_entities = self.session.search_individuals(query)
         else:
             self.filtered_entities = [
                 e for e in self.current_entities
@@ -195,41 +193,48 @@ class GedcomViewer:
     def show_entity(self, event):
         if not self.entity_listbox.curselection():
             return
+        if not self.session:
+            return
 
         index = self.entity_listbox.curselection()[0]
         entity = self.filtered_entities[index]
 
-        # INDIVIDU
-        if hasattr(entity, "entity") and entity.entity.tag == "INDI":
+        raw_entity = None
+
+        # INDIVIDU : entity est un Individual
+        if getattr(entity, "entity", None) is not None and entity.entity.tag == "INDI":
             self.individual_view.display(entity)
             self.notebook.select(self.individual_tab)
             raw_entity = entity.entity
 
-        # FAMILLE
-        elif entity.tag == "FAM":
-            fam = self.controller.families.get(entity.pointer)
+        # FAMILLE : dans ta listbox, pour FAM (hors INDI) tu mets des GedcomEntity bruts
+        elif getattr(entity, "tag", None) == "FAM":
+            fam = self.session.get_family(getattr(entity, "pointer", None))
             self.family_view.display(fam)
             self.notebook.select(self.family_tab)
-            raw_entity = fam.entity
+            raw_entity = fam.entity if fam else entity
 
-        # AUTRES
+        # AUTRES : entity est un GedcomEntity brut
         else:
             self.individual_view.display(None)
             self.family_view.display(None)
             self.notebook.select(self.gedcom_frame)
             raw_entity = entity
 
-        # Affichage du bloc GEDCOM brut
-        block = raw_entity.raw_block()
-        self.text_area.delete("1.0", tk.END)
-        self.text_area.insert(tk.END, block)
-        self.highlighter.highlight()
+        if raw_entity is not None:
+            block = raw_entity.raw_block()
+            self.text_area.delete("1.0", tk.END)
+            self.text_area.insert(tk.END, block)
+            self.highlighter.highlight()
 
     # -----------------------------
     # Afficher le bloc d'en-tête GEDCOM (0 HEAD)
     # -----------------------------
     def show_header(self):
-        block = self.parser.extract_head()
+        if not self.session:
+            return
+
+        block = self.session.extract_head()
 
         if not block:
             messagebox.showerror("Erreur", "Aucun en-tête HEAD trouvé dans le fichier.")
@@ -240,13 +245,15 @@ class GedcomViewer:
         self.highlighter.highlight()
 
     def hide_individual_view(self):
-        """Efface la fiche individu."""
         self.individual_view.display(None)
 
     def navigate_to(self, pointer):
-        # INDIVIDU ?
-        if pointer in self.controller.individuals:
-            ind = self.controller.individuals[pointer]
+        if not self.session:
+            messagebox.showerror("Erreur", "Aucune session chargée.")
+            return
+
+        if pointer in self.session.individuals:
+            ind = self.session.individuals[pointer]
             self.individual_view.display(ind)
             self.notebook.select(self.individual_tab)
             self.text_area.delete("1.0", tk.END)
@@ -254,9 +261,8 @@ class GedcomViewer:
             self.highlighter.highlight()
             return
 
-        # FAMILLE ?
-        if pointer in self.controller.families:
-            fam = self.controller.families[pointer]
+        if pointer in self.session.families:
+            fam = self.session.families[pointer]
             self.family_view.display(fam)
             self.notebook.select(self.family_tab)
             self.text_area.delete("1.0", tk.END)
