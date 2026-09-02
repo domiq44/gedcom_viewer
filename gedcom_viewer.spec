@@ -8,14 +8,15 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        # INCLUSION DES RÉPERTOIRES CLÉS : Ceci est crucial pour que les imports fonctionnent
+        # INCLUSION DES RÉPERTOIRES CLÉS :
         ('ui', 'ui'),
         ('controllers', 'controllers'),
         ('gedcom', 'gedcom'),
+        ('gedcom/models', 'gedcom/models'),
         ('tests', 'tests'),
     ],
     hiddenimports=[
-        # IMPORTS CACHÉS : Indique à PyInstaller les dépendances qui ne sont pas évidentes
+        # Gardez les imports de haut niveau, mais retirez l'importation interne qui cause le conflit
         'ui.main_window',
         'controllers.app_controller',
         'controllers.entity_controller',
