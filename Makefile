@@ -1,33 +1,48 @@
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 APP_NAME ?= gedcom_viewer
 
-.PHONY: help install run test format lint dist clean check_pip check_tk
+.PHONY: help install run test format lint dist clean check_pip check_tk venv
 
 help:
 	@echo "Usage: make <target>"
 	@echo "Targets:"
-	@echo "  install     Install pip (if missing), Tkinter (if missing), PyInstaller and Black"
-	@echo "  run         Launch the application locally"
+	@echo "  venv        Create the virtual environment (.venv)"
+	@echo "  install     Install pip, Tkinter (system check), PyInstaller and Black"
+	@echo "  run         Launch the application locally (requires venv)"
 	@echo "  test        Run the Python unit tests"
 	@echo "  format      Format Python sources with Black"
 	@echo "  lint        Check Python syntax for all source files"
 	@echo "  dist        Build a standalone executable with PyInstaller"
-	@echo "  clean       Remove build artifacts"
+	@echo "  clean       Remove build artifacts and venv"
 
-# Vérifie si pip est installé
+# --- Gestion de l'environnement ---
+
+venv:
+	@if [ ! -d .venv ]; then \
+		echo "Creating virtual environment (.venv)..."; \
+		python3 -m venv .venv; \
+	else \
+		echo ".venv already exists."; \
+	fi
+
+# Assurez-vous que PYTHON pointe vers le bon exécutable après venv
+# On réévalue PYTHON pour s'assurer qu'il pointe vers .venv/bin/python
+PYTHON_ACTUAL := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+
+# --- Vérifications ---
+
 check_pip:
 	@echo "Checking pip..."
-	@if ! command -v pip >/dev/null 2>&1; then \
+	@if ! $(PYTHON_ACTUAL) -m pip >/dev/null 2>&1; then \
 		echo "pip not found. Attempting installation..."; \
-		$(PYTHON) -m ensurepip --upgrade || echo "Failed to install pip. Install it manually."; \
+		$(PYTHON_ACTUAL) -m ensurepip --upgrade || echo "Failed to install pip. Install it manually."; \
 	else \
 		echo "pip is installed."; \
 	fi
 
-# Vérifie si Tkinter est disponible
 check_tk:
 	@echo "Checking Tkinter..."
-	@if ! $(PYTHON) -c "import tkinter" >/dev/null 2>&1; then \
+	@if ! $(PYTHON_ACTUAL) -c "import tkinter" >/dev/null 2>&1; then \
 		echo "Tkinter is not installed."; \
 		echo "Install it with your system package manager:"; \
 		echo "  Debian/Ubuntu: sudo apt install python3-tk"; \
@@ -38,31 +53,49 @@ check_tk:
 		echo "Tkinter is installed."; \
 	fi
 
-install: check_pip check_tk
+# --- Installation ---
+
+install: venv check_pip check_tk
 	@if [ -n "$$VIRTUAL_ENV" ] || [ -d .venv ]; then \
-		$(PYTHON) -m pip install pyinstaller black; \
+		echo "Installing packages into .venv..."; \
+		$(PYTHON_ACTUAL) -m pip install pyinstaller black; \
 	else \
-		$(PYTHON) -m pip install --user pyinstaller black; \
+		echo "Installing packages globally (use 'make venv' first for best results)."; \
+		$(PYTHON_ACTUAL) -m pip install --user pyinstaller black; \
 	fi
 
-run:
-	$(PYTHON) main.py
+# --- Exécution et Test ---
 
-test:
-	$(PYTHON) -m unittest discover -s tests
+run: venv install
+	echo "--- Running application ---"
+	$(PYTHON_ACTUAL) main.py
+
+test: venv
+	echo "--- Running tests ---"
+	$(PYTHON_ACTUAL) -m unittest discover -s tests
+
+# --- Formatage et Linting ---
 
 format:
-	$(PYTHON) -m black .
+	@echo "--- Formatting sources with Black ---"
+	$(PYTHON_ACTUAL) -m black .
 
 lint:
+	@echo "--- Linting sources ---"
 	find . -name "*.py" \
 		-not -path "./build/*" \
 		-not -path "./dist/*" \
 		-not -path "./.venv/*" \
-		-print0 | xargs -0 $(PYTHON) -m py_compile
+		-print0 | xargs -0 $(PYTHON_ACTUAL) -m py_compile
 
-dist: install
-	$(PYTHON) -m PyInstaller $(APP_NAME).spec
+# --- Distribution ---
+
+dist: venv install
+	@echo "--- Building executable with PyInstaller ---"
+	$(PYTHON_ACTUAL) -m PyInstaller $(APP_NAME).spec
+
+# --- Nettoyage ---
 
 clean:
-	rm -rf build dist
+	@echo "--- Cleaning build artifacts and venv ---"
+	rm -rf build dist .venv
