@@ -97,5 +97,8 @@ dist: venv install
 # --- Nettoyage ---
 
 clean:
-	@echo "--- Cleaning build artifacts and venv ---"
+	@echo "--- Cleaning build artifacts, venv, and __pycache__ ---"
+	# Nettoie les répertoires de build et de distribution
 	rm -rf build dist .venv
+	# Nettoie tous les dossiers __pycache__ dans tout le projet
+	find . -name "__pycache__" -type d -exec rm -rf {} +
