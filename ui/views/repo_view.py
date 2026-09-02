@@ -1,0 +1,75 @@
+import tkinter as tk
+from tkinter import ttk
+
+
+class RepositoryView(ttk.Frame):
+    """
+    Affiche une fiche Repository (modèle Repository).
+    """
+
+    def __init__(self, parent, on_pointer_click):
+        super().__init__(parent)
+
+        self.on_pointer_click_callback = on_pointer_click
+        self.reference_resolver = None
+        self.configure(padding=10)
+
+        self.title_label = ttk.Label(self, text="Dépôt", font=("Segoe UI", 12, "bold"))
+        self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
+
+        self.labels = {}
+        fields = [
+            ("Nom", "name"),
+            ("Ligne 1", "address"),
+            ("Ville", "city"),
+            ("État/Pays", "state"),
+            ("Code postal", "postal_code"),
+        ]
+
+        for i, (label_text, key) in enumerate(fields, start=1):
+            ttk.Label(self, text=label_text + " :").grid(row=i, column=0, sticky="w")
+            value_label = ttk.Label(self, text="", font=("Segoe UI", 10))
+            value_label.grid(row=i, column=1, sticky="w", padx=10)
+            self.labels[key] = value_label
+
+        for i in range(len(fields) + 1):
+            self.grid_rowconfigure(i, pad=4)
+
+    def set_reference_resolver(self, resolver):
+        self.reference_resolver = resolver
+
+    def _format_pointer_label(self, pointer):
+        if not pointer:
+            return "—"
+
+        label = pointer
+        if callable(self.reference_resolver):
+            try:
+                target = self.reference_resolver(pointer)
+                if target is not None:
+                    name = getattr(target, "name", None)
+                    if isinstance(name, str) and name.strip():
+                        label = f"{pointer} – {name}"
+            except Exception:
+                pass
+
+        return label
+
+    def display(self, repo):
+        if not repo:
+            self.title_label.config(text="Dépôt")
+            for widget in self.labels.values():
+                widget.config(text="—", foreground="black", cursor="")
+                widget.unbind("<Button-1>")
+            return
+
+        self.title_label.config(text=f"Dépôt : {repo.pointer}")
+
+        for key, widget in self.labels.items():
+            value = getattr(repo, key, "")
+            widget.config(text=value if value else "—", foreground="black", cursor="")
+            widget.unbind("<Button-1>")
+
+    def on_pointer_click(self, pointer):
+        if callable(self.on_pointer_click_callback):
+            self.on_pointer_click_callback(pointer)
