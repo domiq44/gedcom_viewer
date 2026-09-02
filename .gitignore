@@ -27,7 +27,7 @@ Thumbs.db
 # --- Build / Packaging ---
 build/
 dist/
-*.spec
+# *.spec
 
 # --- Tkinter cache (rare but safe) ---
 *.tcl

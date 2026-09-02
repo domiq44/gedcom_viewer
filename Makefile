@@ -62,7 +62,7 @@ lint:
 		-print0 | xargs -0 $(PYTHON) -m py_compile
 
 dist: install
-	$(PYTHON) -m PyInstaller --onefile --windowed --name $(APP_NAME) --paths . main.py
+	$(PYTHON) -m PyInstaller $(APP_NAME).spec
 
 clean:
-	rm -rf build dist $(APP_NAME).spec
+	rm -rf build dist
