@@ -20,10 +20,22 @@ class SourceView(ttk.Frame):
         self.labels = {}
         fields = [
             ("Titre", "title"),
+            ("Abréviation", "abbreviation"),
             ("Auteur", "author"),
             ("Date publication", "pub_date"),
+            ("Publication", "publication"),
             ("Texte", "text"),
             ("Dépôt associé", "repository"),
+            ("Cote", "call_number"),
+            ("Support", "media"),
+            ("Agence", "agency"),
+            ("Notes", "notes"),
+            ("Sources", "sources"),
+            ("Références", "references"),
+            ("Identifiant interne", "record_id"),
+            ("Note du dépôt", "repo_note"),
+            ("Données / événements", "data_events"),
+            ("Autres informations GEDCOM", "additional_fields"),
         ]
 
         for i, (label_text, key) in enumerate(fields, start=1):
@@ -118,9 +130,28 @@ class SourceView(ttk.Frame):
                 widget.config(state="disabled")
                 continue
 
+            if isinstance(value, list):
+                value = ", ".join(
+                    self._format_additional_field(item)
+                    if isinstance(item, dict)
+                    else str(item)
+                    for item in value
+                )
+
             widget.config(text=value if value else "—", foreground="black", cursor="")
             widget.unbind("<Button-1>")
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):
             self.on_pointer_click_callback(pointer)
+
+    @staticmethod
+    def _format_additional_field(field):
+        if "value" in field:
+            text = f"{field.get('tag', '')}: {field.get('value', '')}".rstrip(": ")
+            details = ", ".join(
+                f"{tag}: {value}" if value else tag
+                for tag, value in field.get("details", [])
+            )
+            return f"{text} ({details})" if details else text
+        return str(field)

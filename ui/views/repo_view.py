@@ -24,6 +24,15 @@ class RepositoryView(ttk.Frame):
             ("Ville", "city"),
             ("État/Pays", "state"),
             ("Code postal", "postal_code"),
+            ("Adresse complémentaire 1", "address_line_1"),
+            ("Adresse complémentaire 2", "address_line_2"),
+            ("Pays", "country"),
+            ("Notes", "notes"),
+            ("Références", "references"),
+            ("Identifiant interne", "record_id"),
+            ("Date de modification", "change_date"),
+            ("Heure de modification", "change_time"),
+            ("Autres informations GEDCOM", "additional_fields"),
         ]
 
         for i, (label_text, key) in enumerate(fields, start=1):
@@ -67,9 +76,25 @@ class RepositoryView(ttk.Frame):
 
         for key, widget in self.labels.items():
             value = getattr(repo, key, "")
+            if isinstance(value, list):
+                value = ", ".join(
+                    self._format_additional_field(item)
+                    if isinstance(item, dict)
+                    else str(item)
+                    for item in value
+                )
             widget.config(text=value if value else "—", foreground="black", cursor="")
             widget.unbind("<Button-1>")
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):
             self.on_pointer_click_callback(pointer)
+
+    @staticmethod
+    def _format_additional_field(field):
+        text = f"{field.get('tag', '')}: {field.get('value', '')}".rstrip(": ")
+        details = ", ".join(
+            f"{tag}: {value}" if value else tag
+            for tag, value in field.get("details", [])
+        )
+        return f"{text} ({details})" if details else text

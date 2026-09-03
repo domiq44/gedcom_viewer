@@ -12,13 +12,20 @@ class Note:
 
         self.text = ""
         self.source = None
+        self.sources = []
+        self.references = []
+        self.record_id = None
+        self.submitters = []
+        self.change_date = None
+        self.change_time = None
+        self.additional_fields = []
 
         self._parse_lines(entity.lines)
 
     def _parse_lines(self, lines):
-        ###print(">>> DEBUG LINES FOR NOTE", self.pointer)
         current_section = None
         current_level = None
+        current_additional = None
 
         for raw in lines:
             level, pointer, tag, value = _parse_line(raw)
@@ -32,12 +39,30 @@ class Note:
                 current_level = level
                 continue
 
-            if current_section == "NOTE":
-                if tag == "NOTE" and level == 1:
+            if level == 1:
+                current_additional = None
+                if tag == "NOTE":
                     self.text = (self.text + "\n" + (value or "")).strip("\n")
+                    current_section = "NOTE"
                     current_level = level
+                elif tag == "SOUR":
+                    self.source = value
+                    self.sources.append(value)
+                elif tag == "REFN":
+                    self.references.append(value)
+                elif tag == "RIN":
+                    self.record_id = value
+                elif tag == "SUBM":
+                    self.submitters.append(value)
+                elif tag == "CHAN":
+                    current_section = "CHAN"
+                elif tag not in {"SOUR", "REFN", "RIN", "SUBM", "CHAN"}:
+                    current_additional = {"tag": tag, "value": value, "details": []}
+                    self.additional_fields.append(current_additional)
+                if tag == "NOTE":
                     continue
 
+            if current_section == "NOTE":
                 if tag in {"CONC", "CONT"} and level >= current_level:
                     suffix = value or ""
                     if tag == "CONC":
@@ -60,5 +85,11 @@ class Note:
                     current_section = None
                     current_level = None
 
-            if level == 1 and tag == "SOUR":
-                self.source = value
+            if current_section == "CHAN" and level >= 2:
+                if tag == "DATE":
+                    self.change_date = value
+                elif tag == "TIME":
+                    self.change_time = value
+
+            if current_additional is not None and level >= 2:
+                current_additional["details"].append((tag, value))

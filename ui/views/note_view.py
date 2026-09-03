@@ -44,6 +44,21 @@ class NoteView(ttk.Frame):
         self.source_label = ttk.Label(self, text="—", font=("Segoe UI", 10))
         self.source_label.grid(row=2, column=1, sticky="w", padx=10)
 
+        self.info_labels = {}
+        fields = [
+            ("Références", "references"),
+            ("Identifiant interne", "record_id"),
+            ("Submitters", "submitters"),
+            ("Date de modification", "change_date"),
+            ("Heure de modification", "change_time"),
+            ("Autres informations GEDCOM", "additional_fields"),
+        ]
+        for row, (label_text, key) in enumerate(fields, start=3):
+            ttk.Label(self, text=label_text + " :").grid(row=row, column=0, sticky="w")
+            value_label = ttk.Label(self, text="—", font=("Segoe UI", 10))
+            value_label.grid(row=row, column=1, sticky="w", padx=10)
+            self.info_labels[key] = value_label
+
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -56,6 +71,8 @@ class NoteView(ttk.Frame):
             self.text_widget.config(state="disabled")
             self.source_label.config(text="—", foreground="black", cursor="")
             self.source_label.unbind("<Button-1>")
+            for widget in self.info_labels.values():
+                widget.config(text="—", foreground="black", cursor="")
             return
 
         self.title_label.config(text=f"Note : {note.pointer}")
@@ -85,6 +102,26 @@ class NoteView(ttk.Frame):
             self.source_label.bind(
                 "<Button-1>", lambda e, ptr=source: self.on_pointer_click(ptr)
             )
+
+        for key, widget in self.info_labels.items():
+            value = getattr(note, key, None)
+            if key == "additional_fields":
+                value = self._format_additional_fields(value)
+            elif isinstance(value, list):
+                value = ", ".join(str(item) for item in value)
+            widget.config(text=value if value else "—")
+
+    @staticmethod
+    def _format_additional_fields(fields):
+        formatted = []
+        for field in fields or []:
+            text = f"{field.get('tag', '')}: {field.get('value', '')}".rstrip(": ")
+            details = ", ".join(
+                f"{tag}: {value}" if value else tag
+                for tag, value in field.get("details", [])
+            )
+            formatted.append(f"{text} ({details})" if details else text)
+        return " | ".join(formatted)
 
     def set_reference_resolver(self, resolver):
         self.reference_resolver = resolver

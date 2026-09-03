@@ -14,11 +14,21 @@ class Source:
         self.call_number = None
         self.media = None
         self.repo_note = None
+        self.publication = None
+        self.abbreviation = None
+        self.notes = []
+        self.sources = []
+        self.references = []
+        self.record_id = None
+        self.data_events = []
+        self.agency = None
+        self.additional_fields = []
 
         self._parse_lines(entity.lines)
 
     def _parse_lines(self, lines):
         current_section = None
+        current_additional = None
 
         for raw in lines:
             level, pointer, tag, value = _parse_line(raw)
@@ -32,6 +42,7 @@ class Source:
             # --- Niveau 1 : champs principaux ---
             if level == 1:
                 current_section = tag
+                current_additional = None
 
                 if tag == "TITL":
                     self.title = value
@@ -51,6 +62,34 @@ class Source:
                 elif tag == "REPO":
                     self.repository = value
 
+                elif tag == "PUBL":
+                    self.publication = value
+
+                elif tag == "ABBR":
+                    self.abbreviation = value
+
+                elif tag == "NOTE":
+                    self.notes.append(value)
+
+                elif tag == "SOUR":
+                    self.sources.append(value)
+
+                elif tag == "REFN":
+                    self.references.append(value)
+
+                elif tag == "RIN":
+                    self.record_id = value
+
+                elif tag == "DATA":
+                    current_section = "DATA"
+
+                elif tag not in {
+                    "TITL", "AUTH", "DATE", "TEXT", "NOTE", "REPO", "PUBL",
+                    "ABBR", "SOUR", "REFN", "RIN", "DATA",
+                }:
+                    current_additional = {"tag": tag, "value": value, "details": []}
+                    self.additional_fields.append(current_additional)
+
             # --- Niveau 2 : sous-sections ---
             elif level == 2 and current_section:
 
@@ -69,6 +108,14 @@ class Source:
                         self.text = f"{self.text or ''}{value}"
                     elif tag == "CONT":
                         self.text = f"{self.text or ''}\n{value}"
+
+                elif current_section == "DATA":
+                    if tag == "EVEN":
+                        self.data_events.append({"value": value, "details": []})
+                    elif self.data_events:
+                        self.data_events[-1]["details"].append((tag, value))
+                    elif tag == "AGNC":
+                        self.agency = value
                     elif tag == "NOTE":
                         self.text = f"{self.text or ''}\n{value}"
 
@@ -83,3 +130,6 @@ class Source:
             elif level == 3 and current_section == "REPO":
                 if tag == "MEDI":
                     self.media = value
+
+            if current_additional is not None and level >= 2:
+                current_additional["details"].append((tag, value))

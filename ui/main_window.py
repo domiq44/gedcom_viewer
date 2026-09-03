@@ -32,6 +32,56 @@ class _UiLogHandler(logging.Handler):
             pass
 
 
+class _ScrollableFrame(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar = ttk.Scrollbar(
+            self, orient="vertical", command=self.canvas.yview
+        )
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.content = ttk.Frame(self.canvas)
+        self.window_id = self.canvas.create_window(
+            (0, 0), window=self.content, anchor="nw"
+        )
+        self.content.bind("<Configure>", self._update_scrollregion)
+        self.canvas.bind("<Configure>", self._sync_content_width)
+        self.canvas.bind("<Enter>", self._bind_mousewheel)
+        self.canvas.bind("<Leave>", self._unbind_mousewheel)
+
+    def _update_scrollregion(self, event=None):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _sync_content_width(self, event):
+        self.canvas.itemconfigure(self.window_id, width=event.width)
+        self._update_scrollregion()
+
+    def _bind_mousewheel(self, event=None):
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)
+
+    def _unbind_mousewheel(self, event=None):
+        self.canvas.unbind_all("<MouseWheel>")
+        self.canvas.unbind_all("<Button-4>")
+        self.canvas.unbind_all("<Button-5>")
+
+    def _on_mousewheel(self, event):
+        if event.num == 4:
+            delta = -1
+        elif event.num == 5:
+            delta = 1
+        else:
+            delta = -int(event.delta / 120)
+        self.canvas.yview_scroll(delta, "units")
+
+
 class GedcomViewer:
     def __init__(self, root):
         self.root = root
@@ -196,33 +246,43 @@ class GedcomViewer:
 
         self.individual_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.individual_tab, text="Individu")
-        self.individual_view = IndividualView(self.individual_tab, self.navigate_to)
+        individual_scroll = _ScrollableFrame(self.individual_tab)
+        individual_scroll.pack(fill="both", expand=True)
+        self.individual_view = IndividualView(individual_scroll.content, self.navigate_to)
         self.individual_view.set_family_name_resolver(self.controller.get_family)
         self.individual_view.set_family_member_resolver(self.controller.get_individual)
         self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.family_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.family_tab, text="Famille")
-        self.family_view = FamilyView(self.family_tab, self.navigate_to)
+        family_scroll = _ScrollableFrame(self.family_tab)
+        family_scroll.pack(fill="both", expand=True)
+        self.family_view = FamilyView(family_scroll.content, self.navigate_to)
         self.family_view.set_name_resolver(self.controller.get_individual)
         self.family_view.set_source_resolver(self.controller.get_source)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.repo_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.repo_tab, text="Dépôt")
-        self.repo_view = RepositoryView(self.repo_tab, self.navigate_to)
+        repo_scroll = _ScrollableFrame(self.repo_tab)
+        repo_scroll.pack(fill="both", expand=True)
+        self.repo_view = RepositoryView(repo_scroll.content, self.navigate_to)
         self.repo_view.set_reference_resolver(self.controller.get_repository)
         self.repo_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.source_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.source_tab, text="Source")
-        self.source_view = SourceView(self.source_tab, self.navigate_to)
+        source_scroll = _ScrollableFrame(self.source_tab)
+        source_scroll.pack(fill="both", expand=True)
+        self.source_view = SourceView(source_scroll.content, self.navigate_to)
         self.source_view.set_reference_resolver(self.controller.get_repository)
         self.source_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.note_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.note_tab, text="Note")
-        self.note_view = NoteView(self.note_tab, self.navigate_to)
+        note_scroll = _ScrollableFrame(self.note_tab)
+        note_scroll.pack(fill="both", expand=True)
+        self.note_view = NoteView(note_scroll.content, self.navigate_to)
         self.note_view.set_reference_resolver(self.controller.get_source)
         self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -233,7 +293,9 @@ class GedcomViewer:
 
         self.submitter_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.submitter_tab, text="Submitter")
-        self.submitter_view = SubmitterView(self.submitter_tab, self.navigate_to)
+        submitter_scroll = _ScrollableFrame(self.submitter_tab)
+        submitter_scroll.pack(fill="both", expand=True)
+        self.submitter_view = SubmitterView(submitter_scroll.content, self.navigate_to)
         self.submitter_view.set_reference_resolver(self.controller.get_submitter)
         self.submitter_view.pack(fill="both", expand=True, padx=10, pady=10)
 
