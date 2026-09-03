@@ -73,7 +73,7 @@ class Individual:
                     self.properties.append(value)
 
                 elif tag == "DEAT":
-                    self.death_confirmed = True
+                    self.death_confirmed = (value or "").strip().upper() == "Y"
 
             # --- Niveau 2 : sous-sections ---
             elif level == 2 and current_section:

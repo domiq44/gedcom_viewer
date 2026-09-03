@@ -1,8 +1,9 @@
 import unittest
 import tempfile
-from gedcom.parser import GedcomParser
+from gedcom.parser import GedcomEntity, GedcomParser
 from gedcom.models.individual import Individual
 from gedcom.models.note import Note
+from gedcom.models.source import Source
 
 SAMPLE_GEDCOM = """0 @I1@ INDI
 1 NAME John /Doe/
@@ -278,6 +279,35 @@ class TestGedcomParser(unittest.TestCase):
             note.text,
             "Première ligne\nseconde ligne et encore plus",
         )
+
+    def test_source_keeps_notes_separately_from_text(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @S10@ SOUR",
+            "1 TITL Source de test",
+            "1 NOTE Première ligne",
+            "2 CONT seconde ligne",
+            "2 CONC , suite",
+        ]
+        parser._parse_entities()
+
+        source = Source(parser.get_entity("@S10@"))
+
+        self.assertIsNone(source.text)
+        self.assertEqual(source.notes, ["Première ligne\nseconde ligne, suite"])
+
+    def test_death_confirmation_requires_y_value(self):
+        without_confirmation = Individual(
+            GedcomEntity(
+                "@I20@", "INDI", 0, ["0 @I20@ INDI", "1 DEAT", "2 DATE 1 JAN 1900"]
+            )
+        )
+        with_confirmation = Individual(
+            GedcomEntity("@I21@", "INDI", 0, ["0 @I21@ INDI", "1 DEAT Y"])
+        )
+
+        self.assertFalse(without_confirmation.death_confirmed)
+        self.assertTrue(with_confirmation.death_confirmed)
 
     def test_multiline_place_conc_cont(self):
         parser = GedcomParser()

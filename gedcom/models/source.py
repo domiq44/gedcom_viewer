@@ -57,7 +57,7 @@ class Source:
                     self.text = value
 
                 elif tag == "NOTE":
-                    self.text = value
+                    self.notes.append(value)
 
                 elif tag == "REPO":
                     self.repository = value
@@ -67,9 +67,6 @@ class Source:
 
                 elif tag == "ABBR":
                     self.abbreviation = value
-
-                elif tag == "NOTE":
-                    self.notes.append(value)
 
                 elif tag == "SOUR":
                     self.sources.append(value)
@@ -105,9 +102,15 @@ class Source:
                 # Sous TEXT / NOTE
                 elif current_section in ("TEXT", "NOTE"):
                     if tag == "CONC":
-                        self.text = f"{self.text or ''}{value}"
+                        if current_section == "NOTE" and self.notes:
+                            self.notes[-1] = f"{self.notes[-1] or ''}{value}"
+                        else:
+                            self.text = f"{self.text or ''}{value}"
                     elif tag == "CONT":
-                        self.text = f"{self.text or ''}\n{value}"
+                        if current_section == "NOTE" and self.notes:
+                            self.notes[-1] = f"{self.notes[-1] or ''}\n{value}"
+                        else:
+                            self.text = f"{self.text or ''}\n{value}"
 
                 elif current_section == "DATA":
                     if tag == "EVEN":
