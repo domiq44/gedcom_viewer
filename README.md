@@ -1,7 +1,7 @@
 # GEDCOM Viewer 5.5.1
 
 <p align="center">
-  <img src="docs/screenshots/gedcom-viewer-overview.svg" alt="Capture d’écran du projet GEDCOM Viewer" width="1000" />
+  <img src="docs/screenshots/gedcom-viewer-overview.png" alt="Capture d’écran du projet GEDCOM Viewer" width="1000" />
 </p>
 
 Un visualiseur GEDCOM écrit en **Python + Tkinter** pour explorer des fichiers au format **GEDCOM 5.5.1**.
