@@ -1,12 +1,12 @@
 # Analyse du projet GEDCOM Viewer
 
-## Périmètre de l'analyse
+## Périmètre
 
-Cette analyse porte sur le code Python, les tests, le `Makefile`, le script de lancement et la configuration PyInstaller. Elle décrit l'état observé le 3 septembre 2026.
+Analyse réalisée le 3 septembre 2026 à partir du code Python, des tests, du `Makefile`, de `run.sh` et de la configuration PyInstaller. Les autres documents du dépôt n'ont pas été utilisés comme source d'information.
 
 ## Vue d'ensemble
 
-GEDCOM Viewer est une application de bureau Python/Tkinter destinée à ouvrir et explorer des fichiers GEDCOM. Le projet est fonctionnel, modulaire et dispose d'une suite de tests unitaires couvrant le parsing, les contrôleurs et une grande partie de l'interface simulée.
+GEDCOM Viewer est une application de bureau Python/Tkinter permettant d'ouvrir, rechercher et explorer des fichiers GEDCOM. Le projet est fonctionnel et organisé en couches distinctes : parsing, modèles métier, contrôleurs et interface utilisateur.
 
 ## Architecture
 
@@ -14,101 +14,94 @@ GEDCOM Viewer est une application de bureau Python/Tkinter destinée à ouvrir e
 main.py
   -> ui.main_window.GedcomViewer
       -> controllers.app_controller.AppController
-          -> controllers.gedcom_service.GedcomService
-              -> gedcom.parser.GedcomParser
+          -> GedcomService -> GedcomParser
           -> EntityController
           -> SearchController
           -> PresentationController
       -> ui.views/*
 ```
 
-### Responsabilités principales
-
-| Composant | Rôle |
+| Composant | Responsabilité |
 |---|---|
-| `gedcom/parser.py` | Lit le fichier, conserve les lignes brutes et crée un index des entités par type et pointeur. |
-| `gedcom/models/` | Transforme les entités brutes en objets `Individual`, `Family`, `Source`, `Repository`, `Note`, `MultimediaObject` et `Submitter`. |
-| `controllers/gedcom_service.py` | Encapsule le chargement et l'accès au parser. |
-| `controllers/entity_controller.py` | Construit les modèles métier et fournit les recherches spécialisées. |
-| `controllers/search_controller.py` | Gère les types affichés, le filtrage, le tri et les libellés. |
-| `controllers/presentation_controller.py` | Résout les pointeurs et prépare le contexte des vues. |
-| `ui/main_window.py` | Coordonne la fenêtre principale, les listes, la navigation et l'historique. |
-| `ui/views/` | Affiche les fiches détaillées des différents types GEDCOM. |
+| `gedcom/parser.py` | Lecture du fichier, découpage en blocs, indexation par type et pointeur, extraction des valeurs et continuations. |
+| `gedcom/models/` | Conversion des blocs bruts en modèles `Individual`, `Family`, `Source`, `Repository`, `Note`, `MultimediaObject` et `Submitter`. |
+| `controllers/gedcom_service.py` | Encapsulation du parser et accès aux données chargées. |
+| `controllers/entity_controller.py` | Construction et indexation des modèles métier. |
+| `controllers/search_controller.py` | Recherche, tri, formatage et libellés des entités. |
+| `controllers/presentation_controller.py` | Résolution des pointeurs et préparation du contexte d'affichage. |
+| `ui/main_window.py` | Fenêtre principale, listes, chargement, navigation et historique. |
+| `ui/views/` | Vues spécialisées pour les sept types d'entités pris en charge. |
 
-## Fonctionnalités présentes
+## Fonctionnalités observées
 
-- Ouverture de fichiers GEDCOM.
-- Conservation et affichage du contenu brut avec coloration syntaxique.
-- Support des entités `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
-- Recherche instantanée et tri des entités.
-- Tri numérique des pointeurs tels que `@I2@` et `@I10@`.
-- Navigation entre les pointeurs GEDCOM.
-- Historique précédent/suivant.
-- Gestion des fichiers récemment ouverts.
-- Affichage de l'en-tête `HEAD` et du trailer `TRLR`.
-- Prévisualisation d'images locales lorsque Pillow est installé.
-- Journalisation dans `~/.gedcom_viewer.log`.
-- Affichage dans la barre de statut du temps de chargement du GEDCOM.
-- Interface avec zones de texte et formulaires défilants.
+- Chargement de fichiers GEDCOM et affichage du bloc brut.
+- Support des types `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
+- Recherche instantanée et tri par nom, titre ou identifiant.
+- Tri numérique des pointeurs comme `@I2@` et `@I10@`.
+- Navigation entre pointeurs GEDCOM et historique précédent/suivant.
+- Gestion des fichiers récents.
+- Extraction et affichage de `HEAD` et `TRLR`.
+- Coloration syntaxique du contenu GEDCOM brut.
+- Prévisualisation des images locales avec Pillow.
+- Journalisation locale et affichage du dernier message dans la barre de statut.
+- Affichage du temps de chargement du GEDCOM dans cette barre de statut.
+- Formulaires défilants pour les données détaillées.
 
-## Points forts
+## Corrections déjà réalisées
 
-1. La séparation parser, modèles, contrôleurs et vues est claire.
-2. Le parser conserve le bloc brut, ce qui permet de comparer les données interprétées avec leur représentation d'origine.
-3. Les recherches par pointeur et par attribut sont simples à suivre.
-4. La résolution centralisée des pointeurs facilite la navigation entre fiches.
-5. Les tests couvrent plusieurs cas GEDCOM délicats, notamment `CONC`, `CONT`, les sous-tags imbriqués et les blocs `HEAD`/`TRLR`.
+- Les notes `NOTE` des sources sont conservées dans `Source.notes`, avec leurs continuations, au lieu d'être perdues dans une branche inaccessible.
+- `Individual.death_confirmed` n'est activé par la valeur `Y` du tag `DEAT` ou par un sous-tag `Y`, et non par la seule présence de `DEAT`.
+- Les lignes GEDCOM malformées sont enregistrées dans `GedcomParser.malformed_lines` et journalisées.
+- Les caractères remplacés par `errors="replace"` sont comptabilisés dans `encoding_replacements` et journalisés.
+- Pillow est installé par `make install` avec PyInstaller et Black.
+- Le temps de chargement est mesuré avec `time.perf_counter()` et publié dans le log de succès.
 
-## Défauts confirmés et corrections apportées
+## Défauts et limites encore présents
 
-### 1. Les notes des sources ne sont pas stockées
+### 1. Chargement entièrement en mémoire
 
-Dans `gedcom/models/source.py`, deux branches traitent `tag == "NOTE"`. La première affecte `self.text`, ce qui rend la seconde inaccessible. Une note de source se retrouve donc dans `source.text` et jamais dans `source.notes`.
+Le parser conserve toutes les lignes et `EntityController` construit immédiatement tous les modèles. Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde et 169 Mo de mémoire maximale. Le temps est acceptable, mais la mémoire consommée justifie une future conception d'index compact ou de chargement différé. Cette évolution devra préserver l'API actuelle, qui expose des listes et objets métier matérialisés.
 
-### 2. Un tag `DEAT` est toujours marqué comme confirmé
+### 2. Exceptions encore silencieuses dans certaines vues
 
-Dans `gedcom/models/individual.py`, la présence du tag `DEAT` positionne `death_confirmed` à `True`, même lorsque le tag ne contient pas la valeur `Y`. Le modèle ne distingue donc pas l'existence d'un événement de son niveau de confirmation.
+Les résolveurs de noms et de pointeurs de plusieurs vues utilisent encore `except Exception: pass`. Une erreur peut donc produire un libellé incomplet sans trace exploitable. Ce point doit être traité avec des logs ciblés ou des erreurs contrôlées.
 
-### 3. Les erreurs de parsing sont désormais signalées
+### 3. Événements représentés par des dictionnaires
 
-Les lignes malformées restent ignorées, mais `gedcom/parser.py` les enregistre maintenant dans `malformed_lines` et les journalise. Les caractères remplacés par `errors="replace"` sont comptabilisés dans `encoding_replacements` et signalés dans le logger.
+`gedcom/models/event.py` est vide. Les événements de `Family` sont stockés sous forme de dictionnaires, ce qui limite le typage et la réutilisation. Une classe `Event` ne doit être ajoutée que si le domaine nécessite davantage de comportement.
 
-### 4. Les erreurs d'affichage sont désormais journalisées
+### 4. Modèle `Submitter` limité
 
-Les vues conservent un affichage de repli lors d'une erreur de résolution, mais les exceptions sont maintenant écrites dans le logger avec leur contexte.
+`Submitter` conserve un seul téléphone et un seul email. Si un fichier contient plusieurs tags `PHON` ou `EMAIL`, les valeurs précédentes sont remplacées.
 
-### 5. Les gros fichiers sont chargés entièrement en mémoire
+### 5. Mariages multiples peu exploités
 
-Le parser conserve toutes les lignes, puis `EntityController` construit tous les modèles au chargement. Cette stratégie est adaptée aux fichiers courants, mais peut ralentir l'ouverture et augmenter fortement la mémoire utilisée pour une généalogie volumineuse.
+`Family` collecte plusieurs événements de mariage dans `marriages`, mais l'affichage met surtout en avant `marriage_date` et `marriage_place`. Les mariages supplémentaires ne sont pas présentés comme tels dans la vue.
 
-Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde de chargement et 169 Mo de mémoire maximale dans l'environnement de développement. Le temps reste raisonnable, mais la consommation mémoire justifie un futur chargement différé ou un index plus compact. Une telle évolution doit préserver l'API actuelle, qui expose déjà des listes et des objets métier matérialisés.
+### 6. Validation GEDCOM non stricte
 
-### 6. Le modèle d'événement n'est pas implémenté
+Le parser est volontairement tolérant : certaines lignes invalides sont ignorées et les fichiers incomplets peuvent être chargés. Les anomalies sont maintenant signalées, mais aucune validation complète de conformité GEDCOM n'est réalisée.
 
-`gedcom/models/event.py` est vide. Les événements familiaux sont actuellement représentés par des dictionnaires dans `Family`, sans classe métier dédiée.
+### 7. Gestion d'erreurs périphériques silencieuse
+
+La sauvegarde de la liste des fichiers récents et la mise à jour du widget de statut ignorent certaines exceptions. Cela protège l'interface, mais peut masquer un problème d'accès disque ou de widget.
 
 ## Tests et validation
 
-La commande de test est :
+Commande utilisée :
 
 ```bash
-python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s tests
 ```
 
-Résultat de la dernière validation :
+Dernier résultat :
 
 - 70 tests exécutés.
 - 70 tests réussis.
-- Tous les fichiers Python compilent avec `py_compile`.
+- Compilation Python réussie sur les fichiers du projet.
+- `git diff --check` réussi.
 
-### Couverture manquante
-
-- Cas d'encodage invalide et signalement des lignes ignorées.
-- Notes de sources et sémantique précise de `DEAT`.
-- Fichiers GEDCOM de très grande taille en environnement réel.
-- Tests des erreurs de résolution dans les vues.
-- Installation et fonctionnement avec ou sans Pillow.
-- Tests de construction PyInstaller.
+La suite couvre principalement le parser, les services, les contrôleurs et des scénarios Tkinter. Les principales lacunes concernent les gros fichiers réels, les valeurs multiples de `Submitter`, les mariages multiples, la validation GEDCOM stricte et les erreurs périphériques de l'interface.
 
 ## Dépendances et exécution
 
@@ -117,18 +110,20 @@ Résultat de la dernière validation :
 | Python 3 | Langage principal |
 | Tkinter | Interface graphique |
 | Pillow | Prévisualisation des images, installé par `make install` |
-| unittest | Tests intégrés à Python |
+| `unittest` | Tests |
 | Black | Formatage |
-| PyInstaller | Génération de l'exécutable |
+| PyInstaller | Exécutable autonome |
 
-Les principales cibles du `Makefile` sont `make test`, `make lint`, `make run`, `make format` et `make dist`. Le script `run.sh` lance directement `main.py` avec l'interpréteur Python disponible.
+Les cibles principales sont `make test`, `make lint`, `make run`, `make format` et `make dist`. `run.sh` lance l'application avec Python 3 ou Python si Python 3 n'est pas disponible.
 
 ## Priorités recommandées
 
-1. Concevoir un chargement différé ou un index plus compact pour les très gros fichiers, sans casser l'API des contrôleurs.
-2. Ajouter une validation GEDCOM plus stricte si les fichiers non conformes doivent être refusés plutôt que signalés.
-3. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
+1. Réduire la mémoire utilisée par les gros fichiers sans casser l'API des contrôleurs.
+2. Remplacer les exceptions silencieuses des vues et opérations périphériques par des logs ciblés.
+3. Ajouter des tests pour les valeurs multiples de `Submitter` et les mariages multiples.
+4. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
+5. Introduire un modèle `Event` uniquement si les besoins métier le justifient.
 
 ## Conclusion
 
-Le projet fournit une base fonctionnelle et bien découpée pour explorer des fichiers GEDCOM. Les tests actuels sont entièrement verts, mais ils ne couvrent pas encore plusieurs règles métier importantes. Les corrections prioritaires concernent la fidélité des données interprétées, la visibilité des erreurs et la disponibilité explicite de la prévisualisation multimédia.
+Le projet fournit une base fonctionnelle, testée et correctement structurée pour explorer des données GEDCOM. Les corrections récentes ont amélioré la fidélité des données, la visibilité des anomalies et le suivi du chargement. Les principaux travaux restants concernent la mémoire, la gestion des erreurs encore silencieuses et la couverture des cas GEDCOM multiples ou non conformes.
