@@ -1,192 +1,139 @@
-# 📊 Analyse Complète du Projet GEDCOM Viewer
+# Analyse du projet GEDCOM Viewer
+
+## Périmètre de l'analyse
+
+Cette analyse porte sur le code Python, les tests, le `Makefile`, le script de lancement et la configuration PyInstaller. Elle décrit l'état observé le 3 septembre 2026.
 
 ## Vue d'ensemble
 
-**GEDCOM Viewer 5.5.1** est une application desktop Python + Tkinter pour visualiser et explorer des fichiers GEDCOM (format standardisé pour les données généalogiques). L'application compte environ **3 900 lignes de code** réparties en trois couches architecturales.
+GEDCOM Viewer est une application de bureau Python/Tkinter destinée à ouvrir et explorer des fichiers GEDCOM. Le projet est fonctionnel, modulaire et dispose d'une suite de tests unitaires couvrant le parsing, les contrôleurs et une grande partie de l'interface simulée.
 
----
+## Architecture
 
-## 🏗️ Architecture et Structure
-
-### **Couches Applicatives**
-
-```
-┌─────────────────────────────────────┐
-│        UI (ui/)                     │ ← Tkinter GUI
-├─────────────────────────────────────┤
-│   Controllers (controllers/)         │ ← Orchestration & logique métier
-├─────────────────────────────────────┤
-│   GEDCOM Models (gedcom/)           │ ← Parser & modèles de données
-└─────────────────────────────────────┘
+```text
+main.py
+  -> ui.main_window.GedcomViewer
+      -> controllers.app_controller.AppController
+          -> controllers.gedcom_service.GedcomService
+              -> gedcom.parser.GedcomParser
+          -> EntityController
+          -> SearchController
+          -> PresentationController
+      -> ui.views/*
 ```
 
-### **Composants Principaux**
+### Responsabilités principales
 
-| Module | Responsabilité |
-|--------|-----------------|
-| **gedcom/parser.py** | Analyse les fichiers .ged ligne par ligne, crée les entités brutes |
-| **gedcom/models/** | 8 fichiers définissant les modèles métier (Individual, Family, Source, Repository, etc.) |
-| **controllers/gedcom_service.py** | Charge les fichiers, gère l'index des entités |
-| **controllers/entity_controller.py** | Récupère les objets par pointeur GEDCOM (@I1@, @F1@, etc.) |
-| **controllers/search_controller.py** | Filtre par type d'entité, recherche par texte |
-| **controllers/presentation_controller.py** | Formate les informations pour l'affichage |
-| **ui/main_window.py** | Fenêtre principale Tkinter |
-| **ui/views/** | 7 vues détaillées (Individual, Family, Source, Repository, Note, Multimedia, Submitter) |
-| **ui/menus.py** | Barre de menu (Fichier, Récents, Affichage) |
-| **ui/syntax_highlighter.py** | Coloration syntaxique du code GEDCOM brut |
-| **ui/themes.py** | Thème moderne Tkinter |
+| Composant | Rôle |
+|---|---|
+| `gedcom/parser.py` | Lit le fichier, conserve les lignes brutes et crée un index des entités par type et pointeur. |
+| `gedcom/models/` | Transforme les entités brutes en objets `Individual`, `Family`, `Source`, `Repository`, `Note`, `MultimediaObject` et `Submitter`. |
+| `controllers/gedcom_service.py` | Encapsule le chargement et l'accès au parser. |
+| `controllers/entity_controller.py` | Construit les modèles métier et fournit les recherches spécialisées. |
+| `controllers/search_controller.py` | Gère les types affichés, le filtrage, le tri et les libellés. |
+| `controllers/presentation_controller.py` | Résout les pointeurs et prépare le contexte des vues. |
+| `ui/main_window.py` | Coordonne la fenêtre principale, les listes, la navigation et l'historique. |
+| `ui/views/` | Affiche les fiches détaillées des différents types GEDCOM. |
 
----
+## Fonctionnalités présentes
 
-## 🎯 Fonctionnalités
+- Ouverture de fichiers GEDCOM.
+- Conservation et affichage du contenu brut avec coloration syntaxique.
+- Support des entités `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
+- Recherche instantanée et tri des entités.
+- Tri numérique des pointeurs tels que `@I2@` et `@I10@`.
+- Navigation entre les pointeurs GEDCOM.
+- Historique précédent/suivant.
+- Gestion des fichiers récemment ouverts.
+- Affichage de l'en-tête `HEAD` et du trailer `TRLR`.
+- Prévisualisation d'images locales lorsque Pillow est installé.
+- Journalisation dans `~/.gedcom_viewer.log`.
+- Interface avec zones de texte et formulaires défilants.
 
-### ✅ Implémentées
+## Points forts
 
-- ✓ Chargement de fichiers GEDCOM (.ged)
-- ✓ Sélection par onglets verticaux (INDI, FAM, SOUR, REPO, NOTE, OBJE, SUBM)
-- ✓ Liste en deux colonnes avec tri par nom ou identifiant
-- ✓ Tri des individus par `SURN` et tri numérique des identifiants
-- ✓ Recherche instantanée dans la liste des entités
-- ✓ Navigation par pointeurs GEDCOM
-- ✓ Affichage du bloc GEDCOM brut avec coloration syntaxique
-- ✓ Navigation historique (précédent/suivant)
-- ✓ Menu des fichiers récents
-- ✓ Vues détaillées pour 7 types d'entités
-- ✓ Prévisualisation d'images multimédia
-- ✓ Journalisation locale (`~/.gedcom_viewer.log`)
-- ✓ Panneau de statut avec dernière erreur
-- ✓ Défilement vertical des formulaires longs
-- ✓ Formulaires enrichis pour Famille, Note, Source et Dépôt
+1. La séparation parser, modèles, contrôleurs et vues est claire.
+2. Le parser conserve le bloc brut, ce qui permet de comparer les données interprétées avec leur représentation d'origine.
+3. Les recherches par pointeur et par attribut sont simples à suivre.
+4. La résolution centralisée des pointeurs facilite la navigation entre fiches.
+5. Les tests couvrent plusieurs cas GEDCOM délicats, notamment `CONC`, `CONT`, les sous-tags imbriqués et les blocs `HEAD`/`TRLR`.
 
----
+## Défauts confirmés
 
-## 📂 Distribution des Fichiers
+### 1. Les notes des sources ne sont pas stockées
 
-| Répertoire | Fichiers | Lignes | Purpose |
-|-----------|----------|--------|---------|
-| **gedcom/** | 2 + 8 modèles | ~900 | Parser + modèles métier |
-| **controllers/** | 6 fichiers | ~1000 | Orchestration et logique |
-| **ui/** | 3 + 7 vues | ~1200 | Interface utilisateur |
-| **tests/** | 4 fichiers | ~300 | Tests unitaires |
-| **Root** | main.py, Makefile, run.sh | ~100 | Points d'entrée et build |
+Dans `gedcom/models/source.py`, deux branches traitent `tag == "NOTE"`. La première affecte `self.text`, ce qui rend la seconde inaccessible. Une note de source se retrouve donc dans `source.text` et jamais dans `source.notes`.
 
----
+### 2. Un tag `DEAT` est toujours marqué comme confirmé
 
-## 🔄 Flux de Données
+Dans `gedcom/models/individual.py`, la présence du tag `DEAT` positionne `death_confirmed` à `True`, même lorsque le tag ne contient pas la valeur `Y`. Le modèle ne distingue donc pas l'existence d'un événement de son niveau de confirmation.
 
+### 3. Les erreurs de parsing peuvent passer inaperçues
+
+Les lignes malformées sont ignorées par `gedcom/parser.py`. La lecture utilise également `errors="replace"`, ce qui remplace les caractères invalides sans avertissement explicite. Le résultat peut être incomplet sans que l'utilisateur en soit informé.
+
+### 4. Plusieurs erreurs d'affichage sont masquées
+
+Certaines vues utilisent `except Exception: pass` lors de la résolution des pointeurs. Une erreur de modèle ou de callback peut ainsi produire un affichage incomplet sans trace exploitable.
+
+### 5. Les gros fichiers sont chargés entièrement en mémoire
+
+Le parser conserve toutes les lignes, puis `EntityController` construit tous les modèles au chargement. Cette stratégie est adaptée aux fichiers courants, mais peut ralentir l'ouverture et augmenter fortement la mémoire utilisée pour une généalogie volumineuse.
+
+### 6. Le modèle d'événement n'est pas implémenté
+
+`gedcom/models/event.py` est vide. Les événements familiaux sont actuellement représentés par des dictionnaires dans `Family`, sans classe métier dédiée.
+
+### 7. Pillow n'est pas installé par la cible d'installation
+
+La prévisualisation multimédia dépend de Pillow, mais `make install` installe seulement PyInstaller et Black. L'application reste utilisable, mais les prévisualisations peuvent être indisponibles après une installation standard.
+
+## Tests et validation
+
+La commande de test est :
+
+```bash
+python3 -m unittest discover -s tests -v
 ```
-Utilisateur (UI)
-       ↓
- GedcomViewer (main_window.py)
-       ↓
- AppController (orchestration)
-       ↓
-GedcomService (charge les fichiers)
-       ├→ Parser (parse le fichier)
-       ├→ EntityController (indexe les entités)
-       └→ SearchController (filtre/recherche)
-       ↓
-Views (affiche les détails)
-```
 
----
+Résultat de la dernière validation :
 
-## 🛠️ Outils et Dépendances
+- 65 tests exécutés.
+- 65 tests réussis.
+- Tous les fichiers Python compilent avec `py_compile`.
 
-| Élément | Détail |
-|---------|--------|
-| **Langage** | Python 3 |
-| **GUI** | Tkinter (stdlib) |
-| **Build** | PyInstaller (pour exécutable) |
-| **Linting** | Black (formatage) |
-| **Testing** | unittest (stdlib) |
+### Couverture manquante
 
-### **Commandes Makefile**
+- Cas d'encodage invalide et signalement des lignes ignorées.
+- Notes de sources et sémantique précise de `DEAT`.
+- Fichiers GEDCOM de très grande taille.
+- Tests des erreurs de résolution dans les vues.
+- Installation et fonctionnement avec ou sans Pillow.
+- Tests de construction PyInstaller.
 
-- `make install` — installer pip, Tkinter, PyInstaller, Black
-- `make run` — lancer l'application
-- `make test` — exécuter les tests
-- `make format` — formater avec Black
-- `make lint` — vérifier la syntaxe
-- `make dist` — créer un exécutable standalone
+## Dépendances et exécution
 
----
+| Élément | Utilisation |
+|---|---|
+| Python 3 | Langage principal |
+| Tkinter | Interface graphique |
+| Pillow | Prévisualisation des images, optionnelle actuellement |
+| unittest | Tests intégrés à Python |
+| Black | Formatage |
+| PyInstaller | Génération de l'exécutable |
 
-## 🧪 Tests
+Les principales cibles du `Makefile` sont `make test`, `make lint`, `make run`, `make format` et `make dist`. Le script `run.sh` lance directement `main.py` avec l'interpréteur Python disponible.
 
-Le projet contient 4 fichiers de test :
+## Priorités recommandées
 
-- `test_gedcom_parser.py` — Parser et structure GEDCOM
-- `test_gedcom_service.py` — Service de chargement
-- `test_app_controller.py` — Contrôleur principal
-- `test_main_window.py` — Tests UI
+1. Corriger le traitement des notes dans `Source` et ajouter un test de régression.
+2. Clarifier la sémantique de `DEAT` et tester les variantes `DEAT` et `DEAT Y`.
+3. Remplacer les exceptions silencieuses par des logs ciblés ou des erreurs contrôlées.
+4. Signaler les lignes GEDCOM ignorées et les remplacements d'encodage.
+5. Ajouter Pillow aux dépendances d'installation si la prévisualisation est une fonctionnalité attendue par défaut.
+6. Évaluer un chargement différé ou une stratégie de limitation pour les très gros fichiers.
+7. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
 
-**Fichier de test GEDCOM** : `gedcom-test.ged` (exemple de données)
+## Conclusion
 
----
-
-## 📊 Types d'Entités Supportés
-
-| Type | Classe | Exemple |
-|------|--------|---------|
-| **INDI** | `Individual` | John Doe (1900-1980) |
-| **FAM** | `Family` | Mariage, enfants |
-| **SOUR** | `Source` | Documents sources |
-| **REPO** | `Repository` | Archives/dépôts |
-| **NOTE** | `Note` | Notes détaillées |
-| **OBJE** | `Object` | Photos/documents multimédia |
-| **SUBM** | `Submitter` | Personne ayant soumis les données |
-| **EVEN** | `Event` | Événements (naissances, décès, etc.) |
-
----
-
-## 🎨 Interface Utilisateur
-
-### **Organisation**
-
-- **Barre latérale gauche** : onglets verticaux de sélection du type d'entité
-- **Panneau gauche** : liste filtrable avec colonnes Nom et Identifiant
-- **Panneau central** : bloc GEDCOM brut en lecture seule et colorisé
-- **Panneau droit** : vue détaillée avec formulaires scrollables
-- **Barre de statut** : Affiche la dernière erreur loggée
-
-### **Thème**
-
-Moderne, couleurs adaptées au type d'entité
-
----
-
-## ✨ Points Forts
-
-1. **Architecture bien structurée** — Séparation claire UI/Controllers/Models
-2. **Extensible** — Facile d'ajouter de nouvelles vues ou entités
-3. **Parser robuste** — Gère les variations GEDCOM
-4. **Recherche performante** — Filtrage en temps réel
-5. **Documentation** — README, SCHEMA.md, commentaires de code
-6. **Logging** — Traçabilité des erreurs
-
----
-
-## ⚠️ Observations et Améliorations Possibles
-
-| Domaine | Observation |
-|---------|------------|
-| **Dépendances** | Tkinter, Pillow recommandé pour les images, PyInstaller et Black pour le développement |
-| **Tests** | Couverture modérée (4 fichiers test) |
-| **Documentation** | `doc.md` et `SCHEMA.md` semblent incomplets/en chantier |
-| **Erreurs** | Utiliser `make lint` pour identifier les problèmes Python |
-| **Performance** | Pas de cache/index pour très gros fichiers GEDCOM |
-| **Validation** | Pas de validation stricte du GEDCOM 5.5.1 spec |
-
----
-
-## 📋 Résumé Exécutif
-
-**GEDCOM Viewer** est un outil bien architécturé et modulaire pour explorer des fichiers généalogiques GEDCOM. Le projet suit une stratégie en trois couches claire, facilite l'extension future et propose déjà une interface utilisateur complète avec 7 types de vues spécialisées.
-
-Les domaines d'amélioration concernent principalement la couverture de tests, la validation stricte du format GEDCOM, et l'optimisation pour les très gros fichiers.
-
-**Tests** : 61 tests unitaires, tous validés au dernier contrôle
-**Langages** : Python 3, Tkinter
-**Licence/État** : Application fonctionnelle (v5.5.1)
-
+Le projet fournit une base fonctionnelle et bien découpée pour explorer des fichiers GEDCOM. Les tests actuels sont entièrement verts, mais ils ne couvrent pas encore plusieurs règles métier importantes. Les corrections prioritaires concernent la fidélité des données interprétées, la visibilité des erreurs et la disponibilité explicite de la prévisualisation multimédia.
