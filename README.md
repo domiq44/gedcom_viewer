@@ -101,7 +101,7 @@ Ou directement :
 python3 -m unittest discover -s tests
 ```
 
-Dernière validation : 70 tests réussis.
+Dernière validation : 73 tests réussis.
 
 Vérifier la syntaxe Python :
 
@@ -155,8 +155,7 @@ La liste des fichiers récents est enregistrée dans :
 
 - Les gros fichiers sont chargés entièrement en mémoire. Une mesure synthétique sur 100 000 individus a donné environ 1,45 seconde et 169 Mo de mémoire maximale.
 - Les événements familiaux sont représentés par des dictionnaires ; le modèle `Event` n'est pas encore implémenté.
-- Le modèle `Submitter` conserve un seul téléphone et un seul email.
-- Les mariages multiples sont collectés mais pas affichés séparément dans la vue famille.
+- Les événements de mariage multiples sont affichés dans la vue famille, mais restent représentés par des dictionnaires.
 - Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
 
 ## Structure du projet

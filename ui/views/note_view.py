@@ -92,7 +92,6 @@ class NoteView(ttk.Frame):
                     source_label = f"{source} – {title}"
             except Exception:
                 logger.exception("Échec de résolution de la source %s", source)
-                pass
 
         configure_label(self.source_label, source_label)
         if source:

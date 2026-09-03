@@ -93,7 +93,6 @@ class SourceView(ttk.Frame):
                         label = f"{pointer} – {name}"
             except Exception:
                 logger.exception("Échec de résolution du dépôt %s", pointer)
-                pass
 
         return label
 

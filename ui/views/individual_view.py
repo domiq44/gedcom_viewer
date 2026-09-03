@@ -120,7 +120,6 @@ class IndividualView(ttk.Frame):
                     label = f"{pointer} – {wife_name}"
             except Exception:
                 logger.exception("Échec de résolution de la famille %s", pointer)
-                pass
 
         return label
 

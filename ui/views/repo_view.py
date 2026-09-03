@@ -67,7 +67,6 @@ class RepositoryView(ttk.Frame):
                         label = f"{pointer} – {name}"
             except Exception:
                 logger.exception("Échec de résolution de l'entité %s", pointer)
-                pass
 
         return label
 

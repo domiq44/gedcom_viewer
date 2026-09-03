@@ -38,6 +38,7 @@ class FamilyView(ttk.Frame):
             ("Nombre d'enfants", "number_of_children"),
             ("Date mariage", "marriage_date"),
             ("Lieu mariage", "marriage_place"),
+            ("Mariages", "marriages"),
             ("Engagement", "engagement"),
             ("Bans", "marriage_banns"),
             ("Contrat de mariage", "marriage_contract"),
@@ -55,7 +56,14 @@ class FamilyView(ttk.Frame):
 
         for i, (label, key) in enumerate(fields, start=1):
             ttk.Label(self, text=label + " :").grid(row=i, column=0, sticky="w")
-            if key in ("children", "notes", "sources", "events", "additional_fields"):
+            if key in (
+                "children",
+                "notes",
+                "sources",
+                "events",
+                "marriages",
+                "additional_fields",
+            ):
                 container = tk.Frame(
                     self,
                     padx=8,
@@ -90,7 +98,6 @@ class FamilyView(ttk.Frame):
                     label = f"{pointer} – {name}"
             except Exception:
                 logger.exception("Échec de résolution de l'individu %s", pointer)
-                pass
 
         return label
 
@@ -98,7 +105,14 @@ class FamilyView(ttk.Frame):
         if not family:
             self.title_label.config(text="Famille")
             for key, widget in self.labels.items():
-                if key in ("children", "notes", "sources", "events", "additional_fields"):
+                if key in (
+                    "children",
+                    "notes",
+                    "sources",
+                    "events",
+                    "marriages",
+                    "additional_fields",
+                ):
                     for child in widget.winfo_children():
                         child.destroy()
                     label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
@@ -141,7 +155,13 @@ class FamilyView(ttk.Frame):
                     label.pack(fill="x")
                 continue
 
-            if key in ("notes", "sources", "events", "additional_fields"):
+            if key in (
+                "notes",
+                "sources",
+                "events",
+                "marriages",
+                "additional_fields",
+            ):
                 for child in widget.winfo_children():
                     child.destroy()
 
@@ -151,6 +171,8 @@ class FamilyView(ttk.Frame):
                     elif key == "notes":
                         entries = value
                     elif key == "events":
+                        entries = [self._format_event(event) for event in value]
+                    elif key == "marriages":
                         entries = [self._format_event(event) for event in value]
                     else:
                         entries = [self._format_additional_field(field) for field in value]
@@ -203,7 +225,6 @@ class FamilyView(ttk.Frame):
                     return f"{pointer} – {title}"
             except Exception:
                 logger.exception("Échec de résolution de la source %s", pointer)
-                pass
         return pointer
 
     @staticmethod

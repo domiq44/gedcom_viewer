@@ -10,6 +10,8 @@ class Submitter:
         self.address = None
         self.phone = None
         self.email = None
+        self.phones = []
+        self.emails = []
 
         self._parse_lines(entity.lines)
 
@@ -37,9 +39,11 @@ class Submitter:
 
                 elif tag == "PHON":
                     self.phone = value
+                    self.phones.append(value)
 
                 elif tag == "EMAIL":
                     self.email = value
+                    self.emails.append(value)
 
             # --- Niveau 2 : continuation de ADDR ---
             elif level == 2 and current_section == "ADDR":

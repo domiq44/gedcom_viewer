@@ -4,6 +4,7 @@ from gedcom.parser import GedcomEntity, GedcomParser
 from gedcom.models.individual import Individual
 from gedcom.models.note import Note
 from gedcom.models.source import Source
+from gedcom.models.submitter import Submitter
 
 SAMPLE_GEDCOM = """0 @I1@ INDI
 1 NAME John /Doe/
@@ -318,6 +319,27 @@ class TestGedcomParser(unittest.TestCase):
 
         self.assertIsNone(source.text)
         self.assertEqual(source.notes, ["Première ligne\nseconde ligne, suite"])
+
+    def test_submitter_keeps_multiple_phones_and_emails(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @M10@ SUBM",
+            "1 NAME Submitter",
+            "1 PHON 01 02 03 04 05",
+            "1 PHON 06 07 08 09 10",
+            "1 EMAIL first@example.org",
+            "1 EMAIL second@example.org",
+        ]
+        parser._parse_entities()
+
+        submitter = Submitter(parser.get_entity("@M10@"))
+
+        self.assertEqual(submitter.phones, ["01 02 03 04 05", "06 07 08 09 10"])
+        self.assertEqual(
+            submitter.emails, ["first@example.org", "second@example.org"]
+        )
+        self.assertEqual(submitter.phone, "06 07 08 09 10")
+        self.assertEqual(submitter.email, "second@example.org")
 
     def test_death_confirmation_requires_y_value(self):
         without_confirmation = Individual(

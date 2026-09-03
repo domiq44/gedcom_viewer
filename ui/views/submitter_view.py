@@ -50,7 +50,8 @@ class SubmitterView(ttk.Frame):
 
         self.title_label.config(text=f"Fournisseur d'information : {submitter.pointer}")
         for key, widget in self.labels.items():
-            value = getattr(submitter, key, "")
+            values = getattr(submitter, f"{key}s", None)
+            value = ", ".join(values) if values else getattr(submitter, key, "")
             configure_label(widget, value)
 
     def on_pointer_click(self, pointer):

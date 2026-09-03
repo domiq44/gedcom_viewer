@@ -62,29 +62,17 @@ main.py
 
 Le parser conserve toutes les lignes et `EntityController` construit immédiatement tous les modèles. Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde et 169 Mo de mémoire maximale. Le temps est acceptable, mais la mémoire consommée justifie une future conception d'index compact ou de chargement différé. Cette évolution devra préserver l'API actuelle, qui expose des listes et objets métier matérialisés.
 
-### 2. Exceptions encore silencieuses dans certaines vues
+### 2. Gestion d'erreurs périphériques encore silencieuse
 
-Les résolveurs de noms et de pointeurs de plusieurs vues utilisent encore `except Exception: pass`. Une erreur peut donc produire un libellé incomplet sans trace exploitable. Ce point doit être traité avec des logs ciblés ou des erreurs contrôlées.
+Les résolveurs de noms et de pointeurs des vues journalisent désormais les exceptions tout en conservant un libellé de repli. La sauvegarde des fichiers récents et la mise à jour du widget de statut ignorent toutefois encore certaines exceptions.
 
 ### 3. Événements représentés par des dictionnaires
 
 `gedcom/models/event.py` est vide. Les événements de `Family` sont stockés sous forme de dictionnaires, ce qui limite le typage et la réutilisation. Une classe `Event` ne doit être ajoutée que si le domaine nécessite davantage de comportement.
 
-### 4. Modèle `Submitter` limité
-
-`Submitter` conserve un seul téléphone et un seul email. Si un fichier contient plusieurs tags `PHON` ou `EMAIL`, les valeurs précédentes sont remplacées.
-
-### 5. Mariages multiples peu exploités
-
-`Family` collecte plusieurs événements de mariage dans `marriages`, mais l'affichage met surtout en avant `marriage_date` et `marriage_place`. Les mariages supplémentaires ne sont pas présentés comme tels dans la vue.
-
-### 6. Validation GEDCOM non stricte
+### 4. Validation GEDCOM non stricte
 
 Le parser est volontairement tolérant : certaines lignes invalides sont ignorées et les fichiers incomplets peuvent être chargés. Les anomalies sont maintenant signalées, mais aucune validation complète de conformité GEDCOM n'est réalisée.
-
-### 7. Gestion d'erreurs périphériques silencieuse
-
-La sauvegarde de la liste des fichiers récents et la mise à jour du widget de statut ignorent certaines exceptions. Cela protège l'interface, mais peut masquer un problème d'accès disque ou de widget.
 
 ## Tests et validation
 
@@ -96,12 +84,12 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 70 tests exécutés.
-- 70 tests réussis.
+- 73 tests exécutés.
+- 73 tests réussis.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 
-La suite couvre principalement le parser, les services, les contrôleurs et des scénarios Tkinter. Les principales lacunes concernent les gros fichiers réels, les valeurs multiples de `Submitter`, les mariages multiples, la validation GEDCOM stricte et les erreurs périphériques de l'interface.
+La suite couvre principalement le parser, les services, les contrôleurs et des scénarios Tkinter. Les principales lacunes concernent les gros fichiers réels, la validation GEDCOM stricte et les erreurs périphériques de l'interface.
 
 ## Dépendances et exécution
 
@@ -119,10 +107,9 @@ Les cibles principales sont `make test`, `make lint`, `make run`, `make format` 
 ## Priorités recommandées
 
 1. Réduire la mémoire utilisée par les gros fichiers sans casser l'API des contrôleurs.
-2. Remplacer les exceptions silencieuses des vues et opérations périphériques par des logs ciblés.
-3. Ajouter des tests pour les valeurs multiples de `Submitter` et les mariages multiples.
-4. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
-5. Introduire un modèle `Event` uniquement si les besoins métier le justifient.
+2. Remplacer les exceptions silencieuses des opérations périphériques par des logs ciblés.
+3. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
+4. Introduire un modèle `Event` uniquement si les besoins métier le justifient.
 
 ## Conclusion
 

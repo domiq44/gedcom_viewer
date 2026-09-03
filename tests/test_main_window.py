@@ -221,6 +221,27 @@ class TestGedcomViewer(unittest.TestCase):
         self.assertIn("@R1@", label.cget("text"))
         self.assertIn("Archives de Paris", label.cget("text"))
 
+    def test_submitter_view_displays_multiple_phones_and_emails(self):
+        class DummySubmitter:
+            pointer = "@M1@"
+            name = "Submitter"
+            address = None
+            phone = "legacy-phone"
+            email = "legacy-email"
+            phones = ["01 02 03 04 05", "06 07 08 09 10"]
+            emails = ["first@example.org", "second@example.org"]
+
+        self.viewer.submitter_view.display(DummySubmitter())
+
+        self.assertEqual(
+            self.viewer.submitter_view.labels["phone"].cget("text"),
+            "01 02 03 04 05, 06 07 08 09 10",
+        )
+        self.assertEqual(
+            self.viewer.submitter_view.labels["email"].cget("text"),
+            "first@example.org, second@example.org",
+        )
+
     def test_ui_status_reflects_last_log_message(self):
         logger = logging.getLogger("ui.main_window")
         logger.error("test log ui status")
@@ -506,6 +527,27 @@ class TestGedcomViewer(unittest.TestCase):
                 for child in container.winfo_children()
             )
         )
+
+    def test_family_view_displays_multiple_marriages(self):
+        class DummyFamily:
+            pointer = "@F1@"
+            husband = None
+            wife = None
+            children = []
+            marriage_date = None
+            marriage_place = None
+            marriages = [
+                {"tag": "MARR", "value": "", "details": [("DATE", "1900")]},
+                {"tag": "MARR", "value": "", "details": [("DATE", "1920")]},
+            ]
+            divorce_date = None
+            divorce_place = None
+
+        self.viewer.family_view.display(DummyFamily())
+
+        container = self.viewer.family_view.labels["marriages"]
+        marriage_texts = [child.cget("text") for child in container.winfo_children()]
+        self.assertEqual(marriage_texts, ["DATE: 1900", "DATE: 1920"])
 
 
 if __name__ == "__main__":
