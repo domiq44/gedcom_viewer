@@ -372,6 +372,8 @@ class GedcomViewer:
         entity_type = self.entity_type_var.get()
         self._update_entity_type_tab_state(entity_type)
         self._clear_entity_views(keep_type=entity_type)
+        if entity_type in self._entity_view_map:
+            self.notebook.select(self._entity_view_map[entity_type][1])
         self.list_entities()
 
     def _update_entity_type_tabs(self):
