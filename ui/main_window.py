@@ -44,41 +44,58 @@ class GedcomViewer:
         self._nav_history = []
         self._nav_index = -1
 
-        # --- PANED WINDOW PRINCIPAL ---
-        main_pane = tk.PanedWindow(root, orient="horizontal")
-        main_pane.pack(fill="both", expand=True, padx=10, pady=10)
+        content_frame = ttk.Frame(root)
+        content_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        content_frame.grid_columnconfigure(1, weight=1)
+        content_frame.grid_rowconfigure(0, weight=1)
+
+        self.entity_type_tabs = tk.Frame(content_frame, bg="#e7ebf0", width=125)
+        self.entity_type_tabs.grid(row=0, column=0, sticky="ns", padx=(0, 8))
+        self.entity_type_tabs.grid_propagate(False)
+        self.entity_type_tabs.grid_columnconfigure(0, weight=1)
+        self._entity_type_buttons = {}
+
+        main_pane = tk.PanedWindow(content_frame, orient="horizontal")
+        main_pane.grid(row=0, column=1, sticky="nsew")
 
         # --- FRAME GAUCHE ---
         left_frame = tk.Frame(main_pane)
         main_pane.add(left_frame, minsize=250)
 
-        tk.Label(left_frame, text="Type d'entité :").grid(row=0, column=0, sticky="w")
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
-        self.entity_type_menu = tk.OptionMenu(left_frame, self.entity_type_var, "")
-        self.entity_type_menu.grid(row=1, column=0, sticky="w")
 
         tk.Label(left_frame, text="Recherche :").grid(
-            row=2, column=0, sticky="w", pady=(10, 0)
+            row=0, column=0, sticky="w", pady=(0, 5)
         )
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", self.filter_entities)
         self.search_entry = tk.Entry(left_frame, textvariable=self.search_var, width=30)
-        self.search_entry.grid(row=3, column=0, sticky="w")
+        self.search_entry.grid(row=1, column=0, sticky="ew")
 
         tk.Label(left_frame, text="Entités :").grid(
-            row=4, column=0, sticky="w", pady=(10, 0)
+            row=2, column=0, sticky="w", pady=(10, 0)
         )
-        self.entity_listbox = tk.Listbox(
+        self.entity_tree = ttk.Treeview(
             left_frame,
-            width=40,
-            height=20,
-            font=("Consolas", 10),
+            columns=("name", "pointer"),
+            show="headings",
+            selectmode="browse",
         )
-        self.entity_listbox.grid(row=5, column=0, sticky="nsew")
-        self.entity_listbox.bind("<<ListboxSelect>>", self.show_entity)
+        self.entity_tree.heading("name", text="Nom")
+        self.entity_tree.heading("pointer", text="Identifiant")
+        self.entity_tree.column("name", width=230, minwidth=140, anchor="w")
+        self.entity_tree.column("pointer", width=80, minwidth=70, anchor="e")
+        self.entity_tree.grid(row=3, column=0, sticky="nsew")
+        self.entity_tree.bind("<<TreeviewSelect>>", self.show_entity)
 
-        left_frame.grid_rowconfigure(5, weight=1)
+        entity_scrollbar = ttk.Scrollbar(
+            left_frame, orient="vertical", command=self.entity_tree.yview
+        )
+        entity_scrollbar.grid(row=3, column=1, sticky="ns")
+        self.entity_tree.configure(yscrollcommand=entity_scrollbar.set)
+
+        left_frame.grid_rowconfigure(3, weight=1)
         left_frame.grid_columnconfigure(0, weight=1)
 
         # --- FRAME DROITE ---
@@ -311,16 +328,7 @@ class GedcomViewer:
 
         self.entity_type_var.set(entity_types[0])
 
-        menu = self.entity_type_menu["menu"]
-        menu.delete(0, "end")
-        for (
-            display,
-            entity_type,
-        ) in self.controller.get_entity_type_menu_display_items():
-            menu.add_command(
-                label=display,
-                command=lambda value=entity_type: self.entity_type_var.set(value),
-            )
+        self._update_entity_type_tabs()
 
         self.list_entities()
         logger.info("GEDCOM chargé avec succès: %s", filename)
@@ -352,8 +360,47 @@ class GedcomViewer:
 
     def on_entity_type_change(self, *args):
         entity_type = self.entity_type_var.get()
+        self._update_entity_type_tab_state(entity_type)
         self._clear_entity_views(keep_type=entity_type)
         self.list_entities()
+
+    def _update_entity_type_tabs(self):
+        for button in self._entity_type_buttons.values():
+            button.destroy()
+        self._entity_type_buttons = {}
+
+        for row, (display, entity_type) in enumerate(
+            self.controller.get_entity_type_menu_display_items()
+        ):
+            button = tk.Button(
+                self.entity_type_tabs,
+                text=display,
+                command=lambda value=entity_type: self.entity_type_var.set(value),
+                anchor="w",
+                justify="left",
+                padx=10,
+                pady=7,
+                relief="flat",
+                bd=0,
+                bg="#e7ebf0",
+                fg="#2b415a",
+                activebackground="#d5e5f5",
+                activeforeground="#0d3b66",
+                cursor="hand2",
+            )
+            button.grid(row=row, column=0, sticky="ew", pady=(0, 1))
+            self._entity_type_buttons[entity_type] = button
+
+        self._update_entity_type_tab_state(self.entity_type_var.get())
+
+    def _update_entity_type_tab_state(self, selected_type):
+        for entity_type, button in self._entity_type_buttons.items():
+            is_selected = entity_type == selected_type
+            button.config(
+                relief="sunken" if is_selected else "flat",
+                bg="#ffffff" if is_selected else "#e7ebf0",
+                fg="#0d3b66" if is_selected else "#2b415a",
+            )
 
     def open_recent_file(self, filename):
         self._load_file_from_path(filename)
@@ -372,12 +419,20 @@ class GedcomViewer:
             return
 
         entity_type = self.entity_type_var.get()
-        self.entity_listbox.delete(0, tk.END)
+        self.entity_tree.delete(*self.entity_tree.get_children())
         items = self.controller.get_entity_list_items(entity_type)
         self.filtered_entities = [entity for entity, _ in items]
 
-        for _, label in items:
-            self.entity_listbox.insert(tk.END, label)
+        for index, (entity, _) in enumerate(items):
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid=str(index),
+                values=(
+                    self.controller.format_entity_display_name(entity, entity_type),
+                    getattr(entity, "pointer", "") or "—",
+                ),
+            )
 
     def filter_entities(self, *args):
         if not self.controller.is_loaded():
@@ -385,21 +440,30 @@ class GedcomViewer:
 
         entity_type = self.entity_type_var.get()
         query = self.search_var.get()
-        self.entity_listbox.delete(0, tk.END)
+        self.entity_tree.delete(*self.entity_tree.get_children())
 
         items = self.controller.get_entity_list_items(entity_type, query)
         self.filtered_entities = [entity for entity, _ in items]
 
-        for _, label in items:
-            self.entity_listbox.insert(tk.END, label)
+        for index, (entity, _) in enumerate(items):
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid=str(index),
+                values=(
+                    self.controller.format_entity_display_name(entity, entity_type),
+                    getattr(entity, "pointer", "") or "—",
+                ),
+            )
 
     def show_entity(self, event):
-        if not self.entity_listbox.curselection():
+        selection = self.entity_tree.selection()
+        if not selection:
             return
         if not self.controller.is_loaded():
             return
 
-        index = self.entity_listbox.curselection()[0]
+        index = int(selection[0])
         entity = self.filtered_entities[index]
         context = self.controller.get_entity_display_info(entity)
         self.display_entity_context(context)

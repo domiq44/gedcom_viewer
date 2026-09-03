@@ -131,6 +131,48 @@ class SearchController:
             for entity in self.get_entity_list(entity_type, query)
         ]
 
+    @staticmethod
+    def _clean_gedcom_name(name):
+        if not isinstance(name, str):
+            return ""
+
+        cleaned = re.sub(r"\s*/([^/]*)/\s*", r" \1 ", name)
+        return " ".join(cleaned.split())
+
+    def format_entity_display_name(self, entity, entity_type: str = None):
+        if entity is None:
+            return ""
+
+        if entity_type == "INDI":
+            name = self._clean_gedcom_name(getattr(entity, "name", ""))
+            return name or "Individu sans nom"
+
+        if entity_type == "FAM":
+            names = []
+            for pointer in (
+                getattr(entity, "husband", None),
+                getattr(entity, "wife", None),
+            ):
+                individual = self.entity_controller.get_individual(pointer)
+                name = self._clean_gedcom_name(getattr(individual, "name", ""))
+                if name:
+                    names.append(name)
+            if names:
+                return " & ".join(names)
+            return "Famille sans membres"
+
+        for attribute in ("title", "name", "file"):
+            value = getattr(entity, attribute, None)
+            if isinstance(value, str) and value.strip():
+                return self._clean_gedcom_name(value)
+
+        if entity_type == "NOTE":
+            text = getattr(entity, "text", "")
+            if isinstance(text, str) and text.strip():
+                return " ".join(text.split())[:80]
+
+        return entity_type or "Entité"
+
     def format_entity_label(self, entity, entity_type: str = None):
         if entity is None:
             return ""
