@@ -326,7 +326,8 @@ class GedcomViewer:
         if self.recent_files:
             startup_file = self.recent_files[0]
             if os.path.isfile(startup_file):
-                self._load_file_from_path(startup_file)
+                self.status_var.set("Chargement du dernier fichier GEDCOM…")
+                self.root.after(50, self._load_file_from_path, startup_file)
 
         right_frame.grid_columnconfigure(0, weight=1)
         right_frame.grid_rowconfigure(1, weight=1)

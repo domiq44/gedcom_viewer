@@ -35,6 +35,7 @@ class TestGedcomViewer(unittest.TestCase):
                 GedcomViewer, "_load_file_from_path"
             ) as load_file:
                 viewer = GedcomViewer(root)
+                root.update()
                 self.assertEqual(load_file.call_count, 1)
                 self.assertEqual(load_file.call_args[0][0], "/tmp/last_gedcom.ged")
                 try:
