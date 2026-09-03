@@ -205,6 +205,7 @@ class GedcomViewer:
         self.notebook.add(self.family_tab, text="Famille")
         self.family_view = FamilyView(self.family_tab, self.navigate_to)
         self.family_view.set_name_resolver(self.controller.get_individual)
+        self.family_view.set_source_resolver(self.controller.get_source)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.repo_tab = ttk.Frame(self.notebook)
