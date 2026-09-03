@@ -173,6 +173,21 @@ class SearchController:
 
         return entity_type or "Entité"
 
+    def get_entity_sort_key(self, entity, entity_type: str, column: str):
+        if column == "pointer":
+            pointer = getattr(entity, "pointer", "") or ""
+            numeric_id = self._extract_numeric_id(entity)
+            return (numeric_id[0] == float("inf"), numeric_id[0], pointer.casefold())
+
+        if entity_type == "INDI":
+            raw_name = getattr(entity, "name", "") or ""
+            surname_match = re.search(r"/([^/]*)/", raw_name)
+            if surname_match and surname_match.group(1).strip():
+                return surname_match.group(1).strip().casefold()
+            return self._clean_gedcom_name(raw_name).casefold()
+
+        return self.format_entity_display_name(entity, entity_type).casefold()
+
     def format_entity_label(self, entity, entity_type: str = None):
         if entity is None:
             return ""

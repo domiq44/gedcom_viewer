@@ -43,6 +43,9 @@ class GedcomViewer:
         self.filtered_entities = []
         self._nav_history = []
         self._nav_index = -1
+        self._entity_sort_column = None
+        self._entity_sort_reverse = False
+        self._entity_by_item_id = {}
 
         content_frame = ttk.Frame(root)
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -82,8 +85,14 @@ class GedcomViewer:
             show="headings",
             selectmode="browse",
         )
-        self.entity_tree.heading("name", text="Nom")
-        self.entity_tree.heading("pointer", text="Identifiant")
+        self.entity_tree.heading(
+            "name", text="Nom", command=lambda: self._sort_entity_tree("name")
+        )
+        self.entity_tree.heading(
+            "pointer",
+            text="Identifiant",
+            command=lambda: self._sort_entity_tree("pointer"),
+        )
         self.entity_tree.column("name", width=230, minwidth=140, anchor="w")
         self.entity_tree.column("pointer", width=80, minwidth=70, anchor="e")
         self.entity_tree.grid(row=3, column=0, sticky="nsew")
@@ -402,6 +411,39 @@ class GedcomViewer:
                 fg="#0d3b66" if is_selected else "#2b415a",
             )
 
+    def _sort_entity_tree(self, column):
+        if self._entity_sort_column == column:
+            self._entity_sort_reverse = not self._entity_sort_reverse
+        else:
+            self._entity_sort_column = column
+            self._entity_sort_reverse = False
+
+        entity_type = self.entity_type_var.get()
+        rows = []
+        for item_id in self.entity_tree.get_children():
+            values = self.entity_tree.item(item_id, "values")
+            entity = self._entity_by_item_id[item_id]
+            rows.append(
+                (
+                    item_id,
+                    values,
+                    entity,
+                    self.controller.get_entity_sort_key(entity, entity_type, column),
+                )
+            )
+
+        rows.sort(
+            key=lambda row: row[3],
+            reverse=self._entity_sort_reverse,
+        )
+
+        self.filtered_entities = [entity for _, _, entity, _ in rows]
+        self._entity_by_item_id = {
+            item_id: entity for item_id, _, entity, _ in rows
+        }
+        for index, (item_id, _, _, _) in enumerate(rows):
+            self.entity_tree.move(item_id, "", index)
+
     def open_recent_file(self, filename):
         self._load_file_from_path(filename)
 
@@ -420,14 +462,17 @@ class GedcomViewer:
 
         entity_type = self.entity_type_var.get()
         self.entity_tree.delete(*self.entity_tree.get_children())
+        self._entity_by_item_id = {}
         items = self.controller.get_entity_list_items(entity_type)
         self.filtered_entities = [entity for entity, _ in items]
 
         for index, (entity, _) in enumerate(items):
+            item_id = str(index)
+            self._entity_by_item_id[item_id] = entity
             self.entity_tree.insert(
                 "",
                 "end",
-                iid=str(index),
+                iid=item_id,
                 values=(
                     self.controller.format_entity_display_name(entity, entity_type),
                     getattr(entity, "pointer", "") or "—",
@@ -441,15 +486,18 @@ class GedcomViewer:
         entity_type = self.entity_type_var.get()
         query = self.search_var.get()
         self.entity_tree.delete(*self.entity_tree.get_children())
+        self._entity_by_item_id = {}
 
         items = self.controller.get_entity_list_items(entity_type, query)
         self.filtered_entities = [entity for entity, _ in items]
 
         for index, (entity, _) in enumerate(items):
+            item_id = str(index)
+            self._entity_by_item_id[item_id] = entity
             self.entity_tree.insert(
                 "",
                 "end",
-                iid=str(index),
+                iid=item_id,
                 values=(
                     self.controller.format_entity_display_name(entity, entity_type),
                     getattr(entity, "pointer", "") or "—",
@@ -463,8 +511,7 @@ class GedcomViewer:
         if not self.controller.is_loaded():
             return
 
-        index = int(selection[0])
-        entity = self.filtered_entities[index]
+        entity = self._entity_by_item_id[selection[0]]
         context = self.controller.get_entity_display_info(entity)
         self.display_entity_context(context)
 

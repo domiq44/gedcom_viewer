@@ -86,6 +86,9 @@ class AppController:
     def format_entity_display_name(self, entity, entity_type: str = None):
         return self.search_controller.format_entity_display_name(entity, entity_type)
 
+    def get_entity_sort_key(self, entity, entity_type: str, column: str):
+        return self.search_controller.get_entity_sort_key(entity, entity_type, column)
+
     def get_family(self, pointer: str):
         if not self.is_loaded():
             return None

@@ -195,6 +195,29 @@ class TestAppController(unittest.TestCase):
         self.assertIs(context["entity"], family)
         self.assertIs(context["raw_entity"], family.entity)
 
+    def test_sort_keys_use_numeric_pointer_and_surname(self):
+        pointer_2 = DummyEntity("@I2@", "INDI")
+        pointer_10 = DummyEntity("@I10@", "INDI")
+        self.assertLess(
+            self.controller.get_entity_sort_key(pointer_2, "INDI", "pointer"),
+            self.controller.get_entity_sort_key(pointer_10, "INDI", "pointer"),
+        )
+
+        surname_adams = Individual(
+            GedcomEntity(
+                "@I20@", "INDI", 0, ["0 @I20@ INDI\n", "1 NAME Zoe /Adams/\n"]
+            )
+        )
+        surname_martin = Individual(
+            GedcomEntity(
+                "@I21@", "INDI", 0, ["0 @I21@ INDI\n", "1 NAME Jean /Martin/\n"]
+            )
+        )
+        self.assertLess(
+            self.controller.get_entity_sort_key(surname_adams, "INDI", "name"),
+            self.controller.get_entity_sort_key(surname_martin, "INDI", "name"),
+        )
+
     def test_load_initializes_controllers(self):
         controller = AppController()
         parser = GedcomParser()
