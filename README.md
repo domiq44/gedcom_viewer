@@ -161,10 +161,10 @@ La liste des fichiers récents est enregistrée dans :
 ## Limites connues
 
 - Les gros fichiers sont chargés entièrement en mémoire. Une mesure synthétique sur 100 000 individus a donné environ 1,45 seconde et 169 Mo de mémoire maximale.
-- Les événements familiaux sont représentés par le modèle `Event`, avec leurs sous-tags associés.
-- Les événements de mariage multiples sont affichés dans la vue famille, mais restent représentés par des dictionnaires.
+- Les événements familiaux sont représentés par le modèle `Event`, mais leur structure reste volontairement simple : un tag, une valeur et une liste de sous-tags.
+- Les événements de mariage multiples sont affichés dans la vue famille, mais ne disposent pas encore d'une présentation détaillée dédiée.
 - Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
-- Le chargement de l'interface reste tolérant ; le mode strict est disponible via l'API Python.
+- L'ouverture standard reste tolérante ; le mode strict est également accessible dans le menu `Fichier` et via l'API Python.
 
 ## Structure du projet
 
