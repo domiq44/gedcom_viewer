@@ -1,269 +1,180 @@
 # GEDCOM Viewer 5.5.1
 
 <p align="center">
-  <img src="docs/screenshots/gedcom-viewer-overview.png" alt="Capture d’écran du projet GEDCOM Viewer" width="1000" />
+  <img src="docs/screenshots/gedcom-viewer-overview.png" alt="Interface de GEDCOM Viewer" width="1000" />
 </p>
 
-Un visualiseur GEDCOM écrit en **Python + Tkinter** pour explorer des fichiers au format **GEDCOM 5.5.1**.
+GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explorer des fichiers GEDCOM.
 
-## Vue d’ensemble
+## Fonctionnalités
 
-Le projet fournit une interface desktop légère pour ouvrir un fichier GEDCOM, visualiser le contenu brut, filtrer les entités, parcourir les relations entre objets et afficher les détails d’une entité dans des vues dédiées.
+- Ouverture de fichiers GEDCOM `.ged`.
+- Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
+- Recherche instantanée dans les entités.
+- Tri par nom, titre ou identifiant, avec tri numérique des pointeurs.
+- Navigation entre les pointeurs GEDCOM tels que `@I1@` ou `@F1@`.
+- Historique de navigation précédent/suivant.
+- Affichage du bloc GEDCOM brut avec coloration syntaxique.
+- Affichage des blocs `HEAD` et `TRLR`.
+- Gestion des fichiers récemment ouverts.
+- Vues détaillées pour les individus, familles, sources, dépôts, notes, médias et submitters.
+- Prévisualisation des images locales dans l'onglet multimédia avec Pillow.
+- Journalisation dans `~/.gedcom_viewer.log`.
+- Affichage du temps de chargement dans la barre de statut.
+- Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
 
-L’application est structurée en trois couches :
+L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
 
-- `gedcom/` : parser GEDCOM, modèles métier et logique de représentation des entités
-- `controllers/` : orchestration de la lecture, de la recherche, de l’affichage et de la résolution des pointeurs
-- `ui/` : fenêtre principale, menus, thème, vues Tkinter et onglets d’affichage
-
-### Flux de données
+## Architecture
 
 ```text
-UI (ui/) → Controller (controllers/) → GEDCOM model (gedcom/)
+UI Tkinter (ui/)
+    -> contrôleurs (controllers/)
+        -> service GEDCOM
+            -> parser et modèles métier (gedcom/)
 ```
 
-## Fonctionnalités prises en charge
-
-- Chargement de fichiers GEDCOM (`.ged`)
-- Sélection par type d’entité
-- Recherche instantanée dans la liste des entités
-- Onglets verticaux à gauche pour sélectionner le type d’entité
-- Liste des entités en deux colonnes : nom lisible et identifiant GEDCOM
-- Tri croissant/décroissant en cliquant sur les en-têtes de colonnes
-- Tri des individus par nom de famille (`SURN`) et des identifiants par partie numérique
-- Navigation par pointeurs GEDCOM (`@I...@`, `@F...@`, etc.)
-- Affichage du bloc GEDCOM brut dans le panneau gauche
-- Mise en surbrillance syntaxique basique du bloc brut
-- Navigation avec boutons précédent / suivant
-- Historique de navigation pour l’exploration des entités
-- Menu `Fichier > Récents` pour recharger rapidement les derniers GEDCOM ouverts
-- Menu `Fichier > Effacer la liste des fichiers récents` pour vider l’historique enregistré sans supprimer les fichiers GEDCOM
-- Sous-menus `Inspecter` et `Navigation` pour garder le menu `Fichier` organisé
-- Vues détaillées pour :
-  - `INDI` (individu)
-  - `FAM` (famille)
-  - `SOUR` (source)
-  - `REPO` (dépôt)
-  - `NOTE` (note)
-  - `OBJE` (multimédia)
-  - `SUBM` (submitter)
-- Prévisualisation d’images multimédia dans l’onglet `Multimédia`
-- Scroll vertical dans la vue multimédia pour accéder aux champs texte en dessous de l’image
-- Défilement vertical dans les formulaires longs
-- Affichage des références avec leur libellé associé, lorsque l’entité est disponible
-- Formulaires enrichis pour Famille, Note, Source et Dépôt
-- Journalisation locale vers `~/.gedcom_viewer.log`
-- Panneau d’état `Dernière erreur log` dans l’interface
-
-## Types d’entités supportés
-
-- `INDI` — Individu
-- `FAM` — Famille
-- `OBJE` — Multimédia
-- `NOTE` — Note
-- `SOUR` — Source
-- `SUBM` — Submitter
-- `REPO` — Dépôt
-- `HEAD` — En-tête GEDCOM
-- `TRLR` — Fin de fichier
+- `gedcom/` contient le parser et les modèles métier.
+- `controllers/` coordonne le chargement, la recherche, le tri et la résolution des pointeurs.
+- `ui/` contient la fenêtre principale, les menus, le thème et les vues spécialisées.
+- `tests/` contient les tests unitaires et les tests UI Tkinter.
 
 ## Prérequis
 
-Le projet dépend principalement de :
-
 - Python 3.x
 - Tkinter
-- Pillow pour la prévisualisation d’images dans l’onglet multimédia
+- Accès à `pip` pour installer Pillow, PyInstaller et Black
 
-> Sur la plupart des systèmes, Tkinter est livré avec Python. Pillow est recommandé pour la prévisualisation des images multimédia.
-
-Installation manuelle de Pillow :
+Sur Debian ou Ubuntu, Tkinter peut être installé avec :
 
 ```bash
-python -m pip install Pillow
+sudo apt install python3-tk
 ```
 
 ## Installation
 
-### 1. Cloner le dépôt
-
-```bash
-git clone https://github.com/<votre-utilisateur>/gedcom-viewer.git
-cd gedcom-viewer
-```
-
-### 2. Préparer l’environnement
-
-Le dépôt fournit un `Makefile` pour installer les dépendances de build et lancer l’application.
+Le `Makefile` crée automatiquement `.venv` si nécessaire et installe les outils requis :
 
 ```bash
 make install
 ```
 
-Si vous utilisez un environnement virtuel local, le projet s’appuie sur `.venv/bin/python` lorsque ce dossier existe.
+Cette commande installe :
 
-## Lancer l’application
+- Pillow pour la prévisualisation des images ;
+- PyInstaller pour la génération de l'exécutable ;
+- Black pour le formatage du code.
 
-### Via le script fourni
+## Lancement
+
+Avec le script fourni :
 
 ```bash
 ./run.sh
 ```
 
-### Via Python directement
+Ou directement avec Python :
 
 ```bash
-python main.py
+python3 main.py
 ```
 
-### Si vous utilisez l’environnement virtuel du projet
+Avec l'environnement virtuel du projet :
 
 ```bash
 .venv/bin/python main.py
 ```
 
-## Tests
+Au démarrage, l'application tente de recharger le dernier fichier GEDCOM récent lorsqu'il existe encore.
 
-Le projet contient une suite de tests unitaires couvrant notamment :
+## Tests et vérifications
 
-- le parser GEDCOM
-- les contrôleurs applicatifs
-- la résolution des entités et des blocs `HEAD` / `TRLR`
-- la fenêtre principale et la vue multimédia
-
-### Exécuter la suite de tests
+Exécuter les tests :
 
 ```bash
 make test
 ```
 
-ou directement :
+Ou directement :
 
 ```bash
-python -m unittest discover -s tests
+python3 -m unittest discover -s tests
 ```
 
-### Vérifier la syntaxe Python
+Dernière validation : 70 tests réussis.
+
+Vérifier la syntaxe Python :
 
 ```bash
 make lint
 ```
 
-## Build et distribution
-
-Un `Makefile` facilite la création d’un exécutable autonome avec PyInstaller.
-
-### Commandes utiles
+Formater le code avec Black :
 
 ```bash
-make install
-make run
-make test
-make lint
-make dist
-make clean
+make format
 ```
 
-### Générer l’exécutable
+## Génération de l'exécutable
+
+Créer une version autonome avec PyInstaller :
 
 ```bash
 make dist
 ```
 
-Le binaire est produit dans :
+L'exécutable est généré dans :
 
 ```text
 dist/gedcom_viewer
 ```
 
-### Nettoyer les artefacts
+Nettoyer les artefacts de build et l'environnement virtuel :
 
 ```bash
 make clean
 ```
 
-Cette commande supprime :
+Cette commande supprime `build/`, `dist/`, `.venv/` et les répertoires `__pycache__/`.
 
-- `build/`
-- `dist/`
-- `gedcom_viewer.spec`
+## Fichiers utilisateur
 
-## Journalisation
-
-L’application enregistre ses messages de runtime dans un fichier local du profil utilisateur :
+Les journaux sont écrits dans :
 
 ```text
 ~/.gedcom_viewer.log
 ```
 
-Cette journalisation est utilisée pour diagnostiquer les erreurs d’affichage, le chargement des médias et les problèmes de runtime dans le binaire distribué.
-
-## Fichiers récents
-
-Lorsqu’un GEDCOM est ouvert, l’application mémorise les chemins récents dans :
+La liste des fichiers récents est enregistrée dans :
 
 ```text
 ~/.gedcom_viewer_recent.json
 ```
 
-Le menu `Fichier > Récents` permet de relancer rapidement un fichier déjà ouvert.
+## Limites connues
 
-## Structure du dépôt
+- Les gros fichiers sont chargés entièrement en mémoire. Une mesure synthétique sur 100 000 individus a donné environ 1,45 seconde et 169 Mo de mémoire maximale.
+- Les événements familiaux sont représentés par des dictionnaires ; le modèle `Event` n'est pas encore implémenté.
+- Le modèle `Submitter` conserve un seul téléphone et un seul email.
+- Les mariages multiples sont collectés mais pas affichés séparément dans la vue famille.
+- Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
+
+## Structure du projet
 
 ```text
 .
 ├── controllers/
-│   ├── app_controller.py
-│   ├── entity_controller.py
-│   ├── entity_labels.py
-│   ├── gedcom_service.py
-│   ├── presentation_controller.py
-│   └── search_controller.py
 ├── gedcom/
-│   ├── __init__.py
-│   ├── parser.py
 │   └── models/
-│       ├── event.py
-│       ├── family.py
-│       ├── individual.py
-│       ├── note.py
-│       ├── object.py
-│       ├── repository.py
-│       ├── source.py
-│       └── submitter.py
 ├── ui/
-│   ├── __init__.py
-│   ├── main_window.py
-│   ├── menus.py
-│   ├── syntax_highlighter.py
-│   ├── themes.py
 │   └── views/
-│       ├── family_view.py
-│       ├── individual_view.py
-│       ├── multimedia_view.py
-│       ├── note_view.py
-│       ├── repo_view.py
-│       ├── source_view.py
-│       └── submitter_view.py
+├── tests/
 ├── main.py
 ├── Makefile
-├── README.md
-├── run.sh
-└── tests/
+├── gedcom_viewer.spec
+└── run.sh
 ```
 
-## Développement et contribution
+## Licence et contributions
 
-- Ouvrir une issue pour signaler un bug ou proposer une amélioration
-- Travailler dans une branche dédiée
-- Soumettre une pull request avec une description concise des changements
-
-## Vérifications effectuées
-
-La suite actuelle a été exécutée et validée dans l’environnement du projet :
-
-```bash
-.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
-```
-
-Résultat vérifié : `61 tests` exécutés, `OK`.
+Aucun fichier de licence n'est fourni dans le dépôt. Les contributions peuvent être proposées via une branche dédiée et une pull request, accompagnées de tests pour les changements de comportement.
