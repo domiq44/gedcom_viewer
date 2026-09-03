@@ -7,7 +7,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo "Targets:"
 	@echo "  venv        Create the virtual environment (.venv)"
-	@echo "  install     Install pip, Tkinter (system check), PyInstaller and Black"
+	@echo "  install     Install pip, Tkinter (system check), Pillow, PyInstaller and Black"
 	@echo "  run         Launch the application locally (requires venv)"
 	@echo "  test        Run the Python unit tests"
 	@echo "  format      Format Python sources with Black"
@@ -58,10 +58,10 @@ check_tk:
 install: venv check_pip check_tk
 	@if [ -n "$$VIRTUAL_ENV" ] || [ -d .venv ]; then \
 		echo "Installing packages into .venv..."; \
-		$(PYTHON_ACTUAL) -m pip install pyinstaller black; \
+		$(PYTHON_ACTUAL) -m pip install pillow pyinstaller black; \
 	else \
 		echo "Installing packages globally (use 'make venv' first for best results)."; \
-		$(PYTHON_ACTUAL) -m pip install --user pyinstaller black; \
+		$(PYTHON_ACTUAL) -m pip install --user pillow pyinstaller black; \
 	fi
 
 # --- Exécution et Test ---

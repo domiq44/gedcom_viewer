@@ -84,10 +84,6 @@ Le parser conserve toutes les lignes, puis `EntityController` construit tous les
 
 `gedcom/models/event.py` est vide. Les événements familiaux sont actuellement représentés par des dictionnaires dans `Family`, sans classe métier dédiée.
 
-### 7. Pillow n'est pas installé par la cible d'installation
-
-La prévisualisation multimédia dépend de Pillow, mais `make install` installe seulement PyInstaller et Black. L'application reste utilisable, mais les prévisualisations peuvent être indisponibles après une installation standard.
-
 ## Tests et validation
 
 La commande de test est :
@@ -98,8 +94,8 @@ python3 -m unittest discover -s tests -v
 
 Résultat de la dernière validation :
 
-- 65 tests exécutés.
-- 65 tests réussis.
+- 69 tests exécutés.
+- 69 tests réussis.
 - Tous les fichiers Python compilent avec `py_compile`.
 
 ### Couverture manquante
@@ -117,7 +113,7 @@ Résultat de la dernière validation :
 |---|---|
 | Python 3 | Langage principal |
 | Tkinter | Interface graphique |
-| Pillow | Prévisualisation des images, optionnelle actuellement |
+| Pillow | Prévisualisation des images, installé par `make install` |
 | unittest | Tests intégrés à Python |
 | Black | Formatage |
 | PyInstaller | Génération de l'exécutable |
@@ -130,9 +126,8 @@ Les principales cibles du `Makefile` sont `make test`, `make lint`, `make run`, 
 2. Clarifier la sémantique de `DEAT` et tester les variantes `DEAT` et `DEAT Y`.
 3. Remplacer les exceptions silencieuses par des logs ciblés ou des erreurs contrôlées.
 4. Signaler les lignes GEDCOM ignorées et les remplacements d'encodage.
-5. Ajouter Pillow aux dépendances d'installation si la prévisualisation est une fonctionnalité attendue par défaut.
-6. Évaluer un chargement différé ou une stratégie de limitation pour les très gros fichiers.
-7. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
+5. Évaluer un chargement différé ou une stratégie de limitation pour les très gros fichiers.
+6. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
 
 ## Conclusion
 
