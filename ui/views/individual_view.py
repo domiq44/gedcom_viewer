@@ -14,6 +14,7 @@ class IndividualView(ttk.Frame):
 
         self.on_pointer_click_callback = on_pointer_click
         self.family_name_resolver = None
+        self.family_member_resolver = None
         self.configure(padding=10)
 
         # Titre
@@ -65,6 +66,9 @@ class IndividualView(ttk.Frame):
     def set_family_name_resolver(self, resolver):
         self.family_name_resolver = resolver
 
+    def set_family_member_resolver(self, resolver):
+        self.family_member_resolver = resolver
+
     def _format_family_pointer(self, pointer):
         if not pointer:
             return "—"
@@ -82,24 +86,22 @@ class IndividualView(ttk.Frame):
                 husband_pointer = getattr(family, "husband", None)
                 if husband_pointer:
                     husband = getattr(family, "_resolved_husband", None)
-                    if husband is None and callable(
-                        getattr(self, "_family_member_resolver", None)
-                    ):
-                        husband = self._family_member_resolver(husband_pointer)
-                    if husband is None and hasattr(family, "entity"):
-                        husband = getattr(family.entity, "husband", None)
+                    member_resolver = getattr(self, "_family_member_resolver", None)
+                    if not callable(member_resolver):
+                        member_resolver = self.family_member_resolver
+                    if husband is None and callable(member_resolver):
+                        husband = member_resolver(husband_pointer)
                     if husband is not None:
                         husband_name = getattr(husband, "name", None)
 
                 wife_pointer = getattr(family, "wife", None)
                 if wife_pointer:
                     wife = getattr(family, "_resolved_wife", None)
-                    if wife is None and callable(
-                        getattr(self, "_family_member_resolver", None)
-                    ):
-                        wife = self._family_member_resolver(wife_pointer)
-                    if wife is None and hasattr(family, "entity"):
-                        wife = getattr(family.entity, "wife", None)
+                    member_resolver = getattr(self, "_family_member_resolver", None)
+                    if not callable(member_resolver):
+                        member_resolver = self.family_member_resolver
+                    if wife is None and callable(member_resolver):
+                        wife = member_resolver(wife_pointer)
                     if wife is not None:
                         wife_name = getattr(wife, "name", None)
 

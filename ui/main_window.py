@@ -172,6 +172,7 @@ class GedcomViewer:
         self.notebook.add(self.individual_tab, text="Individu")
         self.individual_view = IndividualView(self.individual_tab, self.navigate_to)
         self.individual_view.set_family_name_resolver(self.controller.get_family)
+        self.individual_view.set_family_member_resolver(self.controller.get_individual)
         self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.family_tab = ttk.Frame(self.notebook)
@@ -195,6 +196,7 @@ class GedcomViewer:
         self.note_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.note_tab, text="Note")
         self.note_view = NoteView(self.note_tab, self.navigate_to)
+        self.note_view.set_reference_resolver(self.controller.get_source)
         self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.object_tab = ttk.Frame(self.notebook)
