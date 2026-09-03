@@ -227,6 +227,14 @@ class TestGedcomViewer(unittest.TestCase):
         self.root.update_idletasks()
         self.assertIn("test log ui status", self.viewer.status_var.get())
 
+    def test_clear_recent_files_removes_all_entries(self):
+        self.viewer.recent_files = ["/tmp/one.ged", "/tmp/two.ged"]
+        with patch.object(self.viewer, "_save_recent_files") as save_recent:
+            self.viewer.clear_recent_files()
+
+        self.assertEqual(self.viewer.recent_files, [])
+        save_recent.assert_called_once_with()
+
     def test_find_urls_in_form_value(self):
         value = "Voir https://example.org/document, puis http://example.net."
         self.assertEqual(

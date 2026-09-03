@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label
+from ui.themes import FONTS
 
 
 class FamilyView(ttk.Frame):
@@ -20,7 +21,7 @@ class FamilyView(ttk.Frame):
         self.configure(padding=10)
 
         self.title_label = ttk.Label(
-            self, text="Famille", font=("Segoe UI", 12, "bold")
+            self, text="Famille", font=FONTS["title"]
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 

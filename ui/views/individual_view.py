@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+from ui.themes import FONTS
 
 
 class IndividualView(ttk.Frame):
@@ -21,7 +22,7 @@ class IndividualView(ttk.Frame):
 
         # Titre
         self.title_label = ttk.Label(
-            self, text="Fiche individu", font=("Segoe UI", 12, "bold")
+            self, text="Fiche individu", font=FONTS["title"]
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
@@ -57,7 +58,7 @@ class IndividualView(ttk.Frame):
                 container.grid(row=i, column=1, sticky="nw", padx=10, pady=2)
                 self.labels[key] = container
             else:
-                value_label = ttk.Label(self, text="", font=("Segoe UI", 10))
+                value_label = ttk.Label(self, text="", font=FONTS["ui"])
                 value_label.grid(row=i, column=1, sticky="w", padx=10)
                 self.labels[key] = value_label
 

@@ -17,6 +17,7 @@ from ui.views.source_view import SourceView
 from ui.views.note_view import NoteView
 from ui.views.multimedia_view import MultimediaView
 from ui.views.submitter_view import SubmitterView
+from ui.themes import COLORS, FONTS
 
 
 class _UiLogHandler(logging.Handler):
@@ -99,17 +100,22 @@ class GedcomViewer:
 
         content_frame = ttk.Frame(root)
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
-        content_frame.grid_columnconfigure(1, weight=1)
         content_frame.grid_rowconfigure(0, weight=1)
+        content_frame.grid_columnconfigure(0, weight=1)
 
-        self.entity_type_tabs = tk.Frame(content_frame, bg="#e7ebf0", width=125)
-        self.entity_type_tabs.grid(row=0, column=0, sticky="ns", padx=(0, 8))
+        layout_pane = tk.PanedWindow(content_frame, orient="horizontal")
+        layout_pane.grid(row=0, column=0, sticky="nsew")
+
+        self.entity_type_tabs = tk.Frame(
+            layout_pane, bg=COLORS["sidebar"], width=150
+        )
         self.entity_type_tabs.grid_propagate(False)
         self.entity_type_tabs.grid_columnconfigure(0, weight=1)
         self._entity_type_buttons = {}
+        layout_pane.add(self.entity_type_tabs, minsize=125, width=150)
 
-        main_pane = tk.PanedWindow(content_frame, orient="horizontal")
-        main_pane.grid(row=0, column=1, sticky="nsew")
+        main_pane = tk.PanedWindow(layout_pane, orient="horizontal")
+        layout_pane.add(main_pane, minsize=850)
 
         # --- FRAME GAUCHE ---
         left_frame = tk.Frame(main_pane)
@@ -134,6 +140,7 @@ class GedcomViewer:
             columns=("name", "pointer"),
             show="headings",
             selectmode="browse",
+            style="Entity.Treeview",
         )
         self.entity_tree.heading(
             "name", text="Nom", command=lambda: self._sort_entity_tree("name")
@@ -177,13 +184,15 @@ class GedcomViewer:
         self.history_status = tk.Label(
             self.nav_toolbar,
             text="Historique : 0/0",
-            foreground="#666666",
+            foreground=COLORS["muted_text"],
             font=("TkDefaultFont", 9),
         )
         self.history_status.pack(side="left", padx=(10, 0))
 
         # Séparateur visuel
-        separator = tk.Label(self.nav_toolbar, text=" | ", foreground="#cccccc")
+        separator = tk.Label(
+            self.nav_toolbar, text=" | ", foreground=COLORS["separator"]
+        )
         separator.pack(side="left", padx=(10, 5))
 
         # Boutons pour accéder à l'en-tête et au trailer du fichier
@@ -208,7 +217,7 @@ class GedcomViewer:
         self.status_label = tk.Label(
             self.log_status_frame,
             textvariable=self.status_var,
-            foreground="#666666",
+            foreground=COLORS["muted_text"],
             font=("TkDefaultFont", 9),
             anchor="w",
         )
@@ -230,7 +239,7 @@ class GedcomViewer:
             self.gedcom_frame,
             width=70,
             height=30,
-            font=("Consolas", 10),
+            font=FONTS["mono"],
             state="disabled",
         )
         self.text_area.pack(fill="both", expand=True)
@@ -308,6 +317,7 @@ class GedcomViewer:
             "OBJE": (self.object_view, self.object_tab),
             "SUBM": (self.submitter_view, self.submitter_tab),
         }
+        self._update_entity_type_tabs()
 
         self.highlighter = GedcomHighlighter(self.text_area)
         self._attach_ui_log_handler()
@@ -354,6 +364,12 @@ class GedcomViewer:
                 json.dump(self.recent_files[:10], handle)
         except Exception:
             return
+
+    def clear_recent_files(self):
+        self.recent_files = []
+        self._save_recent_files()
+        if hasattr(self, "menu_bar"):
+            self.menu_bar.refresh_recent_menu()
 
     def _remember_recent_file(self, filename):
         normalized = os.path.abspath(filename)
@@ -456,14 +472,16 @@ class GedcomViewer:
                 pady=7,
                 relief="flat",
                 bd=0,
-                bg="#e7ebf0",
-                fg="#2b415a",
-                activebackground="#d5e5f5",
-                activeforeground="#0d3b66",
+                bg=COLORS["sidebar"],
+                fg=COLORS["sidebar_text"],
+                activebackground=COLORS["sidebar_hover"],
+                activeforeground=COLORS["sidebar_active_text"],
                 cursor="hand2",
             )
             if entity_type not in self.controller.get_entity_types():
-                button.config(state="disabled", cursor="arrow", fg="#9aa4b2")
+                button.config(
+                    state="disabled", cursor="arrow", fg=COLORS["disabled_text"]
+                )
             button.grid(row=row, column=0, sticky="ew", pady=(0, 1))
             self._entity_type_buttons[entity_type] = button
 
@@ -474,8 +492,12 @@ class GedcomViewer:
             is_selected = entity_type == selected_type
             button.config(
                 relief="sunken" if is_selected else "flat",
-                bg="#ffffff" if is_selected else "#e7ebf0",
-                fg="#0d3b66" if is_selected else "#2b415a",
+                bg=COLORS["sidebar_active"] if is_selected else COLORS["sidebar"],
+                fg=(
+                    COLORS["sidebar_active_text"]
+                    if is_selected
+                    else COLORS["sidebar_text"]
+                ),
             )
 
     def _sort_entity_tree(self, column):

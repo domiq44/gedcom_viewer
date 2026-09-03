@@ -37,6 +37,8 @@ UI (ui/) → Controller (controllers/) → GEDCOM model (gedcom/)
 - Navigation avec boutons précédent / suivant
 - Historique de navigation pour l’exploration des entités
 - Menu `Fichier > Récents` pour recharger rapidement les derniers GEDCOM ouverts
+- Menu `Fichier > Effacer la liste des fichiers récents` pour vider l’historique enregistré sans supprimer les fichiers GEDCOM
+- Sous-menus `Inspecter` et `Navigation` pour garder le menu `Fichier` organisé
 - Vues détaillées pour :
   - `INDI` (individu)
   - `FAM` (famille)

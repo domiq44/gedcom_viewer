@@ -25,6 +25,8 @@ Fichier GEDCOM -> GedcomParser -> GedcomEntity -> modèles métier -> contrôleu
 - Les identifiants sont triés selon leur partie numérique, par exemple `@I2@` avant `@I10@`.
 - Les formulaires longs disposent d’un défilement vertical.
 - Le bloc GEDCOM brut est affiché en lecture seule.
+- Le menu `Fichier` regroupe les commandes d’inspection et de navigation dans des sous-menus.
+- `Fichier > Effacer la liste des fichiers récents` vide l’historique enregistré après confirmation ; les fichiers GEDCOM ne sont jamais supprimés.
 
 ## Formulaires
 

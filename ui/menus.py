@@ -22,16 +22,27 @@ class MenuBar:
         self.recent_menu = tk.Menu(file_menu, tearoff=0)
         file_menu.add_cascade(label="Récents", menu=self.recent_menu)
         self.refresh_recent_menu()
-
         file_menu.add_command(
+            label="Effacer la liste des fichiers récents",
+            command=self.clear_recent_files,
+        )
+
+        file_menu.add_separator()
+
+        inspect_menu = tk.Menu(file_menu, tearoff=0)
+        inspect_menu.add_command(
             label="Afficher l'en-tête GEDCOM", command=self.app.show_header
         )
-        file_menu.add_command(
+        inspect_menu.add_command(
             label="Afficher le bloc TRLR", command=self.app.show_trailer
         )
+        file_menu.add_cascade(label="Inspecter", menu=inspect_menu)
+
         file_menu.add_separator()
-        file_menu.add_command(label="Précédent", command=self.app.go_back)
-        file_menu.add_command(label="Suivant", command=self.app.go_forward)
+        navigation_menu = tk.Menu(file_menu, tearoff=0)
+        navigation_menu.add_command(label="Précédent", command=self.app.go_back)
+        navigation_menu.add_command(label="Suivant", command=self.app.go_forward)
+        file_menu.add_cascade(label="Navigation", menu=navigation_menu)
 
         file_menu.add_separator()
         file_menu.add_command(label="Quitter", command=self.quit_app)
@@ -55,6 +66,19 @@ class MenuBar:
                 label=filename,
                 command=lambda path=filename: self.app.open_recent_file(path),
             )
+
+    def clear_recent_files(self):
+        if not getattr(self.app, "recent_files", None):
+            return
+
+        confirmed = messagebox.askyesno(
+            "Effacer la liste des fichiers récents",
+            "Voulez-vous vraiment vider la liste des fichiers récents ?\n\n"
+            "Les fichiers GEDCOM eux-mêmes ne seront pas supprimés.",
+            parent=self.root,
+        )
+        if confirmed:
+            self.app.clear_recent_files()
 
     def quit_app(self):
         self.root.quit()

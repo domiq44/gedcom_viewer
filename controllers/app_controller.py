@@ -56,6 +56,11 @@ class AppController:
         return self.search_controller.get_entity_type_menu_display_items()
 
     def get_all_entity_type_menu_display_items(self):
+        if self.search_controller is None:
+            return [
+                (f"{entity_type} – {label}", entity_type)
+                for entity_type, label in self.ENTITY_LABELS.items()
+            ]
         return self.search_controller.get_all_entity_type_menu_display_items()
 
     def list_entities(self, entity_type: str):
