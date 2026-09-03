@@ -5,6 +5,8 @@ from gedcom.models.individual import Individual
 from gedcom.models.note import Note
 from gedcom.models.source import Source
 from gedcom.models.submitter import Submitter
+from gedcom.models.family import Family
+from gedcom.models.event import Event
 
 SAMPLE_GEDCOM = """0 @I1@ INDI
 1 NAME John /Doe/
@@ -340,6 +342,27 @@ class TestGedcomParser(unittest.TestCase):
         )
         self.assertEqual(submitter.phone, "06 07 08 09 10")
         self.assertEqual(submitter.email, "second@example.org")
+
+    def test_family_events_use_event_model(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @F10@ FAM",
+            "1 MARR",
+            "2 DATE 1 JAN 1900",
+            "1 DIV",
+            "2 DATE 1 JAN 1910",
+            "1 EVEN Reunion familiale",
+            "2 TYPE Reunion",
+        ]
+        parser._parse_entities()
+
+        family = Family(parser.get_entity("@F10@"))
+
+        self.assertIsInstance(family.marriages[0], Event)
+        self.assertEqual(family.marriages[0].get("details"), [("DATE", "1 JAN 1900")])
+        self.assertIsInstance(family.divorces[0], Event)
+        self.assertIsInstance(family.events[0], Event)
+        self.assertEqual(family.events[0].value, "Reunion familiale")
 
     def test_death_confirmation_requires_y_value(self):
         without_confirmation = Individual(

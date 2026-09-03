@@ -66,11 +66,7 @@ Le parser conserve toutes les lignes et `EntityController` construit immédiatem
 
 Les résolveurs de noms et de pointeurs des vues journalisent désormais les exceptions tout en conservant un libellé de repli. La sauvegarde des fichiers récents et la mise à jour du widget de statut ignorent toutefois encore certaines exceptions.
 
-### 3. Événements représentés par des dictionnaires
-
-`gedcom/models/event.py` est vide. Les événements de `Family` sont stockés sous forme de dictionnaires, ce qui limite le typage et la réutilisation. Une classe `Event` ne doit être ajoutée que si le domaine nécessite davantage de comportement.
-
-### 4. Validation GEDCOM non stricte
+### 3. Validation GEDCOM non stricte
 
 Le parser est volontairement tolérant : certaines lignes invalides sont ignorées et les fichiers incomplets peuvent être chargés. Les anomalies sont maintenant signalées, mais aucune validation complète de conformité GEDCOM n'est réalisée.
 
@@ -84,8 +80,8 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 73 tests exécutés.
-- 73 tests réussis.
+- 74 tests exécutés.
+- 74 tests réussis.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 
@@ -109,7 +105,6 @@ Les cibles principales sont `make test`, `make lint`, `make run`, `make format` 
 1. Réduire la mémoire utilisée par les gros fichiers sans casser l'API des contrôleurs.
 2. Remplacer les exceptions silencieuses des opérations périphériques par des logs ciblés.
 3. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
-4. Introduire un modèle `Event` uniquement si les besoins métier le justifient.
 
 ## Conclusion
 

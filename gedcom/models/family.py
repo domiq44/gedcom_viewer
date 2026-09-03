@@ -1,4 +1,5 @@
 from gedcom.parser import _parse_line
+from gedcom.models.event import Event
 
 
 class Family:
@@ -95,15 +96,15 @@ class Family:
                     self.sources.append(value)
 
                 elif tag == "MARR":
-                    current_event = {"tag": "MARR", "value": value, "details": []}
+                    current_event = Event("MARR", value)
                     self.marriages.append(current_event)
 
                 elif tag == "DIV":
-                    current_event = {"tag": "DIV", "value": value, "details": []}
+                    current_event = Event("DIV", value)
                     self.divorces.append(current_event)
 
                 elif tag == "EVEN":
-                    current_event = {"tag": "EVEN", "value": value, "details": []}
+                    current_event = Event("EVEN", value)
                     self.events.append(current_event)
 
                 if tag not in known_level_one_tags:
@@ -114,7 +115,7 @@ class Family:
             elif level == 2:
 
                 if current_event is not None:
-                    current_event["details"].append((tag, value))
+                    current_event.add_detail(tag, value)
 
                 if current_section == "NOTE" and self.notes:
                     if tag == "CONT":
@@ -141,6 +142,6 @@ class Family:
 
             elif level >= 3:
                 if current_event is not None:
-                    current_event["details"].append((tag, value))
+                    current_event.add_detail(tag, value)
                 if current_additional is not None:
                     current_additional["details"].append((tag, value))
