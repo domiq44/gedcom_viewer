@@ -1,7 +1,11 @@
+import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label
+
+
+logger = logging.getLogger(__name__)
 
 
 class RepositoryView(ttk.Frame):
@@ -62,6 +66,7 @@ class RepositoryView(ttk.Frame):
                     if isinstance(name, str) and name.strip():
                         label = f"{pointer} – {name}"
             except Exception:
+                logger.exception("Échec de résolution de l'entité %s", pointer)
                 pass
 
         return label

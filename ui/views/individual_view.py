@@ -1,10 +1,14 @@
 # ui/views/individual_view.py
 
+import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
 from ui.themes import FONTS
+
+
+logger = logging.getLogger(__name__)
 
 
 class IndividualView(ttk.Frame):
@@ -115,6 +119,7 @@ class IndividualView(ttk.Frame):
                 elif wife_name:
                     label = f"{pointer} – {wife_name}"
             except Exception:
+                logger.exception("Échec de résolution de la famille %s", pointer)
                 pass
 
         return label

@@ -1,7 +1,11 @@
+import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+
+
+logger = logging.getLogger(__name__)
 
 
 class NoteView(ttk.Frame):
@@ -87,6 +91,7 @@ class NoteView(ttk.Frame):
                 if isinstance(title, str) and title.strip():
                     source_label = f"{source} – {title}"
             except Exception:
+                logger.exception("Échec de résolution de la source %s", source)
                 pass
 
         configure_label(self.source_label, source_label)

@@ -1,10 +1,14 @@
 # ui/views/family_view.py
 
+import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label
 from ui.themes import FONTS
+
+
+logger = logging.getLogger(__name__)
 
 
 class FamilyView(ttk.Frame):
@@ -85,6 +89,7 @@ class FamilyView(ttk.Frame):
                 if isinstance(name, str) and name.strip():
                     label = f"{pointer} – {name}"
             except Exception:
+                logger.exception("Échec de résolution de l'individu %s", pointer)
                 pass
 
         return label
@@ -197,6 +202,7 @@ class FamilyView(ttk.Frame):
                 if isinstance(title, str) and title.strip():
                     return f"{pointer} – {title}"
             except Exception:
+                logger.exception("Échec de résolution de la source %s", pointer)
                 pass
         return pointer
 

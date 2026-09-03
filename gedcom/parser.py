@@ -1,3 +1,9 @@
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 def _parse_line(line):
     stripped = line.strip()
 
@@ -41,10 +47,20 @@ class GedcomParser:
         self.lines = []
         self.entities = {}  # dict: type → liste de GedcomEntity
         self._by_pointer = {}  # dict: pointer → GedcomEntity
+        self.malformed_lines = []
+        self.encoding_replacements = 0
 
     def load(self, filename):
         with open(filename, "r", encoding="utf-8-sig", errors="replace") as f:
             raw_lines = f.readlines()
+
+        self.encoding_replacements = sum(line.count("\ufffd") for line in raw_lines)
+        if self.encoding_replacements:
+            logger.warning(
+                "%s caractère(s) invalide(s) remplacé(s) lors de la lecture de %s",
+                self.encoding_replacements,
+                filename,
+            )
 
         self.lines = [line.replace("\xa0", " ").rstrip("\r\n") for line in raw_lines]
 
@@ -53,6 +69,7 @@ class GedcomParser:
     def _parse_entities(self):
         self.entities = {}
         self._by_pointer = {}
+        self.malformed_lines = []
 
         current_lines = []
         current_pointer = None
@@ -62,6 +79,14 @@ class GedcomParser:
         for idx, line in enumerate(self.lines):
             level, pointer, tag, _ = _parse_line(line)
             if level is None:
+                if line.strip():
+                    line_number = idx + 1
+                    self.malformed_lines.append(line_number)
+                    logger.warning(
+                        "Ligne GEDCOM malformée ignorée (%s): %s",
+                        line_number,
+                        line.strip(),
+                    )
                 continue
 
             if level == 0:

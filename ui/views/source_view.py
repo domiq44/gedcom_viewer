@@ -1,7 +1,11 @@
+import logging
 import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+
+
+logger = logging.getLogger(__name__)
 
 
 class SourceView(ttk.Frame):
@@ -88,6 +92,7 @@ class SourceView(ttk.Frame):
                     if isinstance(name, str) and name.strip():
                         label = f"{pointer} – {name}"
             except Exception:
+                logger.exception("Échec de résolution du dépôt %s", pointer)
                 pass
 
         return label

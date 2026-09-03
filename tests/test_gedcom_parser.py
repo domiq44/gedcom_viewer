@@ -221,6 +221,29 @@ class TestGedcomParser(unittest.TestCase):
         self.assertEqual(parser.get_entity("@F1@").tag, "FAM")
         self.assertIn("0 HEAD", parser.extract_head())
 
+    def test_malformed_lines_are_recorded_and_logged(self):
+        parser = GedcomParser()
+        parser.lines = ["0 @I1@ INDI", "not a GEDCOM line", "1 NAME John /Doe/"]
+
+        with self.assertLogs("gedcom.parser", level="WARNING") as logs:
+            parser._parse_entities()
+
+        self.assertEqual(parser.malformed_lines, [2])
+        self.assertIn("Ligne GEDCOM malformée", logs.output[0])
+
+    def test_invalid_encoding_is_counted_and_logged(self):
+        with tempfile.NamedTemporaryFile() as temp_file:
+            temp_file.write(b"0 @I1@ INDI\n1 NAME John \xffDoe\n")
+            temp_file.flush()
+            temp_path = temp_file.name
+
+            parser = GedcomParser()
+            with self.assertLogs("gedcom.parser", level="WARNING") as logs:
+                parser.load(temp_path)
+
+        self.assertEqual(parser.encoding_replacements, 1)
+        self.assertIn("caractère(s) invalide(s) remplacé(s)", logs.output[0])
+
     def test_multiline_name_conc_cont(self):
         parser = GedcomParser()
         parser.lines = MULTILINE_NAME_GEDCOM.splitlines()
