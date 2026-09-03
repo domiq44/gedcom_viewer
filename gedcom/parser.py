@@ -1,15 +1,10 @@
 def _parse_line(line):
     stripped = line.strip()
-    ###print(">>> USING PARSER FROM:", __file__)
-    ###print(">>> BYTES:", list(stripped.encode("utf-8")))
-    ###print(">>> DEBUG SPLIT:", stripped.split())
-    ###print(">>> DEBUG SPLIT_1:", stripped.split(" ", 1))
 
     if not stripped:
         return None, None, None, None
 
     parts = stripped.split()
-    ###print(">>> PARTS:", parts)
 
     if len(parts) == 0:
         return None, None, None, None
@@ -20,7 +15,6 @@ def _parse_line(line):
         return None, None, None, None
 
     remainder = " ".join(parts[1:])
-    ###print(">>> REMAINDER:", repr(remainder))
 
     pointer = None
     tag = None
@@ -28,20 +22,17 @@ def _parse_line(line):
 
     if level == 0 and remainder.startswith("@"):
         sub = remainder.split(" ", 2)
-        ###print(">>> SUB:", sub)
 
         pointer = sub[0]
         tag = sub[1] if len(sub) >= 2 else None
         value = sub[2] if len(sub) == 3 else ""
 
-        ###print(">>> PARSED:", level, pointer, tag, value)
         return level, pointer, tag, value
 
     sub = remainder.split(" ", 1)
     tag = sub[0] if len(sub) >= 1 else None
     value = sub[1] if len(sub) == 2 else ""
 
-    ###print(">>> PARSED:", level, pointer, tag, value)
     return level, pointer, tag, value
 
 
