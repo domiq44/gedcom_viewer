@@ -228,6 +228,19 @@ class TestGedcomViewer(unittest.TestCase):
         self.root.update_idletasks()
         self.assertIn("test log ui status", self.viewer.status_var.get())
 
+    def test_load_file_logs_elapsed_time(self):
+        self.viewer.controller.get_entity_types.return_value = ["INDI"]
+        self.viewer.controller.get_all_entity_type_menu_display_items.return_value = [
+            ("INDI - Individu", "INDI")
+        ]
+
+        with patch("ui.main_window.time.perf_counter", side_effect=[10.0, 12.345]):
+            with patch.object(self.viewer, "list_entities"):
+                with self.assertLogs("ui.main_window", level="INFO") as logs:
+                    self.viewer._load_file_from_path("/tmp/test.ged")
+
+        self.assertIn("GEDCOM chargé avec succès en 2.345 s", logs.output[-1])
+
     def test_clear_recent_files_removes_all_entries(self):
         self.viewer.recent_files = ["/tmp/one.ged", "/tmp/two.ged"]
         with patch.object(self.viewer, "_save_recent_files") as save_recent:

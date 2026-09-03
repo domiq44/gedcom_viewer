@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
@@ -391,6 +392,7 @@ class GedcomViewer:
             return
 
         logger.info("Chargement du fichier GEDCOM: %s", filename)
+        load_started_at = time.perf_counter()
         try:
             self.controller.load_file(filename)
         except Exception as e:
@@ -420,7 +422,12 @@ class GedcomViewer:
         self._update_entity_type_tabs()
 
         self.list_entities()
-        logger.info("GEDCOM chargé avec succès: %s", filename)
+        load_duration = time.perf_counter() - load_started_at
+        logger.info(
+            "GEDCOM chargé avec succès en %.3f s: %s",
+            load_duration,
+            filename,
+        )
 
     def _clear_entity_views(self, keep_type=None):
         for entity_type, (view, _) in self._entity_view_map.items():

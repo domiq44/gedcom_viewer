@@ -48,6 +48,7 @@ main.py
 - Affichage de l'en-tête `HEAD` et du trailer `TRLR`.
 - Prévisualisation d'images locales lorsque Pillow est installé.
 - Journalisation dans `~/.gedcom_viewer.log`.
+- Affichage dans la barre de statut du temps de chargement du GEDCOM.
 - Interface avec zones de texte et formulaires défilants.
 
 ## Points forts
@@ -58,7 +59,7 @@ main.py
 4. La résolution centralisée des pointeurs facilite la navigation entre fiches.
 5. Les tests couvrent plusieurs cas GEDCOM délicats, notamment `CONC`, `CONT`, les sous-tags imbriqués et les blocs `HEAD`/`TRLR`.
 
-## Défauts confirmés
+## Défauts confirmés et corrections apportées
 
 ### 1. Les notes des sources ne sont pas stockées
 
@@ -68,17 +69,19 @@ Dans `gedcom/models/source.py`, deux branches traitent `tag == "NOTE"`. La premi
 
 Dans `gedcom/models/individual.py`, la présence du tag `DEAT` positionne `death_confirmed` à `True`, même lorsque le tag ne contient pas la valeur `Y`. Le modèle ne distingue donc pas l'existence d'un événement de son niveau de confirmation.
 
-### 3. Les erreurs de parsing peuvent passer inaperçues
+### 3. Les erreurs de parsing sont désormais signalées
 
-Les lignes malformées sont ignorées par `gedcom/parser.py`. La lecture utilise également `errors="replace"`, ce qui remplace les caractères invalides sans avertissement explicite. Le résultat peut être incomplet sans que l'utilisateur en soit informé.
+Les lignes malformées restent ignorées, mais `gedcom/parser.py` les enregistre maintenant dans `malformed_lines` et les journalise. Les caractères remplacés par `errors="replace"` sont comptabilisés dans `encoding_replacements` et signalés dans le logger.
 
-### 4. Plusieurs erreurs d'affichage sont masquées
+### 4. Les erreurs d'affichage sont désormais journalisées
 
-Certaines vues utilisent `except Exception: pass` lors de la résolution des pointeurs. Une erreur de modèle ou de callback peut ainsi produire un affichage incomplet sans trace exploitable.
+Les vues conservent un affichage de repli lors d'une erreur de résolution, mais les exceptions sont maintenant écrites dans le logger avec leur contexte.
 
 ### 5. Les gros fichiers sont chargés entièrement en mémoire
 
 Le parser conserve toutes les lignes, puis `EntityController` construit tous les modèles au chargement. Cette stratégie est adaptée aux fichiers courants, mais peut ralentir l'ouverture et augmenter fortement la mémoire utilisée pour une généalogie volumineuse.
+
+Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde de chargement et 169 Mo de mémoire maximale dans l'environnement de développement. Le temps reste raisonnable, mais la consommation mémoire justifie un futur chargement différé ou un index plus compact. Une telle évolution doit préserver l'API actuelle, qui expose déjà des listes et des objets métier matérialisés.
 
 ### 6. Le modèle d'événement n'est pas implémenté
 
@@ -94,15 +97,15 @@ python3 -m unittest discover -s tests -v
 
 Résultat de la dernière validation :
 
-- 69 tests exécutés.
-- 69 tests réussis.
+- 70 tests exécutés.
+- 70 tests réussis.
 - Tous les fichiers Python compilent avec `py_compile`.
 
 ### Couverture manquante
 
 - Cas d'encodage invalide et signalement des lignes ignorées.
 - Notes de sources et sémantique précise de `DEAT`.
-- Fichiers GEDCOM de très grande taille.
+- Fichiers GEDCOM de très grande taille en environnement réel.
 - Tests des erreurs de résolution dans les vues.
 - Installation et fonctionnement avec ou sans Pillow.
 - Tests de construction PyInstaller.
@@ -122,12 +125,9 @@ Les principales cibles du `Makefile` sont `make test`, `make lint`, `make run`, 
 
 ## Priorités recommandées
 
-1. Corriger le traitement des notes dans `Source` et ajouter un test de régression.
-2. Clarifier la sémantique de `DEAT` et tester les variantes `DEAT` et `DEAT Y`.
-3. Remplacer les exceptions silencieuses par des logs ciblés ou des erreurs contrôlées.
-4. Signaler les lignes GEDCOM ignorées et les remplacements d'encodage.
-5. Évaluer un chargement différé ou une stratégie de limitation pour les très gros fichiers.
-6. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
+1. Concevoir un chargement différé ou un index plus compact pour les très gros fichiers, sans casser l'API des contrôleurs.
+2. Ajouter une validation GEDCOM plus stricte si les fichiers non conformes doivent être refusés plutôt que signalés.
+3. Introduire un modèle `Event` seulement si cela apporte une vraie valeur à la gestion des événements aujourd'hui stockés sous forme de dictionnaires.
 
 ## Conclusion
 
