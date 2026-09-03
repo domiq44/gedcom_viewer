@@ -43,7 +43,9 @@
 ### ✅ Implémentées
 
 - ✓ Chargement de fichiers GEDCOM (.ged)
-- ✓ Sélection par type d'entité (INDI, FAM, SOUR, REPO, NOTE, OBJE, SUBM)
+- ✓ Sélection par onglets verticaux (INDI, FAM, SOUR, REPO, NOTE, OBJE, SUBM)
+- ✓ Liste en deux colonnes avec tri par nom ou identifiant
+- ✓ Tri des individus par `SURN` et tri numérique des identifiants
 - ✓ Recherche instantanée dans la liste des entités
 - ✓ Navigation par pointeurs GEDCOM
 - ✓ Affichage du bloc GEDCOM brut avec coloration syntaxique
@@ -53,6 +55,8 @@
 - ✓ Prévisualisation d'images multimédia
 - ✓ Journalisation locale (`~/.gedcom_viewer.log`)
 - ✓ Panneau de statut avec dernière erreur
+- ✓ Défilement vertical des formulaires longs
+- ✓ Formulaires enrichis pour Famille, Note, Source et Dépôt
 
 ---
 
@@ -140,9 +144,10 @@ Le projet contient 4 fichiers de test :
 
 ### **Organisation**
 
-- **Panneau gauche** : Bloc GEDCOM brut (scrollable, colorisé)
-- **Panneau central** : Liste des entités filtrées + barre de recherche
-- **Panneau droit** : Vue détaillée de l'entité sélectionnée (7 onglets)
+- **Barre latérale gauche** : onglets verticaux de sélection du type d'entité
+- **Panneau gauche** : liste filtrable avec colonnes Nom et Identifiant
+- **Panneau central** : bloc GEDCOM brut en lecture seule et colorisé
+- **Panneau droit** : vue détaillée avec formulaires scrollables
 - **Barre de statut** : Affiche la dernière erreur loggée
 
 ### **Thème**
@@ -166,7 +171,7 @@ Moderne, couleurs adaptées au type d'entité
 
 | Domaine | Observation |
 |---------|------------|
-| **Dépendances** | Aucun fichier `requirements.txt` — relève implicitement de Tkinter (stdlib) |
+| **Dépendances** | Tkinter, Pillow recommandé pour les images, PyInstaller et Black pour le développement |
 | **Tests** | Couverture modérée (4 fichiers test) |
 | **Documentation** | `doc.md` et `SCHEMA.md` semblent incomplets/en chantier |
 | **Erreurs** | Utiliser `make lint` pour identifier les problèmes Python |
@@ -181,7 +186,7 @@ Moderne, couleurs adaptées au type d'entité
 
 Les domaines d'amélioration concernent principalement la couverture de tests, la validation stricte du format GEDCOM, et l'optimisation pour les très gros fichiers.
 
-**Taille du projet** : ~3 900 lignes de code Python
+**Tests** : 61 tests unitaires, tous validés au dernier contrôle
 **Langages** : Python 3, Tkinter
 **Licence/État** : Application fonctionnelle (v5.5.1)
 

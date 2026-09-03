@@ -1,39 +1,74 @@
-# Documentation
+# Documentation technique
 
-##  1. <a name='Tabledesmatires'></a>Table des matières
+## Architecture
 
-<!-- vscode-markdown-toc -->
-* 1. [Table des matières](#Tabledesmatires)
-* 2. [Section 1.1](#Section1.1)
-* 3. [Section 1.2](#Section1.2)
-* 4. [Section 2.1](#Section2.1)
-* 5. [Section 3.1](#Section3.1)
+Le projet suit trois couches :
 
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
-
-# Chapitre 1
-##  2. <a name='Section1.1'></a>Section 1.1
-##  3. <a name='Section1.2'></a>Section 1.2
-
-# Chapitre 2
-##  4. <a name='Section2.1'></a>Section 2.1
-
-# Schéma
-
-```plantuml
-@startuml
-left to right direction
-actor Utilisateur
-rectangle "Système" as S
-
-Utilisateur --> S : Demande
-S --> Utilisateur : Réponse
-@enduml
+```text
+ui/          Interface Tkinter et vues
+controllers/ Orchestration, recherche et résolution des références
+gedcom/      Parser GEDCOM et modèles métier
 ```
 
-# Chapitre 3
-##  5. <a name='Section3.1'></a>Section 3.1
+Le chargement suit ce flux :
+
+```text
+Fichier GEDCOM -> GedcomParser -> GedcomEntity -> modèles métier -> contrôleurs -> vues Tkinter
+```
+
+## Interface
+
+- Les types d’entités sont sélectionnés avec les onglets verticaux situés à gauche.
+- La liste affiche le nom lisible et l’identifiant GEDCOM dans deux colonnes.
+- Un clic sur un en-tête trie la colonne ; un second clic inverse l’ordre.
+- Les individus sont triés par `SURN` lorsque le nom GEDCOM contient `/Nom/`.
+- Les identifiants sont triés selon leur partie numérique, par exemple `@I2@` avant `@I10@`.
+- Les formulaires longs disposent d’un défilement vertical.
+- Le bloc GEDCOM brut est affiché en lecture seule.
+
+## Formulaires
+
+Les vues spécialisées couvrent `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
+
+Les vues Famille, Source, Dépôt et Note affichent les champs métier connus ainsi que des champs GEDCOM complémentaires lorsque le fichier en contient. Les références disponibles sont présentées avec leur libellé associé et restent navigables par clic.
+
+## Dépendances
+
+- Python 3
+- Tkinter
+- Pillow, recommandé pour l’aperçu des images multimédia
+- PyInstaller et Black pour la distribution et le formatage
+
+Préparer l’environnement :
+
+```bash
+make install
+```
+
+Installer Pillow si nécessaire :
+
+```bash
+python -m pip install Pillow
+```
+
+## Validation
+
+Exécuter les tests :
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+Dernier résultat vérifié : `61 tests`, `OK`.
+
+Vérifier la syntaxe :
+
+```bash
+make lint
+```
+
+Construire l’exécutable :
+
+```bash
+make dist
+```

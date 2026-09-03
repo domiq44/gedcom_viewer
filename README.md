@@ -27,6 +27,10 @@ UI (ui/) → Controller (controllers/) → GEDCOM model (gedcom/)
 - Chargement de fichiers GEDCOM (`.ged`)
 - Sélection par type d’entité
 - Recherche instantanée dans la liste des entités
+- Onglets verticaux à gauche pour sélectionner le type d’entité
+- Liste des entités en deux colonnes : nom lisible et identifiant GEDCOM
+- Tri croissant/décroissant en cliquant sur les en-têtes de colonnes
+- Tri des individus par nom de famille (`SURN`) et des identifiants par partie numérique
 - Navigation par pointeurs GEDCOM (`@I...@`, `@F...@`, etc.)
 - Affichage du bloc GEDCOM brut dans le panneau gauche
 - Mise en surbrillance syntaxique basique du bloc brut
@@ -43,6 +47,9 @@ UI (ui/) → Controller (controllers/) → GEDCOM model (gedcom/)
   - `SUBM` (submitter)
 - Prévisualisation d’images multimédia dans l’onglet `Multimédia`
 - Scroll vertical dans la vue multimédia pour accéder aux champs texte en dessous de l’image
+- Défilement vertical dans les formulaires longs
+- Affichage des références avec leur libellé associé, lorsque l’entité est disponible
+- Formulaires enrichis pour Famille, Note, Source et Dépôt
 - Journalisation locale vers `~/.gedcom_viewer.log`
 - Panneau d’état `Dernière erreur log` dans l’interface
 
@@ -66,7 +73,13 @@ Le projet dépend principalement de :
 - Tkinter
 - Pillow pour la prévisualisation d’images dans l’onglet multimédia
 
-> Sur la plupart des systèmes, Tkinter est livré avec Python. Pour la prévisualisation d’images, la dépendance Pillow est utilisée lorsque disponible.
+> Sur la plupart des systèmes, Tkinter est livré avec Python. Pillow est recommandé pour la prévisualisation des images multimédia.
+
+Installation manuelle de Pillow :
+
+```bash
+python -m pip install Pillow
+```
 
 ## Installation
 
@@ -251,4 +264,4 @@ La suite actuelle a été exécutée et validée dans l’environnement du proje
 .venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-Résultat vérifié : `54 tests` exécutés, `OK`.
+Résultat vérifié : `61 tests` exécutés, `OK`.
