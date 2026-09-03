@@ -62,13 +62,18 @@ main.py
 
 Le parser conserve toutes les lignes et `EntityController` construit immédiatement tous les modèles. Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde et 169 Mo de mémoire maximale. Le temps est acceptable, mais la mémoire consommée justifie une future conception d'index compact ou de chargement différé. Cette évolution devra préserver l'API actuelle, qui expose des listes et objets métier matérialisés.
 
-### 2. Gestion d'erreurs périphériques encore silencieuse
+### 2. Gestion d'erreurs périphériques
 
-Les résolveurs de noms et de pointeurs des vues journalisent désormais les exceptions tout en conservant un libellé de repli. La sauvegarde des fichiers récents et la mise à jour du widget de statut ignorent toutefois encore certaines exceptions.
+Les résolveurs de noms et de pointeurs des vues ainsi que la sauvegarde des fichiers récents journalisent désormais les exceptions tout en conservant un affichage ou un résultat de repli. Le handler UI protège encore sa mise à jour par une exception silencieuse lorsque le widget Tkinter n'est plus disponible, afin d'éviter une récursion du logger pendant la fermeture.
 
-### 3. Validation GEDCOM non stricte
+### 3. Validation GEDCOM configurable
 
-Le parser est volontairement tolérant : certaines lignes invalides sont ignorées et les fichiers incomplets peuvent être chargés. Les anomalies sont maintenant signalées, mais aucune validation complète de conformité GEDCOM n'est réalisée.
+Le parser reste tolérant par défaut : les lignes invalides et fichiers incomplets sont signalés, mais peuvent être chargés. La méthode `load(..., strict=True)` refuse désormais les anomalies structurelles détectées, notamment les lignes malformées, les sauts de niveau, les pointeurs dupliqués et l'absence ou la multiplicité de `HEAD`/`TRLR`. Cette validation ne couvre pas encore toutes les règles sémantiques de GEDCOM.
+
+Le menu `Fichier` propose maintenant les deux comportements : l'ouverture
+standard reste tolérante et `Ouvrir et valider un fichier GEDCOM` active le mode
+strict. Le service charge le nouveau parser avant de le rendre actif, afin qu'un
+échec de validation conserve la session précédente.
 
 ## Tests et validation
 
@@ -80,8 +85,8 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 74 tests exécutés.
-- 74 tests réussis.
+- 81 tests exécutés.
+- 81 tests réussis.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 
@@ -103,9 +108,8 @@ Les cibles principales sont `make test`, `make lint`, `make run`, `make format` 
 ## Priorités recommandées
 
 1. Réduire la mémoire utilisée par les gros fichiers sans casser l'API des contrôleurs.
-2. Remplacer les exceptions silencieuses des opérations périphériques par des logs ciblés.
-3. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
+2. Décider du niveau de validation GEDCOM attendu et ajouter des diagnostics adaptés.
 
 ## Conclusion
 
-Le projet fournit une base fonctionnelle, testée et correctement structurée pour explorer des données GEDCOM. Les corrections récentes ont amélioré la fidélité des données, la visibilité des anomalies et le suivi du chargement. Les principaux travaux restants concernent la mémoire, la gestion des erreurs encore silencieuses et la couverture des cas GEDCOM multiples ou non conformes.
+Le projet fournit une base fonctionnelle, testée et correctement structurée pour explorer des données GEDCOM. Les corrections récentes ont amélioré la fidélité des données, la visibilité des anomalies et le suivi du chargement. Les principaux travaux restants concernent la mémoire, la validation sémantique et la couverture des cas GEDCOM multiples ou non conformes.

@@ -9,6 +9,7 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 ## Fonctionnalités
 
 - Ouverture de fichiers GEDCOM `.ged`.
+- Deux modes d'ouverture : tolérant ou strict avec validation structurelle.
 - Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
 - Recherche instantanée dans les entités.
 - Tri par nom, titre ou identifiant, avec tri numérique des pointeurs.
@@ -22,6 +23,7 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 - Journalisation dans `~/.gedcom_viewer.log`.
 - Affichage du temps de chargement dans la barre de statut.
 - Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
+- Validation structurelle disponible en mode strict via `load(..., strict=True)`.
 
 L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
 
@@ -87,6 +89,11 @@ Avec l'environnement virtuel du projet :
 
 Au démarrage, l'application tente de recharger le dernier fichier GEDCOM récent lorsqu'il existe encore.
 
+Dans le menu `Fichier`, `Ouvrir un fichier GEDCOM` conserve le mode tolérant.
+`Ouvrir et valider un fichier GEDCOM` utilise le mode strict et refuse les
+anomalies structurelles détectées. Les fichiers récents sont rechargés en mode
+tolérant.
+
 ## Tests et vérifications
 
 Exécuter les tests :
@@ -101,7 +108,7 @@ Ou directement :
 python3 -m unittest discover -s tests
 ```
 
-Dernière validation : 74 tests réussis.
+Dernière validation : 81 tests réussis.
 
 Vérifier la syntaxe Python :
 
@@ -157,6 +164,7 @@ La liste des fichiers récents est enregistrée dans :
 - Les événements familiaux sont représentés par le modèle `Event`, avec leurs sous-tags associés.
 - Les événements de mariage multiples sont affichés dans la vue famille, mais restent représentés par des dictionnaires.
 - Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
+- Le chargement de l'interface reste tolérant ; le mode strict est disponible via l'API Python.
 
 ## Structure du projet
 

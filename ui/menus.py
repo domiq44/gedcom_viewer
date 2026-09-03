@@ -18,6 +18,10 @@ class MenuBar:
         file_menu.add_command(
             label="Ouvrir un fichier GEDCOM", command=self.app.load_file
         )
+        file_menu.add_command(
+            label="Ouvrir et valider un fichier GEDCOM",
+            command=self.app.open_validated_file,
+        )
 
         self.recent_menu = tk.Menu(file_menu, tearoff=0)
         file_menu.add_cascade(label="Récents", menu=self.recent_menu)

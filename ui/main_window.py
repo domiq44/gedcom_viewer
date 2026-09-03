@@ -215,12 +215,15 @@ class GedcomViewer:
             pady=4,
         )
         self.log_status_frame.grid(row=2, column=0, sticky="ew", pady=(4, 0))
-        self.status_label = tk.Label(
+        self.status_label = tk.Entry(
             self.log_status_frame,
             textvariable=self.status_var,
-            foreground=COLORS["muted_text"],
             font=("TkDefaultFont", 9),
-            anchor="w",
+            state="readonly",
+            readonlybackground=self.log_status_frame.cget("background"),
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
         )
         self.status_label.pack(fill="x", expand=True)
 
@@ -355,7 +358,12 @@ class GedcomViewer:
                 data = json.load(handle)
             if isinstance(data, list):
                 return [path for path in data if isinstance(path, str)]
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Impossible de lire la liste des fichiers récents %s: %s",
+                recent_path,
+                exc,
+            )
             return []
         return []
 
@@ -364,8 +372,12 @@ class GedcomViewer:
         try:
             with open(recent_path, "w", encoding="utf-8") as handle:
                 json.dump(self.recent_files[:10], handle)
-        except Exception:
-            return
+        except Exception as exc:
+            logger.warning(
+                "Impossible d'enregistrer la liste des fichiers récents %s: %s",
+                recent_path,
+                exc,
+            )
 
     def clear_recent_files(self):
         self.recent_files = []
@@ -387,14 +399,14 @@ class GedcomViewer:
         if hasattr(self, "menu_bar"):
             self.menu_bar.refresh_recent_menu()
 
-    def _load_file_from_path(self, filename):
+    def _load_file_from_path(self, filename, strict=False):
         if not filename:
             return
 
         logger.info("Chargement du fichier GEDCOM: %s", filename)
         load_started_at = time.perf_counter()
         try:
-            self.controller.load_file(filename)
+            self.controller.load_file(filename, strict=strict)
         except Exception as e:
             logger.exception("Échec du chargement du GEDCOM %s", filename)
             messagebox.showerror(
@@ -543,6 +555,16 @@ class GedcomViewer:
 
     def open_recent_file(self, filename):
         self._load_file_from_path(filename)
+
+    def open_validated_file(self):
+        filename = filedialog.askopenfilename(
+            title="Choisir un fichier GEDCOM à valider",
+            filetypes=[("GEDCOM files", "*.ged")],
+        )
+        if not filename:
+            return
+
+        self._load_file_from_path(filename, strict=True)
 
     def load_file(self):
         filename = filedialog.askopenfilename(

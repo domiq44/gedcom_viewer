@@ -55,6 +55,22 @@ class TestGedcomService(unittest.TestCase):
         self.assertIn("HEAD", self.service.entities)
         self.assertIn("TRLR", self.service.entities)
 
+    def test_strict_load_keeps_previous_parser_when_file_is_invalid(self):
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as valid_file:
+            valid_file.write(SAMPLE_GEDCOM)
+            valid_file.flush()
+            self.service.load_file(valid_file.name)
+            previous_parser = self.service.parser
+
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as invalid_file:
+            invalid_file.write("0 HEAD\n1 SOUR TEST\n")
+            invalid_file.flush()
+
+            with self.assertRaises(ValueError):
+                self.service.load_file(invalid_file.name, strict=True)
+
+        self.assertIs(self.service.parser, previous_parser)
+
     def test_get_entity_returns_entity_by_pointer(self):
         with tempfile.NamedTemporaryFile(
             "w", encoding="utf-8", delete=False

@@ -8,9 +8,10 @@ class GedcomService:
     def __init__(self):
         self.parser = None
 
-    def load_file(self, filename: str):
-        self.parser = GedcomParser()
-        self.parser.load(filename)
+    def load_file(self, filename: str, strict=False):
+        parser = GedcomParser()
+        parser.load(filename, strict=strict)
+        self.parser = parser
 
     def create_entity_controller(self):
         if not self.is_loaded():

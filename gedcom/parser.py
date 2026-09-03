@@ -1,4 +1,5 @@
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -49,8 +50,9 @@ class GedcomParser:
         self._by_pointer = {}  # dict: pointer → GedcomEntity
         self.malformed_lines = []
         self.encoding_replacements = 0
+        self.validation_errors = []
 
-    def load(self, filename):
+    def load(self, filename, strict=False):
         with open(filename, "r", encoding="utf-8-sig", errors="replace") as f:
             raw_lines = f.readlines()
 
@@ -65,6 +67,60 @@ class GedcomParser:
         self.lines = [line.replace("\xa0", " ").rstrip("\r\n") for line in raw_lines]
 
         self._parse_entities()
+        self.validation_errors = self.validate()
+        for error in self.validation_errors:
+            logger.warning("Validation GEDCOM: %s", error)
+        if strict and self.validation_errors:
+            raise ValueError(
+                "Fichier GEDCOM invalide: " + "; ".join(self.validation_errors)
+            )
+
+    def validate(self):
+        """Retourne les anomalies structurelles détectées dans le fichier chargé."""
+        errors = []
+        previous_level = None
+        pointer_counts = {}
+        head_count = 0
+        trailer_count = 0
+
+        for idx, line in enumerate(self.lines):
+            if not line.strip():
+                continue
+
+            level, pointer, tag, _ = _parse_line(line)
+            line_number = idx + 1
+            if level is None or tag is None:
+                errors.append(f"ligne {line_number} malformée")
+                continue
+
+            if level < 0:
+                errors.append(f"niveau négatif ligne {line_number}")
+            if previous_level is not None and level > previous_level + 1:
+                errors.append(f"saut de niveau ligne {line_number}")
+            previous_level = level
+
+            if level == 0:
+                if tag in {"HEAD", "TRLR"} and pointer is not None:
+                    errors.append(f"pointeur inattendu ligne {line_number}")
+                if tag == "HEAD":
+                    head_count += 1
+                elif tag == "TRLR":
+                    trailer_count += 1
+                if pointer:
+                    pointer_counts[pointer] = pointer_counts.get(pointer, 0) + 1
+                    if not re.fullmatch(r"@[^@\s]+@", pointer):
+                        errors.append(f"pointeur invalide ligne {line_number}")
+
+        errors.extend(
+            f"pointeur dupliqué {pointer}"
+            for pointer, count in pointer_counts.items()
+            if count > 1
+        )
+        if head_count != 1:
+            errors.append("HEAD absent ou multiple")
+        if trailer_count != 1:
+            errors.append("TRLR absent ou multiple")
+        return errors
 
     def _parse_entities(self):
         self.entities = {}

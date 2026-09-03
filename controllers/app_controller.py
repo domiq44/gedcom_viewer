@@ -17,8 +17,8 @@ class AppController:
         self.search_controller = None
         self.presentation_controller = None
 
-    def load_file(self, filename: str):
-        self.gedcom_service.load_file(filename)
+    def load_file(self, filename: str, strict=False):
+        self.gedcom_service.load_file(filename, strict=strict)
         self._initialize_controllers()
 
     def _initialize_controllers(self):

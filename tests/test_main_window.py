@@ -48,6 +48,16 @@ class TestGedcomViewer(unittest.TestCase):
             except Exception:
                 pass
 
+    def test_open_validated_file_uses_strict_loading(self):
+        with patch(
+            "ui.main_window.filedialog.askopenfilename",
+            return_value="/tmp/validated.ged",
+        ):
+            with patch.object(self.viewer, "_load_file_from_path") as load_file:
+                self.viewer.open_validated_file()
+
+        load_file.assert_called_once_with("/tmp/validated.ged", strict=True)
+
     def test_show_header_displays_head_block(self):
         self.viewer.controller.is_loaded.return_value = True
         self.viewer.controller.extract_head.return_value = "0 HEAD\n1 SOUR GEDCOM"
@@ -248,6 +258,10 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.root.update_idletasks()
         self.assertIn("test log ui status", self.viewer.status_var.get())
+        self.assertEqual(self.viewer.status_label.cget("state"), "readonly")
+
+        self.viewer.status_label.selection_range(0, tk.END)
+        self.viewer.status_label.event_generate("<<Copy>>")
 
     def test_load_file_logs_elapsed_time(self):
         self.viewer.controller.get_entity_types.return_value = ["INDI"]
@@ -269,6 +283,24 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertEqual(self.viewer.recent_files, [])
         save_recent.assert_called_once_with()
+
+    def test_save_recent_files_logs_write_errors(self):
+        self.viewer.recent_files = ["/tmp/example.ged"]
+
+        with patch("ui.main_window.open", side_effect=OSError("permission denied")):
+            with self.assertLogs("ui.main_window", level="WARNING") as logs:
+                self.viewer._save_recent_files()
+
+        self.assertIn("Impossible d'enregistrer la liste des fichiers récents", logs.output[0])
+
+    def test_load_recent_files_logs_read_errors(self):
+        with patch("ui.main_window.os.path.isfile", return_value=True):
+            with patch("ui.main_window.open", side_effect=OSError("permission denied")):
+                with self.assertLogs("ui.main_window", level="WARNING") as logs:
+                    recent_files = self.viewer._load_recent_files()
+
+        self.assertEqual(recent_files, [])
+        self.assertIn("Impossible de lire la liste des fichiers récents", logs.output[0])
 
     def test_find_urls_in_form_value(self):
         value = "Voir https://example.org/document, puis http://example.net."

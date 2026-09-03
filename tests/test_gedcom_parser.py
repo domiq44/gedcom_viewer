@@ -224,6 +224,31 @@ class TestGedcomParser(unittest.TestCase):
         self.assertEqual(parser.get_entity("@F1@").tag, "FAM")
         self.assertIn("0 HEAD", parser.extract_head())
 
+    def test_load_records_validation_errors(self):
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as temp_file:
+            temp_file.write("0 HEAD\n1 SOUR TEST\n")
+            temp_file.flush()
+            parser = GedcomParser()
+            parser.load(temp_file.name)
+
+        self.assertIn("TRLR absent ou multiple", parser.validation_errors)
+
+    def test_strict_load_rejects_invalid_structure(self):
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as temp_file:
+            temp_file.write("0 HEAD\n1 SOUR TEST\n")
+            temp_file.flush()
+            parser = GedcomParser()
+
+            with self.assertRaises(ValueError):
+                parser.load(temp_file.name, strict=True)
+
+    def test_validate_reports_malformed_line(self):
+        parser = GedcomParser()
+        parser.lines = ["0 HEAD", "invalid GEDCOM line", "0 TRLR"]
+        parser._parse_entities()
+
+        self.assertIn("ligne 2 malformée", parser.validate())
+
     def test_malformed_lines_are_recorded_and_logged(self):
         parser = GedcomParser()
         parser.lines = ["0 @I1@ INDI", "not a GEDCOM line", "1 NAME John /Doe/"]

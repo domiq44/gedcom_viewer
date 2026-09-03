@@ -1,6 +1,6 @@
-# CORRECTION ABSOLUE : Diagrammes de Flux (Mermaid Flowchart TD - Ultra-Minimaliste)
+# Diagrammes de flux GEDCOM Viewer
 
-Puisque votre plugin VSCode est extrêmement strict, nous allons utiliser la syntaxe **la plus basique possible** pour les flux (sans sous-graphes, sans titres complexes, juste des nœuds et des flèches).
+Les diagrammes décrivent le fonctionnement actuel du parser, des contrôleurs et de l’interface.
 
 ## PHASE 1 : Initialisation & Chargement (Le Cycle de Lecture)
 
@@ -19,19 +19,25 @@ flowchart TD
     A3 --> A4{Ligne valide?};
     A4 -- Yes --> A5[Create Entity];
     A5 --> A6[Store Entity];
-    A4 -- No --> A7[Skip Line];
+    A4 -- No --> A7[Journaliser et ignorer];
     A6 --> A3;
     A7 --> A3;
     A3 --> A8{Toutes lignes traitées?};
     A8 -- Yes --> A9[Parser: Parsing Complete];
     
+    A9 --> A10{Mode strict?};
+    A10 -- Oui --> A11[Valider la structure];
+    A11 --> A12{Anomalies détectées?};
+    A12 -- Oui --> A13[Refuser le chargement];
+    A13 --> A18((End Load));
+    A10 -- Non --> A14[Controller: Boucle de construction];
+    A12 -- Non --> A14;
+
     %% Construction
-    A9 --> A10[Controller: Boucle de construction];
-    A10 --> A11[Instancier Modele];
-    A11 --> A12[Stocker Objet];
-    A12 --> A13[Construction Terminee];
-    
-    A13 --> end((End Load));
+    A14 --> A15[Instancier Modele];
+    A15 --> A16[Stocker Objet];
+    A16 --> A17[Construction Terminee];
+    A17 --> A18;
 ```
 
 ---
@@ -46,9 +52,9 @@ flowchart TD
     B1[UI: Select Pointer];
     B1 --> B2[UI appelle Controller.get_entity(pointer)];
     
-    B2 --> B3[Controller -> Service: Requete Entite];
-    B3 --> B4[Service -> Parser: Recuperer Entite brute];
-    B4 --> B5[Service -> Controller: Retour Objet Modele];
+    B2 --> B3[Controller -> Service: Requête entité];
+    B3 --> B4[Service -> Parser: Récupérer entité brute];
+    B4 --> B5[Controller -> Objet modèle];
     
     B5 --> B6[Controller: Traiter Objet];
     B6 --> B7[UI: Enregistrer Historique];
@@ -80,6 +86,6 @@ flowchart TD
         C7 -- Yes --> C8[Retour Liste Filtree];
     end
     
-    C8 --> C9[UI: Mettre a jour Listbox];
+    C8 --> C9[UI: Mettre à jour Treeview];
     C9 --> end((End Search));
 ```
