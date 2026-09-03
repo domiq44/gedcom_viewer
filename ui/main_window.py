@@ -155,6 +155,7 @@ class GedcomViewer:
             width=70,
             height=30,
             font=("Consolas", 10),
+            state="disabled",
         )
         self.text_area.pack(fill="both", expand=True)
 
@@ -401,6 +402,14 @@ class GedcomViewer:
         context = self.controller.get_entity_display_info(entity)
         self.display_entity_context(context)
 
+    def _display_raw_text(self, content):
+        self.text_area.config(state="normal")
+        try:
+            self.text_area.delete("1.0", tk.END)
+            self.text_area.insert(tk.END, content)
+        finally:
+            self.text_area.config(state="disabled")
+
     def show_header(self):
         if not self.controller.is_loaded():
             return
@@ -410,8 +419,7 @@ class GedcomViewer:
             messagebox.showerror("Erreur", "Aucun en-tête HEAD trouvé dans le fichier.")
             return
 
-        self.text_area.delete("1.0", tk.END)
-        self.text_area.insert(tk.END, block)
+        self._display_raw_text(block)
         self.highlighter.highlight()
 
     def show_trailer(self):
@@ -423,8 +431,7 @@ class GedcomViewer:
             messagebox.showerror("Erreur", "Aucun bloc TRLR trouvé dans le fichier.")
             return
 
-        self.text_area.delete("1.0", tk.END)
-        self.text_area.insert(tk.END, block)
+        self._display_raw_text(block)
         self.highlighter.highlight()
 
     def _record_navigation(self, context):
@@ -506,6 +513,5 @@ class GedcomViewer:
                 self.notebook.select(first_tab)
 
         if context.get("raw_block") is not None:
-            self.text_area.delete("1.0", tk.END)
-            self.text_area.insert(tk.END, context["raw_block"])
+            self._display_raw_text(context["raw_block"])
             self.highlighter.highlight()
