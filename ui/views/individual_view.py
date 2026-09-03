@@ -3,6 +3,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label, configure_text_widget
+
 
 class IndividualView(ttk.Frame):
     """
@@ -133,8 +135,7 @@ class IndividualView(ttk.Frame):
                     label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
                     label.pack(side="left")
                 else:
-                    widget.config(text="—", foreground="black", cursor="")
-                    widget.unbind("<Button-1>")
+                    configure_label(widget, "")
             return
 
         self.title_label.config(text=f"Fiche : {individual.pointer}")
@@ -205,9 +206,8 @@ class IndividualView(ttk.Frame):
                             occ_text = occ.get("occupation", "")
                             if occ.get("date"):
                                 occ_text += f" ({occ['date']})"
-                            label = ttk.Label(
-                                widget, text=occ_text, font=("Segoe UI", 10)
-                            )
+                            label = ttk.Label(widget, font=("Segoe UI", 10))
+                            configure_label(label, occ_text)
                             label.pack(side="left")
                     else:
                         label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
@@ -221,7 +221,8 @@ class IndividualView(ttk.Frame):
                                     widget, text="\n", font=("Segoe UI", 10)
                                 )
                                 sep.pack(side="left")
-                            label = ttk.Label(widget, text=prop, font=("Segoe UI", 10))
+                            label = ttk.Label(widget, font=("Segoe UI", 10))
+                            configure_label(label, prop)
                             label.pack(side="left")
                     else:
                         label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
@@ -258,8 +259,7 @@ class IndividualView(ttk.Frame):
                             scrollbar.config(command=text_widget.yview)
 
                             # Insérer le texte et le rendre en lecture seule
-                            text_widget.insert("1.0", text_item)
-                            text_widget.config(state="disabled")
+                            configure_text_widget(text_widget, text_item)
                     else:
                         label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
                         label.pack(side="left")
@@ -272,12 +272,9 @@ class IndividualView(ttk.Frame):
                                 sep.pack(side="left")
                             # Limiter la longueur des notes affichées
                             note_text = note[:50] + "..." if len(note) > 50 else note
-                            label = ttk.Label(
-                                widget,
-                                text=f"• {note_text}",
-                                font=("Segoe UI", 9),
-                                foreground="#555555",
-                            )
+                            label = ttk.Label(widget, font=("Segoe UI", 9))
+                            configure_label(label, f"• {note_text}")
+                            label.config(foreground="#555555")
                             label.pack(side="left", anchor="w")
                     else:
                         label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
@@ -300,15 +297,15 @@ class IndividualView(ttk.Frame):
                             lambda e, ptr=value: self.on_pointer_click(ptr),
                         )
                     else:
-                        widget.config(text="—", foreground="black", cursor="")
+                        configure_label(widget, "")
                     continue
 
                 # Traitement spécial pour death_confirmed
                 if key == "death_confirmed":
                     text = "Oui" if value else "Non"
-                    widget.config(text=text)
+                    configure_label(widget, text)
                 else:
-                    widget.config(text=value if value else "—")
+                    configure_label(widget, value)
 
     # ---------------------------------------------------------
     # Navigation par clic

@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import Mock, patch, call
 
 from ui.main_window import GedcomViewer
+from ui.views.link_utils import find_urls
 
 
 class TestGedcomViewer(unittest.TestCase):
@@ -225,6 +226,51 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.root.update_idletasks()
         self.assertIn("test log ui status", self.viewer.status_var.get())
+
+    def test_find_urls_in_form_value(self):
+        value = "Voir https://example.org/document, puis http://example.net."
+        self.assertEqual(
+            find_urls(value),
+            ["https://example.org/document", "http://example.net"],
+        )
+
+    def test_simple_form_url_opens_in_web_browser(self):
+        with patch("ui.views.link_utils.webbrowser.open") as open_browser:
+            self.viewer.submitter_view.display(
+                type(
+                    "DummySubmitter",
+                    (),
+                    {
+                        "pointer": "@M1@",
+                        "name": "https://example.org/submitter",
+                        "address": None,
+                        "phone": None,
+                        "email": None,
+                    },
+                )()
+            )
+            self.viewer.submitter_view.labels["name"].event_generate("<Button-1>")
+            open_browser.assert_called_once_with("https://example.org/submitter")
+
+    def test_multiline_form_marks_urls_as_clickable(self):
+        self.viewer.note_view.display(
+            type(
+                "DummyNote",
+                (),
+                {
+                    "pointer": "@N1@",
+                    "text": "Consulter https://example.org/note",
+                    "source": None,
+                    "references": [],
+                    "record_id": None,
+                    "submitters": [],
+                    "change_date": None,
+                    "change_time": None,
+                    "additional_fields": [],
+                },
+            )
+        )
+        self.assertTrue(self.viewer.note_view.text_widget.tag_ranges("url"))
 
     def test_individual_view_pointer_click_calls_callback(self):
         callback = Mock()

@@ -444,7 +444,7 @@ class GedcomViewer:
         self._entity_type_buttons = {}
 
         for row, (display, entity_type) in enumerate(
-            self.controller.get_entity_type_menu_display_items()
+            self.controller.get_all_entity_type_menu_display_items()
         ):
             button = tk.Button(
                 self.entity_type_tabs,
@@ -462,6 +462,8 @@ class GedcomViewer:
                 activeforeground="#0d3b66",
                 cursor="hand2",
             )
+            if entity_type not in self.controller.get_entity_types():
+                button.config(state="disabled", cursor="arrow", fg="#9aa4b2")
             button.grid(row=row, column=0, sticky="ew", pady=(0, 1))
             self._entity_type_buttons[entity_type] = button
 

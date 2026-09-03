@@ -3,6 +3,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label
+
 
 class FamilyView(ttk.Frame):
     """
@@ -150,12 +152,12 @@ class FamilyView(ttk.Frame):
                         pointer = value[index] if key == "sources" else None
                         label = ttk.Label(
                             widget,
-                            text=entry,
                             font=("Segoe UI", 10),
                             justify="left",
-                            foreground="blue" if pointer else "black",
-                            cursor="hand2" if pointer else "",
                         )
+                        configure_label(label, entry)
+                        if pointer:
+                            label.config(foreground="blue", cursor="hand2")
                         label.pack(anchor="w", pady=1)
                         if pointer:
                             label.bind(
@@ -178,7 +180,7 @@ class FamilyView(ttk.Frame):
                     make_clickable(widget, value)
                 continue
 
-            widget.config(text=value if value else "—")
+            configure_label(widget, value)
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):

@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label, configure_text_widget
+
 
 class SourceView(ttk.Frame):
     """
@@ -95,13 +97,9 @@ class SourceView(ttk.Frame):
             self.title_label.config(text="Source")
             for key, widget in self.labels.items():
                 if isinstance(widget, tk.Text):
-                    widget.config(state="normal")
-                    widget.delete("1.0", tk.END)
-                    widget.insert(tk.END, "—")
-                    widget.config(state="disabled")
+                    configure_text_widget(widget, "")
                 else:
-                    widget.config(text="—", foreground="black", cursor="")
-                    widget.unbind("<Button-1>")
+                    configure_label(widget, "")
             return
 
         self.title_label.config(text=f"Source : {source.pointer}")
@@ -124,10 +122,7 @@ class SourceView(ttk.Frame):
                 continue
 
             if key == "text":
-                widget.config(state="normal")
-                widget.delete("1.0", tk.END)
-                widget.insert(tk.END, value if value else "—")
-                widget.config(state="disabled")
+                configure_text_widget(widget, value)
                 continue
 
             if isinstance(value, list):
@@ -138,8 +133,7 @@ class SourceView(ttk.Frame):
                     for item in value
                 )
 
-            widget.config(text=value if value else "—", foreground="black", cursor="")
-            widget.unbind("<Button-1>")
+            configure_label(widget, value)
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):

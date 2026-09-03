@@ -55,6 +55,9 @@ class AppController:
     def get_entity_type_menu_display_items(self):
         return self.search_controller.get_entity_type_menu_display_items()
 
+    def get_all_entity_type_menu_display_items(self):
+        return self.search_controller.get_all_entity_type_menu_display_items()
+
     def list_entities(self, entity_type: str):
         return self.search_controller.list_entities(entity_type)
 

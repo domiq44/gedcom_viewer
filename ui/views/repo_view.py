@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label
+
 
 class RepositoryView(ttk.Frame):
     """
@@ -68,8 +70,7 @@ class RepositoryView(ttk.Frame):
         if not repo:
             self.title_label.config(text="Dépôt")
             for widget in self.labels.values():
-                widget.config(text="—", foreground="black", cursor="")
-                widget.unbind("<Button-1>")
+                configure_label(widget, "")
             return
 
         self.title_label.config(text=f"Dépôt : {repo.pointer}")
@@ -83,8 +84,7 @@ class RepositoryView(ttk.Frame):
                     else str(item)
                     for item in value
                 )
-            widget.config(text=value if value else "—", foreground="black", cursor="")
-            widget.unbind("<Button-1>")
+            configure_label(widget, value)
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):

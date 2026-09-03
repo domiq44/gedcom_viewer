@@ -40,6 +40,20 @@ class Note:
                 continue
 
             if level == 1:
+                if tag in {"CONC", "CONT"} and current_section == "NOTE":
+                    suffix = value or ""
+                    if tag == "CONT":
+                        self.text = (self.text + "\n" + suffix).strip("\n")
+                    elif suffix:
+                        needs_space = (
+                            bool(self.text)
+                            and not self.text.endswith(" ")
+                            and not suffix.startswith(" ")
+                            and suffix[0] not in {",", ".", ";", ":", "?", "!"}
+                        )
+                        self.text += (" " if needs_space else "") + suffix
+                    continue
+
                 current_additional = None
                 if tag == "NOTE":
                     self.text = (self.text + "\n" + (value or "")).strip("\n")

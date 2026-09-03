@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label
+
 
 class SubmitterView(ttk.Frame):
     """
@@ -43,13 +45,13 @@ class SubmitterView(ttk.Frame):
         if not submitter:
             self.title_label.config(text="Fournisseur d'information")
             for widget in self.labels.values():
-                widget.config(text="—", foreground="black", cursor="")
+                configure_label(widget, "")
             return
 
         self.title_label.config(text=f"Fournisseur d'information : {submitter.pointer}")
         for key, widget in self.labels.items():
             value = getattr(submitter, key, "")
-            widget.config(text=value if value else "—", foreground="black", cursor="")
+            configure_label(widget, value)
 
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):

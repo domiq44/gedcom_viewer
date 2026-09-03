@@ -4,6 +4,8 @@ import tempfile
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label, configure_text_widget
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -187,26 +189,18 @@ class MultimediaView(ttk.Frame):
             self._show_preview_placeholder()
             for key, widget in self.labels.items():
                 if isinstance(widget, tk.Text):
-                    widget.config(state="normal")
-                    widget.delete("1.0", tk.END)
-                    widget.insert(tk.END, "—")
-                    widget.config(state="disabled")
+                    configure_text_widget(widget, "")
                 else:
-                    widget.config(text="—", foreground="black", cursor="")
+                    configure_label(widget, "")
             return
 
         self.title_label.config(text=f"Multimédia : {media.pointer}")
         for key, widget in self.labels.items():
             value = getattr(media, key, "")
             if key == "note":
-                widget.config(state="normal")
-                widget.delete("1.0", tk.END)
-                widget.insert(tk.END, value or "—")
-                widget.config(state="disabled")
+                configure_text_widget(widget, value)
             else:
-                widget.config(
-                    text=value if value else "—", foreground="black", cursor=""
-                )
+                configure_label(widget, value)
 
         self._show_preview(getattr(media, "file", None))
 

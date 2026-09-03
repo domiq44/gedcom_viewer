@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.views.link_utils import configure_label, configure_text_widget
+
 
 class NoteView(ttk.Frame):
     """
@@ -17,8 +19,9 @@ class NoteView(ttk.Frame):
         self.title_label = ttk.Label(self, text="Note", font=("Segoe UI", 12, "bold"))
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
+        ttk.Label(self, text="Texte :").grid(row=1, column=0, sticky="nw")
         self.text_frame = ttk.Frame(self, padding=(0, 0, 0, 0))
-        self.text_frame.grid(row=1, column=0, sticky="nsew", padx=2, pady=(0, 4))
+        self.text_frame.grid(row=1, column=1, sticky="nsew", padx=(10, 2), pady=(0, 4))
 
         self.scrollbar = ttk.Scrollbar(self.text_frame, orient="vertical")
         self.scrollbar.pack(side="right", fill="y")
@@ -60,15 +63,12 @@ class NoteView(ttk.Frame):
             self.info_labels[key] = value_label
 
         self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
 
     def display(self, note):
         if not note:
             self.title_label.config(text="Note")
-            self.text_widget.config(state="normal")
-            self.text_widget.delete("1.0", tk.END)
-            self.text_widget.insert(tk.END, "—")
-            self.text_widget.config(state="disabled")
+            configure_text_widget(self.text_widget, "")
             self.source_label.config(text="—", foreground="black", cursor="")
             self.source_label.unbind("<Button-1>")
             for widget in self.info_labels.values():
@@ -76,10 +76,7 @@ class NoteView(ttk.Frame):
             return
 
         self.title_label.config(text=f"Note : {note.pointer}")
-        self.text_widget.config(state="normal")
-        self.text_widget.delete("1.0", tk.END)
-        self.text_widget.insert(tk.END, note.text or "—")
-        self.text_widget.config(state="disabled")
+        configure_text_widget(self.text_widget, note.text)
 
         source = getattr(note, "source", None)
         source_label = source or "—"
@@ -92,12 +89,7 @@ class NoteView(ttk.Frame):
             except Exception:
                 pass
 
-        self.source_label.config(
-            text=source_label,
-            foreground="blue" if source else "black",
-            cursor="hand2" if source else "",
-        )
-        self.source_label.unbind("<Button-1>")
+        configure_label(self.source_label, source_label)
         if source:
             self.source_label.bind(
                 "<Button-1>", lambda e, ptr=source: self.on_pointer_click(ptr)
