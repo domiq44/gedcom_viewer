@@ -25,9 +25,9 @@ class FamilyView(ttk.Frame):
         self.configure(padding=10)
 
         self.title_label = ttk.Label(
-            self, text="Famille", font=FONTS["title"]
+            self, text="Famille", font=("Segoe UI", 12, "bold")
         )
-        self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
+        self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 12))
 
         self.labels = {}
 
@@ -55,7 +55,8 @@ class FamilyView(ttk.Frame):
         ]
 
         for i, (label, key) in enumerate(fields, start=1):
-            ttk.Label(self, text=label + " :").grid(row=i, column=0, sticky="w")
+            field_label = ttk.Label(self, text=label + " :", foreground="#3b4a5a")
+            field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
             if key in (
                 "children",
                 "notes",
@@ -72,11 +73,11 @@ class FamilyView(ttk.Frame):
                     bd=1,
                     relief="solid",
                 )
-                container.grid(row=i, column=1, sticky="nsew", padx=10)
+                container.grid(row=i, column=1, sticky="nsew", padx=10, pady=2)
                 self.labels[key] = container
             else:
                 value_label = ttk.Label(self, text="", font=("Segoe UI", 10))
-                value_label.grid(row=i, column=1, sticky="w", padx=10)
+                value_label.grid(row=i, column=1, sticky="w", padx=10, pady=3)
                 self.labels[key] = value_label
 
     def set_name_resolver(self, resolver):

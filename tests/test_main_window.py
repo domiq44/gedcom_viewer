@@ -252,6 +252,20 @@ class TestGedcomViewer(unittest.TestCase):
             "first@example.org, second@example.org",
         )
 
+    def test_empty_entity_list_clears_raw_and_detail_views(self):
+        self.viewer.controller.is_loaded.return_value = True
+        self.viewer.controller.get_entity_types.return_value = ["INDI"]
+        self.viewer.controller.get_entity_list_items.return_value = []
+        self.viewer.entity_type_var.set("INDI")
+
+        self.viewer._show_entity_view("INDI", object())
+        self.viewer._display_raw_text("0 @I1@ INDI")
+
+        self.viewer.list_entities()
+
+        self.assertEqual(self.viewer.text_area.get("1.0", tk.END).strip(), "")
+        self.assertEqual(self.viewer.individual_view.title_label.cget("text"), "Fiche individu")
+
     def test_ui_status_reflects_last_log_message(self):
         logger = logging.getLogger("ui.main_window")
         logger.error("test log ui status")

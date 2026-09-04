@@ -88,6 +88,8 @@ class GedcomViewer:
     def __init__(self, root):
         self.root = root
         self.root.title("GEDCOM Viewer 5.5.1")
+        self.root.configure(bg=COLORS["background"])
+        self.root.minsize(1100, 700)
 
         self.recent_files = self._load_recent_files()
         self.menu_bar = MenuBar(self.root, self)
@@ -99,6 +101,35 @@ class GedcomViewer:
         self._entity_sort_reverse = False
         self._entity_by_item_id = {}
 
+        self.app_header = tk.Frame(
+            root,
+            bg="#dfeaf5",
+            highlightthickness=1,
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["separator"],
+            padx=18,
+            pady=10,
+        )
+        self.app_header.pack(fill="x", padx=10, pady=(10, 0))
+
+        self.app_title = tk.Label(
+            self.app_header,
+            text="GEDCOM Viewer",
+            font=("Segoe UI", 18, "bold"),
+            bg="#dfeaf5",
+            fg="#163a57",
+        )
+        self.app_title.pack(anchor="w")
+
+        self.app_subtitle = tk.Label(
+            self.app_header,
+            text="Explorateur de fichiers GEDCOM",
+            font=("Segoe UI", 9),
+            bg="#dfeaf5",
+            fg="#44627a",
+        )
+        self.app_subtitle.pack(anchor="w")
+
         content_frame = ttk.Frame(root)
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
         content_frame.grid_rowconfigure(0, weight=1)
@@ -108,7 +139,12 @@ class GedcomViewer:
         layout_pane.grid(row=0, column=0, sticky="nsew")
 
         self.entity_type_tabs = tk.Frame(
-            layout_pane, bg=COLORS["sidebar"], width=150
+            layout_pane,
+            bg=COLORS["sidebar"],
+            width=150,
+            highlightthickness=1,
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["separator"],
         )
         self.entity_type_tabs.grid_propagate(False)
         self.entity_type_tabs.grid_columnconfigure(0, weight=1)
@@ -130,7 +166,18 @@ class GedcomViewer:
         )
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", self.filter_entities)
-        self.search_entry = tk.Entry(left_frame, textvariable=self.search_var, width=30)
+        self.search_entry = tk.Entry(
+            left_frame,
+            textvariable=self.search_var,
+            width=30,
+            relief="solid",
+            highlightthickness=1,
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["selection"],
+            bg="#ffffff",
+            fg=COLORS["text"],
+            insertbackground=COLORS["text"],
+        )
         self.search_entry.grid(row=1, column=0, sticky="ew")
 
         tk.Label(left_frame, text="Entités :").grid(
@@ -142,6 +189,7 @@ class GedcomViewer:
             show="headings",
             selectmode="browse",
             style="Entity.Treeview",
+            padding=(6, 0),
         )
         self.entity_tree.heading(
             "name", text="Nom", command=lambda: self._sort_entity_tree("name")
@@ -169,8 +217,17 @@ class GedcomViewer:
         right_frame = tk.Frame(main_pane)
         main_pane.add(right_frame)
 
-        self.nav_toolbar = ttk.Frame(right_frame)
-        self.nav_toolbar.grid(row=0, column=0, sticky="w", pady=(0, 5))
+        self.nav_toolbar = tk.Frame(
+            right_frame,
+            bg="#edf4fb",
+            padx=8,
+            pady=6,
+            highlightthickness=1,
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["separator"],
+        )
+        self.nav_toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        self.nav_toolbar.grid_columnconfigure(0, weight=1)
 
         self.back_button = ttk.Button(
             self.nav_toolbar, text="← Précédent", command=self.go_back
@@ -181,6 +238,16 @@ class GedcomViewer:
             self.nav_toolbar, text="Suivant →", command=self.go_forward
         )
         self.forward_button.pack(side="left", padx=(5, 0))
+
+        self.header_button = ttk.Button(
+            self.nav_toolbar, text="📄 En-tête", command=self.show_header
+        )
+        self.header_button.pack(side="left", padx=(10, 5))
+
+        self.trailer_button = ttk.Button(
+            self.nav_toolbar, text="🔚 Fin du fichier", command=self.show_trailer
+        )
+        self.trailer_button.pack(side="left")
 
         self.history_status = tk.Label(
             self.nav_toolbar,
@@ -195,17 +262,6 @@ class GedcomViewer:
             self.nav_toolbar, text=" | ", foreground=COLORS["separator"]
         )
         separator.pack(side="left", padx=(10, 5))
-
-        # Boutons pour accéder à l'en-tête et au trailer du fichier
-        self.header_button = ttk.Button(
-            self.nav_toolbar, text="📄 En-tête", command=self.show_header
-        )
-        self.header_button.pack(side="left", padx=(0, 5))
-
-        self.trailer_button = ttk.Button(
-            self.nav_toolbar, text="🔚 Fin du fichier", command=self.show_trailer
-        )
-        self.trailer_button.pack(side="left")
 
         self.status_var = tk.StringVar(value="Prêt")
         self.log_status_frame = tk.LabelFrame(
@@ -232,7 +288,17 @@ class GedcomViewer:
         )
         right_content.grid(row=1, column=0, sticky="nsew")
 
-        self.gedcom_frame = tk.LabelFrame(right_content, text="GEDCOM", padx=8, pady=8)
+        self.gedcom_frame = tk.LabelFrame(
+            right_content,
+            text="GEDCOM",
+            padx=8,
+            pady=8,
+            bg=COLORS["background"],
+            bd=1,
+            relief="groove",
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["separator"],
+        )
         right_content.add(self.gedcom_frame, minsize=350)
         right_content.paneconfigure(self.gedcom_frame, stretch="always")
 
@@ -245,17 +311,31 @@ class GedcomViewer:
             height=30,
             font=FONTS["mono"],
             state="disabled",
+            relief="solid",
+            bd=1,
+            bg="#fcfcfd",
+            highlightthickness=1,
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["selection"],
         )
         self.text_area.pack(fill="both", expand=True)
 
         self.entity_detail_frame = tk.LabelFrame(
-            right_content, text="Vue de l’entité", padx=8, pady=8
+            right_content,
+            text="Vue de l’entité",
+            padx=8,
+            pady=8,
+            bg=COLORS["background"],
+            bd=1,
+            relief="groove",
+            highlightbackground=COLORS["separator"],
+            highlightcolor=COLORS["separator"],
         )
         right_content.add(self.entity_detail_frame, minsize=450)
         right_content.paneconfigure(self.entity_detail_frame, stretch="always")
 
         self.entity_detail_container = tk.Frame(
-            self.entity_detail_frame, bg=COLORS["surface"]
+            self.entity_detail_frame, bg=COLORS["surface"], bd=1, relief="solid"
         )
         self.entity_detail_container.pack(fill="both", expand=True)
         self.entity_detail_container.grid_rowconfigure(0, weight=1)
@@ -472,6 +552,8 @@ class GedcomViewer:
         self._update_entity_type_tab_state(entity_type)
         self._clear_entity_views(keep_type=entity_type)
         self.list_entities()
+        if entity_type in self._entity_view_map:
+            self._show_entity_view(entity_type, None)
 
     def _update_entity_type_tabs(self):
         for button in self._entity_type_buttons.values():
@@ -487,8 +569,8 @@ class GedcomViewer:
                 command=lambda value=entity_type: self.entity_type_var.set(value),
                 anchor="w",
                 justify="left",
-                padx=12,
-                pady=8,
+                padx=14,
+                pady=9,
                 relief="flat",
                 bd=1,
                 bg=COLORS["sidebar"],
@@ -499,11 +581,9 @@ class GedcomViewer:
                 highlightthickness=0,
                 font=("Segoe UI", 10, "bold"),
             )
-            if entity_type not in self.controller.get_entity_types():
-                button.config(
-                    state="disabled", cursor="arrow", fg=COLORS["disabled_text"]
-                )
             button.grid(row=row, column=0, sticky="ew", padx=6, pady=(0, 4))
+            if row == 0:
+                button.grid(pady=(4, 4))
             self._entity_type_buttons[entity_type] = button
 
         self._update_entity_type_tab_state(self.entity_type_var.get())
@@ -511,25 +591,48 @@ class GedcomViewer:
     def _update_entity_type_tab_state(self, selected_type):
         for entity_type, button in self._entity_type_buttons.items():
             is_selected = entity_type == selected_type
+            has_entities = entity_type in self.controller.get_entity_types()
             button.config(
                 relief="solid" if is_selected else "flat",
                 borderwidth=2 if is_selected else 1,
-                bg=COLORS["sidebar_active"] if is_selected else COLORS["sidebar"],
+                bg=(
+                    COLORS["sidebar_active"] if is_selected else COLORS["sidebar"]
+                ),
                 fg=(
                     COLORS["sidebar_active_text"]
                     if is_selected
                     else COLORS["sidebar_text"]
                 ),
-                padx=12,
-                pady=8,
+                padx=14,
+                pady=9,
             )
             if is_selected:
                 button.config(
+                    fg=COLORS["sidebar_active_text"],
+                    bg=COLORS["sidebar_active"],
                     highlightbackground=COLORS["selection"],
                     highlightcolor=COLORS["selection"],
+                    activebackground=COLORS["sidebar_hover"],
+                    activeforeground=COLORS["sidebar_active_text"],
+                )
+            elif not has_entities:
+                button.config(
+                    fg=COLORS["sidebar_text"],
+                    bg=COLORS["sidebar"],
+                    highlightbackground=COLORS["sidebar"],
+                    highlightcolor=COLORS["sidebar"],
+                    activebackground=COLORS["sidebar_hover"],
+                    activeforeground=COLORS["sidebar_active_text"],
                 )
             else:
-                button.config(highlightbackground=COLORS["sidebar"], highlightcolor=COLORS["sidebar"])
+                button.config(
+                    fg=COLORS["sidebar_text"],
+                    bg=COLORS["sidebar"],
+                    highlightbackground=COLORS["sidebar"],
+                    highlightcolor=COLORS["sidebar"],
+                    activebackground=COLORS["sidebar_hover"],
+                    activeforeground=COLORS["sidebar_active_text"],
+                )
 
     def _sort_entity_tree(self, column):
         if self._entity_sort_column == column:
@@ -593,8 +696,32 @@ class GedcomViewer:
         entity_type = self.entity_type_var.get()
         self.entity_tree.delete(*self.entity_tree.get_children())
         self._entity_by_item_id = {}
+        self.filtered_entities = []
+
+        if entity_type not in self.controller.get_entity_types():
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid="empty",
+                values=("Aucune entité de ce type", "—"),
+            )
+            self._show_entity_view(entity_type, None)
+            self._display_raw_text("")
+            return
+
         items = self.controller.get_entity_list_items(entity_type)
         self.filtered_entities = [entity for entity, _ in items]
+
+        if not items:
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid="empty",
+                values=("Aucune entité de ce type", "—"),
+            )
+            self._show_entity_view(entity_type, None)
+            self._display_raw_text("")
+            return
 
         for index, (entity, _) in enumerate(items):
             item_id = str(index)
@@ -617,9 +744,32 @@ class GedcomViewer:
         query = self.search_var.get()
         self.entity_tree.delete(*self.entity_tree.get_children())
         self._entity_by_item_id = {}
+        self.filtered_entities = []
+
+        if entity_type not in self.controller.get_entity_types():
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid="empty",
+                values=("Aucune entité de ce type", "—"),
+            )
+            self._show_entity_view(entity_type, None)
+            self._display_raw_text("")
+            return
 
         items = self.controller.get_entity_list_items(entity_type, query)
         self.filtered_entities = [entity for entity, _ in items]
+
+        if not items:
+            self.entity_tree.insert(
+                "",
+                "end",
+                iid="empty",
+                values=("Aucune entité de ce type", "—"),
+            )
+            self._show_entity_view(entity_type, None)
+            self._display_raw_text("")
+            return
 
         for index, (entity, _) in enumerate(items):
             item_id = str(index)
@@ -641,7 +791,15 @@ class GedcomViewer:
         if not self.controller.is_loaded():
             return
 
-        entity = self._entity_by_item_id[selection[0]]
+        item_id = selection[0]
+        if item_id == "empty":
+            self._show_entity_view(self.entity_type_var.get(), None)
+            self._display_raw_text("")
+            return
+
+        entity = self._entity_by_item_id.get(item_id)
+        if entity is None:
+            return
         context = self.controller.get_entity_display_info(entity)
         self.display_entity_context(context)
 

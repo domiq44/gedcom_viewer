@@ -26,9 +26,9 @@ class IndividualView(ttk.Frame):
 
         # Titre
         self.title_label = ttk.Label(
-            self, text="Fiche individu", font=FONTS["title"]
+            self, text="Fiche individu", font=("Segoe UI", 12, "bold")
         )
-        self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
+        self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 12))
 
         # Champs
         self.labels = {}
@@ -55,15 +55,16 @@ class IndividualView(ttk.Frame):
         ]
 
         for i, (label, key) in enumerate(fields, start=1):
-            ttk.Label(self, text=label + " :").grid(row=i, column=0, sticky="w")
+            field_label = ttk.Label(self, text=label + " :", foreground="#3b4a5a")
+            field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
 
             if key in ("fams", "occupations", "properties", "texts", "notes"):
-                container = ttk.Frame(self)
+                container = ttk.Frame(self, padding=(8, 4), relief="solid", borderwidth=1)
                 container.grid(row=i, column=1, sticky="nw", padx=10, pady=2)
                 self.labels[key] = container
             else:
                 value_label = ttk.Label(self, text="", font=FONTS["ui"])
-                value_label.grid(row=i, column=1, sticky="w", padx=10)
+                value_label.grid(row=i, column=1, sticky="w", padx=10, pady=3)
                 self.labels[key] = value_label
 
         # Espacement
