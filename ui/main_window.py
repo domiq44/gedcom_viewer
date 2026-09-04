@@ -34,6 +34,48 @@ class _UiLogHandler(logging.Handler):
             pass
 
 
+class _Tooltip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.window = None
+        self.after_id = None
+        widget.bind("<Enter>", self._schedule, add="+")
+        widget.bind("<Leave>", self._hide, add="+")
+
+    def _schedule(self, event=None):
+        self._hide()
+        self.after_id = self.widget.after(450, self._show)
+
+    def _show(self):
+        self.after_id = None
+        if not self.widget.winfo_exists() or not self.widget.winfo_ismapped():
+            return
+
+        self.window = tk.Toplevel(self.widget)
+        self.window.wm_overrideredirect(True)
+        self.window.wm_geometry(
+            f"+{self.widget.winfo_rootx()}+{self.widget.winfo_rooty() + self.widget.winfo_height() + 4}"
+        )
+        tk.Label(
+            self.window,
+            text=self.text,
+            bg="#263746",
+            fg="#ffffff",
+            padx=7,
+            pady=4,
+            font=("TkDefaultFont", 9),
+        ).pack()
+
+    def _hide(self, event=None):
+        if self.after_id is not None:
+            self.widget.after_cancel(self.after_id)
+            self.after_id = None
+        if self.window is not None:
+            self.window.destroy()
+            self.window = None
+
+
 class _ScrollableFrame(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
@@ -141,7 +183,7 @@ class GedcomViewer:
         self.entity_type_tabs = tk.Frame(
             layout_pane,
             bg=COLORS["sidebar"],
-            width=150,
+            width=140,
             highlightthickness=1,
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
@@ -149,14 +191,14 @@ class GedcomViewer:
         self.entity_type_tabs.grid_propagate(False)
         self.entity_type_tabs.grid_columnconfigure(0, weight=1)
         self._entity_type_buttons = {}
-        layout_pane.add(self.entity_type_tabs, minsize=125, width=150)
+        layout_pane.add(self.entity_type_tabs, minsize=120, width=140)
 
         main_pane = tk.PanedWindow(layout_pane, orient="horizontal")
-        layout_pane.add(main_pane, minsize=850)
+        layout_pane.add(main_pane, minsize=800, stretch="always")
 
         # --- FRAME GAUCHE ---
         left_frame = tk.Frame(main_pane)
-        main_pane.add(left_frame, minsize=250)
+        main_pane.add(left_frame, minsize=300, width=340, stretch="never")
 
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
@@ -215,53 +257,53 @@ class GedcomViewer:
 
         # --- FRAME DROITE ---
         right_frame = tk.Frame(main_pane)
-        main_pane.add(right_frame)
+        main_pane.add(right_frame, minsize=500, width=590, stretch="always")
 
         self.nav_toolbar = tk.Frame(
             right_frame,
-            bg="#edf4fb",
-            padx=8,
-            pady=6,
+            bg=COLORS["background"],
+            padx=0,
+            pady=2,
+        )
+        self.nav_toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 7))
+
+        navigation_group = tk.Frame(
+            self.nav_toolbar,
+            bg=COLORS["surface"],
             highlightthickness=1,
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        self.nav_toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 5))
-        self.nav_toolbar.grid_columnconfigure(0, weight=1)
+        navigation_group.pack(side="left")
 
         self.back_button = ttk.Button(
-            self.nav_toolbar, text="← Précédent", command=self.go_back
+            navigation_group,
+            text="←",
+            command=self.go_back,
+            style="Nav.TButton",
+            width=3,
         )
         self.back_button.pack(side="left")
+        _Tooltip(self.back_button, "Précédent")
 
         self.forward_button = ttk.Button(
-            self.nav_toolbar, text="Suivant →", command=self.go_forward
+            navigation_group,
+            text="→",
+            command=self.go_forward,
+            style="Nav.TButton",
+            width=3,
         )
-        self.forward_button.pack(side="left", padx=(5, 0))
-
-        self.header_button = ttk.Button(
-            self.nav_toolbar, text="📄 En-tête", command=self.show_header
-        )
-        self.header_button.pack(side="left", padx=(10, 5))
-
-        self.trailer_button = ttk.Button(
-            self.nav_toolbar, text="🔚 Fin du fichier", command=self.show_trailer
-        )
-        self.trailer_button.pack(side="left")
+        self.forward_button.pack(side="left")
+        _Tooltip(self.forward_button, "Suivant")
 
         self.history_status = tk.Label(
             self.nav_toolbar,
             text="Historique : 0/0",
+            bg=COLORS["background"],
             foreground=COLORS["muted_text"],
-            font=("TkDefaultFont", 9),
+            font=FONTS["ui"],
         )
-        self.history_status.pack(side="left", padx=(10, 0))
-
-        # Séparateur visuel
-        separator = tk.Label(
-            self.nav_toolbar, text=" | ", foreground=COLORS["separator"]
-        )
-        separator.pack(side="left", padx=(10, 5))
+        self.history_status.pack(side="right", padx=(12, 4))
 
         self.status_var = tk.StringVar(value="Prêt")
         self.log_status_frame = tk.LabelFrame(
@@ -299,7 +341,7 @@ class GedcomViewer:
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        right_content.add(self.gedcom_frame, minsize=350)
+        right_content.add(self.gedcom_frame, minsize=320, width=390)
         right_content.paneconfigure(self.gedcom_frame, stretch="always")
 
         tk.Label(self.gedcom_frame, text="Contenu brut du fichier :").pack(
@@ -331,7 +373,7 @@ class GedcomViewer:
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        right_content.add(self.entity_detail_frame, minsize=450)
+        right_content.add(self.entity_detail_frame, minsize=360, width=430)
         right_content.paneconfigure(self.entity_detail_frame, stretch="always")
 
         self.entity_detail_container = tk.Frame(

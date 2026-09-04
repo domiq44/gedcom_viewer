@@ -37,6 +37,19 @@ def apply_modern_theme(root):
     style.configure("TFrame", background=COLORS["background"])
     style.configure("TLabel", background=COLORS["background"], font=FONTS["ui"])
     style.configure("TButton", font=FONTS["ui"], padding=6)
+    style.configure(
+        "Nav.TButton",
+        font=FONTS["ui"],
+        padding=(4, 4),
+        background=COLORS["surface"],
+        foreground=COLORS["text"],
+        borderwidth=0,
+    )
+    style.map(
+        "Nav.TButton",
+        background=[("active", COLORS["sidebar_hover"])],
+        foreground=[("disabled", COLORS["disabled_text"])],
+    )
     style.configure("TSeparator", background=COLORS["separator"])
     style.configure("TLabelframe", background=COLORS["background"])
     style.configure(
