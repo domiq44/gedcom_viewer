@@ -277,6 +277,13 @@ class TestGedcomParser(unittest.TestCase):
 
         self.assertIn("ligne 2 malformée", parser.validate())
 
+    def test_validate_reports_line_without_tag(self):
+        parser = GedcomParser()
+        parser.lines = ["0 HEAD", "1", "0 TRLR"]
+        parser._parse_entities()
+
+        self.assertIn("ligne 2 malformée", parser.validate())
+
     def test_malformed_lines_are_recorded_and_logged(self):
         parser = GedcomParser()
         parser.lines = ["0 @I1@ INDI", "not a GEDCOM line", "1 NAME John /Doe/"]

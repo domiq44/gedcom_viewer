@@ -56,17 +56,12 @@ check_tk:
 # --- Installation ---
 
 install: venv check_pip check_tk
-	@if [ -n "$$VIRTUAL_ENV" ] || [ -d .venv ]; then \
-		echo "Installing packages into .venv..."; \
-		$(PYTHON_ACTUAL) -m pip install pillow pyinstaller black; \
-	else \
-		echo "Installing packages globally (use 'make venv' first for best results)."; \
-		$(PYTHON_ACTUAL) -m pip install --user pillow pyinstaller black; \
-	fi
+	@echo "Installing project dependencies..."
+	$(PYTHON_ACTUAL) -m pip install -r requirements-dev.txt
 
 # --- Exécution et Test ---
 
-run: venv install
+run: venv
 	echo "--- Running application ---"
 	$(PYTHON_ACTUAL) main.py
 

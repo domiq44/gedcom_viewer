@@ -36,6 +36,8 @@ def _parse_line(line):
         return None, None, None, None
 
     remainder = " ".join(parts[1:])
+    if not remainder:
+        return None, None, None, None
 
     pointer = None
     tag = None

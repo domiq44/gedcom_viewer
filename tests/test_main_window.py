@@ -113,7 +113,8 @@ class TestGedcomViewer(unittest.TestCase):
         with patch("ui.main_window.messagebox.showerror") as showerror:
             self.viewer.show_header()
             showerror.assert_called_once_with(
-                "Erreur", "Aucun en-tête HEAD trouvé dans le fichier."
+                self.viewer.translator.get("ui.error"),
+                self.viewer.translator.get("ui.no_header"),
             )
 
     def test_show_trailer_displays_trailer_block(self):
@@ -133,7 +134,8 @@ class TestGedcomViewer(unittest.TestCase):
         with patch("ui.main_window.messagebox.showerror") as showerror:
             self.viewer.show_trailer()
             showerror.assert_called_once_with(
-                "Erreur", "Aucun bloc TRLR trouvé dans le fichier."
+                self.viewer.translator.get("ui.error"),
+                self.viewer.translator.get("ui.no_trailer"),
             )
 
     def test_navigate_to_displays_entity_context(self):
@@ -166,7 +168,10 @@ class TestGedcomViewer(unittest.TestCase):
 
         with patch("ui.main_window.messagebox.showerror") as showerror:
             self.viewer.navigate_to("@X1@")
-            showerror.assert_called_once_with("Erreur", "Entité introuvable : @X1@")
+            showerror.assert_called_once_with(
+                self.viewer.translator.get("ui.error"),
+                self.viewer.translator.get("ui.entity_not_found", pointer="@X1@"),
+            )
 
     def test_navigation_history_can_go_back_and_forward(self):
         class DummyEntity:
@@ -302,7 +307,10 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.list_entities()
 
         self.assertEqual(self.viewer.text_area.get("1.0", tk.END).strip(), "")
-        self.assertEqual(self.viewer.individual_view.title_label.cget("text"), "Fiche individu")
+        self.assertEqual(
+            self.viewer.individual_view.title_label.cget("text"),
+            self.viewer.translator.get("view.individual"),
+        )
 
     def test_ui_status_reflects_last_log_message(self):
         logger = logging.getLogger("ui.main_window")

@@ -71,6 +71,10 @@ Cette commande installe :
 - PyInstaller pour la génération de l'exécutable ;
 - Black pour le formatage du code.
 
+Les dépendances runtime sont listées dans `requirements.txt` et les outils de
+développement dans `requirements-dev.txt`. La cible `make run` réutilise
+l'environnement virtuel existant sans relancer l'installation.
+
 ## Lancement
 
 Avec le script fourni :
