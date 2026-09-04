@@ -6,7 +6,10 @@ import tkinter as tk
 import unittest
 from unittest.mock import Mock, patch, call
 
+from ui.detail_panel import DetailPanel
+from ui.entity_type_panel import EntityTypePanel
 from ui.main_window import GedcomViewer
+from ui.themes import COLORS
 from ui.views.link_utils import find_urls
 
 
@@ -94,6 +97,25 @@ class TestGedcomViewer(unittest.TestCase):
                 self.viewer.load_file()
 
         self.assertEqual(askopenfilename.call_args.kwargs["initialdir"], "/tmp")
+
+    def test_entity_type_panel_updates_selected_button_state(self):
+        panel = EntityTypePanel(
+            self.root,
+            self.viewer.translator,
+            selected_type_var=tk.StringVar(value="FAM"),
+        )
+        panel.set_items([("Individu", "INDI"), ("Famille", "FAM")])
+
+        panel.update_selection("FAM")
+
+        self.assertEqual(panel._buttons["FAM"].cget("bg"), COLORS["sidebar_active"])
+        self.assertEqual(panel._buttons["INDI"].cget("bg"), COLORS["sidebar"])
+
+    def test_detail_panel_displays_raw_content(self):
+        panel = DetailPanel(self.root, self.viewer.translator)
+        panel.display_raw("0 @I1@ INDI")
+
+        self.assertEqual(panel.text_area.get("1.0", tk.END).strip(), "0 @I1@ INDI")
 
     def test_clear_search_clears_filter(self):
         self.viewer.controller.is_loaded.return_value = True

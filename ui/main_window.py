@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 from controllers.app_controller import AppController
 from controllers.navigation_history import NavigationHistory
 from controllers.recent_files_store import RecentFilesStore
+from ui.detail_panel import DetailPanel
 from ui.entity_list_panel import EntityListPanel
+from ui.entity_type_panel import EntityTypePanel
 from ui.load_coordinator import LoadCoordinator
 from ui.navigation_bar import NavigationBar
 from ui.menus import MenuBar
@@ -271,26 +273,20 @@ class GedcomViewer:
         self.right_frame.grid_rowconfigure(1, weight=1)
 
     def _build_entity_type_panel(self):
-        self.entity_type_tabs = tk.Frame(
+        self.entity_type_var = tk.StringVar()
+        self.entity_type_var.trace_add("write", self.on_entity_type_change)
+
+        self.entity_type_tabs = EntityTypePanel(
             self.layout_pane,
-            bg=COLORS["sidebar"],
-            width=220,
-            highlightthickness=1,
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["separator"],
+            self.translator,
+            self.entity_type_var,
         )
-        self.entity_type_tabs.grid_propagate(False)
-        self.entity_type_tabs.grid_columnconfigure(0, weight=1)
-        self._entity_type_buttons = {}
         self.layout_pane.add(
             self.entity_type_tabs,
             before=self.main_pane,
             minsize=190,
             width=220,
         )
-
-        self.entity_type_var = tk.StringVar()
-        self.entity_type_var.trace_add("write", self.on_entity_type_change)
 
         self.entity_list_panel = EntityListPanel(
             self.left_frame,
@@ -352,61 +348,14 @@ class GedcomViewer:
         )
         right_content.grid(row=1, column=0, sticky="nsew")
 
-        self.gedcom_frame = tk.LabelFrame(
-            right_content,
-            text="GEDCOM",
-            padx=8,
-            pady=8,
-            bg=COLORS["background"],
-            bd=1,
-            relief="groove",
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["separator"],
-        )
-        right_content.add(self.gedcom_frame, minsize=300, width=370)
-        right_content.paneconfigure(self.gedcom_frame, stretch="always")
+        self.detail_panel = DetailPanel(right_content, self.translator)
+        right_content.add(self.detail_panel, minsize=300, width=370)
+        right_content.paneconfigure(self.detail_panel, stretch="always")
 
-        tk.Label(self.gedcom_frame, text=self.translator.get("ui.raw_content")).pack(
-            anchor="w", pady=(0, 5)
-        )
-        self.text_area = tk.Text(
-            self.gedcom_frame,
-            width=70,
-            height=30,
-            font=FONTS["mono"],
-            state="disabled",
-            relief="solid",
-            bd=1,
-            bg="#fcfcfd",
-            highlightthickness=1,
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["selection"],
-        )
-        self.text_area.pack(fill="both", expand=True)
-
-        self.entity_detail_frame = tk.LabelFrame(
-            right_content,
-            text=self.translator.get("ui.entity_view"),
-            padx=8,
-            pady=8,
-            bg=COLORS["background"],
-            bd=1,
-            relief="groove",
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["separator"],
-        )
-        right_content.add(self.entity_detail_frame, minsize=340, width=410)
-        right_content.paneconfigure(self.entity_detail_frame, stretch="always")
-
-        self.entity_detail_container = tk.Frame(
-            self.entity_detail_frame, bg=COLORS["surface"], bd=1, relief="solid"
-        )
-        self.entity_detail_container.pack(fill="both", expand=True)
-        self.entity_detail_container.grid_rowconfigure(0, weight=1)
-        self.entity_detail_container.grid_columnconfigure(0, weight=1)
-
-        self.entity_detail_frame.grid_columnconfigure(0, weight=1)
-        self.entity_detail_frame.grid_rowconfigure(0, weight=1)
+        self.gedcom_frame = self.detail_panel.gedcom_frame
+        self.text_area = self.detail_panel.text_area
+        self.entity_detail_frame = self.detail_panel.entity_detail_frame
+        self.entity_detail_container = self.detail_panel.entity_detail_container
 
     def _build_detail_views(self):
         view_specs = [
@@ -695,71 +644,13 @@ class GedcomViewer:
             self._show_entity_view(entity_type, None)
 
     def _update_entity_type_tabs(self):
-        for button in self._entity_type_buttons.values():
-            button.destroy()
-        self._entity_type_buttons = {}
-
-        for row, (display, entity_type) in enumerate(
+        self.entity_type_tabs.set_items(
             self.controller.get_all_entity_type_menu_display_items()
-        ):
-            button = tk.Button(
-                self.entity_type_tabs,
-                text=display,
-                command=lambda value=entity_type: self.entity_type_var.set(value),
-                anchor="w",
-                justify="left",
-                padx=14,
-                pady=9,
-                relief="flat",
-                bd=1,
-                bg=COLORS["sidebar"],
-                fg=COLORS["sidebar_text"],
-                activebackground=COLORS["sidebar_hover"],
-                activeforeground=COLORS["sidebar_active_text"],
-                cursor="hand2",
-                highlightthickness=0,
-                font=("Segoe UI", 10, "bold"),
-            )
-            button.grid(row=row, column=0, sticky="ew", padx=6, pady=(0, 4))
-            if row == 0:
-                button.grid(pady=(4, 4))
-            self._entity_type_buttons[entity_type] = button
-
+        )
         self._update_entity_type_tab_state(self.entity_type_var.get())
 
     def _update_entity_type_tab_state(self, selected_type):
-        for entity_type, button in self._entity_type_buttons.items():
-            is_selected = entity_type == selected_type
-            button.config(
-                relief="solid" if is_selected else "flat",
-                borderwidth=2 if is_selected else 1,
-                bg=(COLORS["sidebar_active"] if is_selected else COLORS["sidebar"]),
-                fg=(
-                    COLORS["sidebar_active_text"]
-                    if is_selected
-                    else COLORS["sidebar_text"]
-                ),
-                padx=14,
-                pady=9,
-            )
-            if is_selected:
-                button.config(
-                    fg=COLORS["sidebar_active_text"],
-                    bg=COLORS["sidebar_active"],
-                    highlightbackground=COLORS["selection"],
-                    highlightcolor=COLORS["selection"],
-                    activebackground=COLORS["sidebar_hover"],
-                    activeforeground=COLORS["sidebar_active_text"],
-                )
-            else:
-                button.config(
-                    fg=COLORS["sidebar_text"],
-                    bg=COLORS["sidebar"],
-                    highlightbackground=COLORS["sidebar"],
-                    highlightcolor=COLORS["sidebar"],
-                    activebackground=COLORS["sidebar_hover"],
-                    activeforeground=COLORS["sidebar_active_text"],
-                )
+        self.entity_type_tabs.update_selection(selected_type)
 
     def _sort_entity_tree(self, column):
         if self._entity_sort_column == column:
@@ -905,12 +796,7 @@ class GedcomViewer:
         self.display_entity_context(context)
 
     def _display_raw_text(self, content):
-        self.text_area.config(state="normal")
-        try:
-            self.text_area.delete("1.0", tk.END)
-            self.text_area.insert(tk.END, content)
-        finally:
-            self.text_area.config(state="disabled")
+        self.detail_panel.display_raw(content)
 
     def show_header(self):
         if not self.controller.is_loaded():
