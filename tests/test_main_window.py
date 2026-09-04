@@ -8,9 +8,11 @@ from unittest.mock import Mock, patch, call
 
 from ui.app_header import AppHeader
 from ui.detail_panel import DetailPanel
+from ui.entity_navigator import EntityNavigator
 from ui.entity_type_panel import EntityTypePanel
 from ui.file_manager import FileManager
 from ui.main_window import GedcomViewer
+from ui.menus import MenuBar
 from ui.themes import COLORS
 from ui.views.link_utils import find_urls
 
@@ -122,8 +124,12 @@ class TestGedcomViewer(unittest.TestCase):
     def test_app_header_displays_title_and_subtitle(self):
         header = AppHeader(self.root, self.viewer.translator)
 
-        self.assertEqual(header.app_title.cget("text"), self.viewer.translator.get("app.title"))
-        self.assertEqual(header.app_subtitle.cget("text"), self.viewer.translator.get("app.subtitle"))
+        self.assertEqual(
+            header.app_title.cget("text"), self.viewer.translator.get("app.title")
+        )
+        self.assertEqual(
+            header.app_subtitle.cget("text"), self.viewer.translator.get("app.subtitle")
+        )
 
     def test_file_manager_remembers_last_directory_for_open_dialog(self):
         manager = FileManager(self.root, self.viewer.translator, last_directory="/tmp")
@@ -131,6 +137,41 @@ class TestGedcomViewer(unittest.TestCase):
         options = manager.file_dialog_options()
 
         self.assertEqual(options["initialdir"], "/tmp")
+
+    def test_menu_bar_refreshes_recent_entries(self):
+        self.viewer.recent_files = ["/tmp/recent.ged"]
+        menu = MenuBar(self.root, self.viewer)
+
+        self.assertEqual(menu.recent_menu.entrycget(0, "label"), "/tmp/recent.ged")
+
+    def test_entity_navigator_tracks_history_and_display(self):
+        class DummyEntity:
+            pointer = "@I1@"
+
+        target = DummyEntity()
+        context = {
+            "type": "individual",
+            "entity": target,
+            "raw_entity": target,
+            "raw_block": "0 @I1@ INDI",
+        }
+        controller = Mock()
+        controller.is_loaded.return_value = True
+        controller.resolve_pointer.return_value = target
+        controller.get_entity_display_info.return_value = context
+        displayed = []
+
+        navigator = EntityNavigator(
+            controller=controller,
+            history=self.viewer._navigation_history,
+            on_display=lambda ctx: displayed.append(ctx),
+            on_error=lambda *args, **kwargs: None,
+        )
+
+        navigator.navigate_to("@I1@")
+
+        self.assertEqual(len(self.viewer._navigation_history.entries), 1)
+        self.assertEqual(displayed[0]["raw_block"], "0 @I1@ INDI")
 
     def test_clear_search_clears_filter(self):
         self.viewer.controller.is_loaded.return_value = True
@@ -152,9 +193,7 @@ class TestGedcomViewer(unittest.TestCase):
         self.assertEqual(self.viewer._search_after_id, "search-id")
 
         with patch.object(self.viewer.root, "after_cancel") as cancel:
-            with patch.object(
-                self.viewer.root, "after", return_value="next-search-id"
-            ):
+            with patch.object(self.viewer.root, "after", return_value="next-search-id"):
                 self.viewer.filter_entities()
 
         cancel.assert_called_once_with("search-id")
@@ -450,13 +489,9 @@ class TestGedcomViewer(unittest.TestCase):
     def test_async_load_error_keeps_previous_controller(self):
         previous_controller = self.viewer.controller
         error = ValueError("invalid GEDCOM")
-        self.viewer.load_coordinator._results.put(
-            ("/tmp/test.ged", 1.0, error, None)
-        )
+        self.viewer.load_coordinator._results.put(("/tmp/test.ged", 1.0, error, None))
 
-        with patch.object(
-            self.viewer.load_coordinator, "on_error"
-        ) as show_load_error:
+        with patch.object(self.viewer.load_coordinator, "on_error") as show_load_error:
             self.viewer._poll_load_result()
 
         self.assertIs(self.viewer.controller, previous_controller)
@@ -464,9 +499,7 @@ class TestGedcomViewer(unittest.TestCase):
 
     def test_async_load_result_is_ignored_when_closing(self):
         self.viewer.load_coordinator.close()
-        self.viewer.load_coordinator._results.put(
-            ("/tmp/test.ged", 1.0, None, Mock())
-        )
+        self.viewer.load_coordinator._results.put(("/tmp/test.ged", 1.0, None, Mock()))
 
         with patch.object(self.viewer, "_apply_loaded_file") as apply_loaded_file:
             with patch.object(self.viewer, "_show_load_error") as show_load_error:

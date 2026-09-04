@@ -24,7 +24,7 @@ Terminée.
 
 ### Statut
 
-En cours — refactor UI partiellement terminé.
+Terminée.
 
 ### Réalisations
 
@@ -33,6 +33,12 @@ En cours — refactor UI partiellement terminé.
 - extraction de la barre de navigation dans `ui/navigation_bar.py` ;
 - extraction du sélecteur de type d’entité dans `ui/entity_type_panel.py` ;
 - extraction du panneau de contenu et vues détaillées dans `ui/detail_panel.py` ;
+- extraction de l’en-tête dans `ui/app_header.py` ;
+- extraction de la gestion des fichiers récents dans `ui/file_manager.py` ;
+- extraction du menu applicatif dans `ui/application_menu.py` ;
+- extraction du navigateur d’entités dans `ui/entity_browser.py` ;
+- extraction de la navigation d’entités dans `ui/entity_navigator.py` ;
+- extraction de la gestion des vues détaillées dans `ui/entity_view_manager.py` ;
 - mise en place d’un debounce de 100 ms sur la recherche côté interface ;
 - réduction de la logique UI dans `ui/main_window.py`.
 
@@ -51,6 +57,9 @@ Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 - isoler les vues détaillées derrière une API cohérente ;
 - limiter la logique UI dans `ui/main_window.py`.
 
+Les extractions prévues sont réalisées. La fenêtre principale conserve
+l’orchestration de l’application et les transitions entre contrôleurs et vues.
+
 ### Bénéfice interface
 
 - code plus lisible ;
@@ -59,6 +68,10 @@ Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 
 ## Priorité 3 — gérer les gros GEDCOM plus proprement
 
+### Statut
+
+En cours — première optimisation et mesure réalisées.
+
 ### Objectif performance
 
 Réduire le coût mémoire et améliorer la scalabilité.
@@ -66,6 +79,9 @@ Réduire le coût mémoire et améliorer la scalabilité.
 ### Actions performance
 
 - identifier les points de chargement en mémoire complète ;
+- lecture normalisée ligne par ligne pour supprimer la copie temporaire des
+  lignes brutes ;
+- première mesure sur 100 000 lignes : environ 6,5 Mo de pic mémoire ;
 - introduire des structures d’index plus compactes ;
 - étudier un chargement partiel ou paresseux pour les gros fichiers ;
 - conserver une API stable pour les contrôleurs existants.

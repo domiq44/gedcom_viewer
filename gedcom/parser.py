@@ -69,17 +69,18 @@ class GedcomParser:
 
     def load(self, filename, strict=False):
         with open(filename, "r", encoding="utf-8-sig", errors="replace") as f:
-            raw_lines = f.readlines()
+            self.lines = []
+            self.encoding_replacements = 0
+            for raw_line in f:
+                self.encoding_replacements += raw_line.count("\ufffd")
+                self.lines.append(raw_line.replace("\xa0", " ").rstrip("\r\n"))
 
-        self.encoding_replacements = sum(line.count("\ufffd") for line in raw_lines)
         if self.encoding_replacements:
             logger.warning(
                 "%s caractère(s) invalide(s) remplacé(s) lors de la lecture de %s",
                 self.encoding_replacements,
                 filename,
             )
-
-        self.lines = [line.replace("\xa0", " ").rstrip("\r\n") for line in raw_lines]
 
         self._parse_entities()
         self.validation_errors = self.validate()

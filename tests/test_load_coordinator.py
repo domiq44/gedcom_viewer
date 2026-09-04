@@ -35,9 +35,7 @@ class TestLoadCoordinator(unittest.TestCase):
             worker_target()
 
         self.on_loading.assert_called_once_with()
-        self.controller.load_file.assert_called_once_with(
-            "/tmp/test.ged", strict=True
-        )
+        self.controller.load_file.assert_called_once_with("/tmp/test.ged", strict=True)
         self.assertTrue(self.coordinator.is_loading)
 
         self.coordinator._poll_result()
@@ -76,9 +74,7 @@ class TestLoadCoordinator(unittest.TestCase):
         self.coordinator._poll_result()
 
         self.assertEqual(len(self.root.after_calls), 1)
-        self.assertEqual(
-            self.root.after_calls[0][0], LoadCoordinator.POLL_INTERVAL_MS
-        )
+        self.assertEqual(self.root.after_calls[0][0], LoadCoordinator.POLL_INTERVAL_MS)
 
     def test_close_ignores_pending_result(self):
         self.coordinator.close()

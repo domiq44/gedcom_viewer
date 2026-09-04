@@ -42,9 +42,7 @@ class LoadCoordinator:
                 loaded_controller.load_file(filename, strict=strict)
             except Exception as exc:
                 error = exc
-            self._results.put(
-                (filename, load_started_at, error, loaded_controller)
-            )
+            self._results.put((filename, load_started_at, error, loaded_controller))
 
         threading.Thread(target=load_in_worker, daemon=True).start()
         self.root.after(self.POLL_INTERVAL_MS, self._poll_result)

@@ -61,9 +61,7 @@ class NavigationBar(tk.Frame):
 
     def update_state(self, can_go_back, can_go_forward, current, total):
         self.back_button.state(("!disabled",) if can_go_back else ("disabled",))
-        self.forward_button.state(
-            ("!disabled",) if can_go_forward else ("disabled",)
-        )
+        self.forward_button.state(("!disabled",) if can_go_forward else ("disabled",))
         self.history_status.config(
             text=self.translator.get("ui.history", current=current, total=total)
         )

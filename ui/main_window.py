@@ -14,13 +14,16 @@ from controllers.navigation_history import NavigationHistory
 from controllers.recent_files_store import RecentFilesStore
 from ui.app_header import AppHeader
 from ui.detail_panel import DetailPanel
+from ui.application_menu import ApplicationMenu
+from ui.entity_browser import EntityBrowser
+from ui.entity_navigator import EntityNavigator
 from ui.entity_list_panel import EntityListPanel
 from ui.entity_type_panel import EntityTypePanel
+from ui.entity_view_manager import EntityViewManager
 from ui.file_manager import FileManager
 from ui.load_coordinator import LoadCoordinator
 from ui.navigation_bar import NavigationBar
 from ui.status_bar import StatusBar
-from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
 from ui.views.family_view import FamilyView
@@ -170,7 +173,7 @@ class GedcomViewer:
             last_directory=self.last_directory,
             recent_files=self.recent_files,
         )
-        self.menu_bar = MenuBar(self.root, self)
+        self.menu_bar = ApplicationMenu(self.root, self)
         self.controller = AppController(translator=self.translator)
         self._initialize_state()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -196,6 +199,16 @@ class GedcomViewer:
         self._entity_sort_column = None
         self._entity_sort_reverse = False
         self._entity_by_item_id = {}
+        self.entity_navigator = EntityNavigator(
+            controller=self.controller,
+            history=self._navigation_history,
+            on_display=self.display_entity_context,
+            on_error=lambda error_key, message_key, **kwargs: messagebox.showerror(
+                self.translator.get(error_key),
+                self.translator.get(message_key, **kwargs),
+            ),
+        )
+        self.entity_view_manager = EntityViewManager({})
 
         self.load_coordinator = LoadCoordinator(
             root=self.root,
@@ -274,9 +287,11 @@ class GedcomViewer:
             width=220,
         )
 
-        self.entity_list_panel = EntityListPanel(
+        self.entity_list_panel = EntityBrowser(
             self.left_frame,
             self.translator,
+            self.controller,
+            self.entity_type_var,
             on_search=self.filter_entities,
             on_clear_search=self.clear_search,
             on_sort=self._sort_entity_tree,
@@ -309,7 +324,9 @@ class GedcomViewer:
 
     def _build_status_bar(self):
         self.status_var = tk.StringVar(value=self.translator.get("ui.ready"))
-        self.log_status_frame = StatusBar(self.right_frame, self.translator, self.status_var)
+        self.log_status_frame = StatusBar(
+            self.right_frame, self.translator, self.status_var
+        )
         self.log_status_frame.grid(row=2, column=0, sticky="ew", pady=(4, 0))
         self.status_label = self.log_status_frame.status_label
 
@@ -394,6 +411,8 @@ class GedcomViewer:
                 view,
                 getattr(self, f"{name}_tab"),
             )
+
+        self.entity_view_manager.entity_view_map = self._entity_view_map
 
     def _create_scrollable_detail_view(self, name, view_class, **resolvers):
         tab = ttk.Frame(self.entity_detail_container)
@@ -567,24 +586,10 @@ class GedcomViewer:
         self._update_navigation_buttons()
 
     def _clear_entity_views(self, keep_type=None):
-        for entity_type, (view, tab) in self._entity_view_map.items():
-            if entity_type == keep_type:
-                tab.pack(fill="both", expand=True)
-            else:
-                tab.pack_forget()
-                view.display(None)
+        self.entity_view_manager.clear(keep_type=keep_type)
 
     def _show_entity_view(self, entity_type, entity=None):
-        if entity is not None and not getattr(entity, "pointer", None):
-            entity = None
-
-        for current_type, (view, tab) in self._entity_view_map.items():
-            if current_type == entity_type:
-                tab.pack(fill="both", expand=True)
-                view.display(entity)
-            else:
-                tab.pack_forget()
-                view.display(None)
+        self.entity_view_manager.show(entity_type, entity=entity)
 
     def _update_navigation_buttons(self):
         total = len(self._navigation_history.entries)
@@ -794,43 +799,24 @@ class GedcomViewer:
         self.highlighter.highlight()
 
     def _record_navigation(self, context):
-        self._navigation_history.record(context)
+        self.entity_navigator.record(context)
         self._update_navigation_buttons()
 
     def navigate_to(self, pointer):
-        if not self.controller.is_loaded():
-            messagebox.showerror(
-                self.translator.get("ui.error"),
-                self.translator.get("ui.no_session"),
-            )
-            return
-
-        target = self.controller.resolve_pointer(pointer)
-        if target is None:
-            messagebox.showerror(
-                self.translator.get("ui.error"),
-                self.translator.get("ui.entity_not_found", pointer=pointer),
-            )
-            return
-
-        context = self.controller.get_entity_display_info(target)
-        self._record_navigation(context)
-        self.display_entity_context(context)
+        self.entity_navigator.controller = self.controller
+        self.entity_navigator.history = self._navigation_history
+        self.entity_navigator.navigate_to(pointer)
 
     def go_back(self):
-        context = self._navigation_history.back()
-        if context is None:
-            return
-
-        self.display_entity_context(context)
+        self.entity_navigator.controller = self.controller
+        self.entity_navigator.history = self._navigation_history
+        self.entity_navigator.go_back()
         self._update_navigation_buttons()
 
     def go_forward(self):
-        context = self._navigation_history.forward()
-        if context is None:
-            return
-
-        self.display_entity_context(context)
+        self.entity_navigator.controller = self.controller
+        self.entity_navigator.history = self._navigation_history
+        self.entity_navigator.go_forward()
         self._update_navigation_buttons()
 
     def display_entity_context(self, context):
