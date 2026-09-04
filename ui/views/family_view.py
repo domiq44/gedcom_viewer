@@ -8,7 +8,6 @@ from ui.views.link_utils import configure_label
 from ui.themes import FONTS
 from ui.i18n import Translator
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -184,7 +183,9 @@ class FamilyView(ttk.Frame):
                     elif key == "marriages":
                         entries = [self._format_event(event) for event in value]
                     else:
-                        entries = [self._format_additional_field(field) for field in value]
+                        entries = [
+                            self._format_additional_field(field) for field in value
+                        ]
                     for index, entry in enumerate(entries):
                         pointer = value[index] if key == "sources" else None
                         label = ttk.Label(

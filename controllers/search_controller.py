@@ -107,6 +107,8 @@ class SearchController:
 
         if entity_type == "INDI":
             return self.entity_controller.search_individuals(query)
+        if entity_type == "FAM":
+            return self.entity_controller.search_families(query)
         if entity_type == "SOUR":
             return self.entity_controller.search_sources(query)
         if entity_type == "REPO":
@@ -118,14 +120,16 @@ class SearchController:
         if entity_type == "SUBM":
             return self.entity_controller.search_submitters(query)
 
-        normalized = (query or "").lower()
+        normalized = self.entity_controller._normalize_search_text(query)
         if not normalized:
             return self.list_entities(entity_type)
 
         return [
             entity
             for entity in self.list_entities(entity_type)
-            if getattr(entity, "pointer", "") and normalized in entity.pointer.lower()
+            if getattr(entity, "pointer", "")
+            and normalized
+            in self.entity_controller._normalize_search_text(entity.pointer)
         ]
 
     def get_entity_list(self, entity_type: str, query: str = ""):

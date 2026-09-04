@@ -25,14 +25,14 @@ def _load_catalog(language):
     return data if isinstance(data, dict) else {}
 
 
-TRANSLATIONS = {
-    language: _load_catalog(language) for language in SUPPORTED_LANGUAGES
-}
+TRANSLATIONS = {language: _load_catalog(language) for language in SUPPORTED_LANGUAGES}
 
 
 class Translator:
     def __init__(self, language=DEFAULT_LANGUAGE):
-        self.language = language if language in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+        self.language = (
+            language if language in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+        )
 
     def set_language(self, language):
         if language not in SUPPORTED_LANGUAGES:

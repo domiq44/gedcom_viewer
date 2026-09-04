@@ -33,6 +33,24 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 
 L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
 
+## Champs utilisés par la recherche
+
+La recherche porte sur les champs GEDCOM suivants :
+
+| Type | Champs recherchés |
+| --- | --- |
+| `INDI` | Pointeur de l'individu et `NAME` |
+| `FAM` | Pointeur de la famille et `NAME` des individus référencés par `HUSB`, `WIFE` ou `CHIL` |
+| `SOUR` | Pointeur de la source et `TITL` |
+| `REPO` | Pointeur du dépôt et `NAME` |
+| `NOTE` | Pointeur de la note et texte de la note |
+| `OBJE` | Pointeur du média, `TITL` et `FILE` |
+| `SUBM` | Pointeur du submitter, `NAME` et `EMAIL` |
+
+La recherche est insensible à la casse et aux accents pour tous ces champs :
+`cretel` trouve notamment `crétel`, `Crétel` et `Cretel`, quel que soit le type
+d'entité recherché.
+
 ## Architecture
 
 ```text
@@ -79,8 +97,9 @@ Cette commande installe :
 - Black pour le formatage du code.
 
 Les dépendances runtime sont listées dans `requirements.txt` et les outils de
-développement dans `requirements-dev.txt`. La cible `make run` réutilise
-l'environnement virtuel existant sans relancer l'installation.
+développement dans `requirements-dev.txt`. La cible `make run` vérifie
+l'environnement virtuel et installe ou met à jour les dépendances avant le
+lancement.
 
 ## Lancement
 
@@ -123,7 +142,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 94 tests présents dans la suite.
+Dernière validation : 104 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 

@@ -8,8 +8,11 @@ from controllers.presentation_controller import PresentationController
 from gedcom.parser import GedcomParser, GedcomEntity
 from gedcom.models.individual import Individual
 from gedcom.models.family import Family
+from gedcom.models.note import Note
+from gedcom.models.object import MultimediaObject
 from gedcom.models.source import Source
 from gedcom.models.repository import Repository
+from gedcom.models.submitter import Submitter
 from ui.i18n import Translator
 
 MALFORMED_HEAD_TRLR_GEDCOM = """0 @I1@ INDI
@@ -208,9 +211,7 @@ class TestAppController(unittest.TestCase):
         )
 
         surname_adams = Individual(
-            GedcomEntity(
-                "@I20@", "INDI", 0, ["0 @I20@ INDI\n", "1 NAME Zoe /Adams/\n"]
-            )
+            GedcomEntity("@I20@", "INDI", 0, ["0 @I20@ INDI\n", "1 NAME Zoe /Adams/\n"])
         )
         surname_martin = Individual(
             GedcomEntity(
@@ -391,6 +392,117 @@ class TestAppController(unittest.TestCase):
 
         all_families = self.controller.search_entities("FAM", "")
         self.assertEqual(len(all_families), 1)
+
+    def test_search_individuals_ignores_case_and_accents(self):
+        individual = Individual(
+            GedcomEntity("@I2@", "INDI", 0, ["0 @I2@ INDI\n", "1 NAME Léon /Crétel/\n"])
+        )
+        self.controller.entity_controller.individuals[individual.pointer] = individual
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("INDI", query)
+                self.assertEqual([item.pointer for item in results], ["@I2@"])
+
+    def test_search_families_ignores_case_and_accents_in_member_names(self):
+        individual = Individual(
+            GedcomEntity("@I2@", "INDI", 0, ["0 @I2@ INDI\n", "1 NAME Léon /Crétel/\n"])
+        )
+        family = Family(
+            GedcomEntity(
+                "@F2@",
+                "FAM",
+                0,
+                ["0 @F2@ FAM\n", "1 HUSB @I2@\n"],
+            )
+        )
+        self.controller.entity_controller.individuals[individual.pointer] = individual
+        self.controller.entity_controller.families[family.pointer] = family
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("FAM", query)
+                self.assertEqual([item.pointer for item in results], ["@F2@"])
+
+    def test_search_repositories_ignores_case_and_accents(self):
+        repository = Repository(
+            GedcomEntity(
+                "@R2@",
+                "REPO",
+                0,
+                ["0 @R2@ REPO\n", "1 NAME Dépôt Crétel\n"],
+            )
+        )
+        self.controller.entity_controller.repositories[repository.pointer] = repository
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("REPO", query)
+                self.assertEqual([item.pointer for item in results], ["@R2@"])
+
+    def test_search_sources_ignores_case_and_accents(self):
+        source = Source(
+            GedcomEntity(
+                "@S2@",
+                "SOUR",
+                0,
+                ["0 @S2@ SOUR\n", "1 TITL Archives de Crétel\n"],
+            )
+        )
+        self.controller.entity_controller.sources[source.pointer] = source
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("SOUR", query)
+                self.assertEqual([item.pointer for item in results], ["@S2@"])
+
+    def test_search_notes_ignores_case_and_accents(self):
+        note = Note(
+            GedcomEntity(
+                "@N2@",
+                "NOTE",
+                0,
+                ["0 @N2@ NOTE\n", "1 NOTE Mémoire Crétel\n"],
+            )
+        )
+        self.controller.entity_controller.notes[note.pointer] = note
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("NOTE", query)
+                self.assertEqual([item.pointer for item in results], ["@N2@"])
+
+    def test_search_objects_ignores_case_and_accents(self):
+        multimedia = MultimediaObject(
+            GedcomEntity(
+                "@O2@",
+                "OBJE",
+                0,
+                ["0 @O2@ OBJE\n", "1 TITL Photo Crétel\n"],
+            )
+        )
+        self.controller.entity_controller.objects[multimedia.pointer] = multimedia
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("OBJE", query)
+                self.assertEqual([item.pointer for item in results], ["@O2@"])
+
+    def test_search_submitters_ignores_case_and_accents(self):
+        submitter = Submitter(
+            GedcomEntity(
+                "@M2@",
+                "SUBM",
+                0,
+                ["0 @M2@ SUBM\n", "1 NAME Émile Crétel\n"],
+            )
+        )
+        self.controller.entity_controller.submitters[submitter.pointer] = submitter
+
+        for query in ("cretel", "crétel", "Crétel", "Cretel"):
+            with self.subTest(query=query):
+                results = self.controller.search_entities("SUBM", query)
+                self.assertEqual([item.pointer for item in results], ["@M2@"])
 
 
 if __name__ == "__main__":

@@ -42,8 +42,22 @@ class Family:
         current_event = None
         current_additional = None
         known_level_one_tags = {
-            "HUSB", "WIFE", "CHIL", "MARR", "DIV", "NCHI", "ENGA", "MARB",
-            "MARC", "MARL", "MARS", "DIVF", "ANUL", "NOTE", "SOUR", "EVEN",
+            "HUSB",
+            "WIFE",
+            "CHIL",
+            "MARR",
+            "DIV",
+            "NCHI",
+            "ENGA",
+            "MARB",
+            "MARC",
+            "MARL",
+            "MARS",
+            "DIVF",
+            "ANUL",
+            "NOTE",
+            "SOUR",
+            "EVEN",
         }
 
         for raw in lines:
@@ -76,18 +90,20 @@ class Family:
                     except (ValueError, TypeError):
                         self.number_of_children = value
 
-                elif tag in {
-                    "ENGA", "MARB", "MARC", "MARL", "MARS", "DIVF", "ANUL"
-                }:
-                    setattr(self, {
-                        "ENGA": "engagement",
-                        "MARB": "marriage_banns",
-                        "MARC": "marriage_contract",
-                        "MARL": "marriage_license",
-                        "MARS": "marriage_settlement",
-                        "DIVF": "divorce_final",
-                        "ANUL": "annulment",
-                    }[tag], value or True)
+                elif tag in {"ENGA", "MARB", "MARC", "MARL", "MARS", "DIVF", "ANUL"}:
+                    setattr(
+                        self,
+                        {
+                            "ENGA": "engagement",
+                            "MARB": "marriage_banns",
+                            "MARC": "marriage_contract",
+                            "MARL": "marriage_license",
+                            "MARS": "marriage_settlement",
+                            "DIVF": "divorce_final",
+                            "ANUL": "annulment",
+                        }[tag],
+                        value or True,
+                    )
 
                 elif tag == "NOTE":
                     self.notes.append(value)

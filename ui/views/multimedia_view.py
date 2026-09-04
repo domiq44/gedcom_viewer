@@ -73,9 +73,9 @@ class MultimediaView(ttk.Frame):
         ]
 
         for i, (label_key, key) in enumerate(fields, start=2):
-            ttk.Label(self.content_frame, text=self.translator.get(label_key) + " :").grid(
-                row=i, column=0, sticky="w"
-            )
+            ttk.Label(
+                self.content_frame, text=self.translator.get(label_key) + " :"
+            ).grid(row=i, column=0, sticky="w")
             if key == "note":
                 text_frame = ttk.Frame(self.content_frame, padding=(2, 2, 2, 2))
                 text_frame.grid(row=i, column=1, sticky="nsew", padx=10)
@@ -122,9 +122,7 @@ class MultimediaView(ttk.Frame):
     def set_base_path(self, base_path):
         self.base_path = base_path if base_path and os.path.isdir(base_path) else None
 
-    def _show_preview_placeholder(
-        self, reason=None, log=True
-    ):
+    def _show_preview_placeholder(self, reason=None, log=True):
         reason = reason or self.translator.get("view.preview_unavailable")
         if log:
             logger.info("Prévisualisation non disponible: %s", reason)
@@ -134,9 +132,7 @@ class MultimediaView(ttk.Frame):
 
     def _show_preview(self, file_path):
         if not file_path:
-            self._show_preview_placeholder(
-                self.translator.get("view.no_media_path")
-            )
+            self._show_preview_placeholder(self.translator.get("view.no_media_path"))
             return
 
         candidates = [file_path]

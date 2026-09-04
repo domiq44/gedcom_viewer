@@ -26,14 +26,18 @@ from ui.i18n import Translator
 
 
 class _UiLogHandler(logging.Handler):
-    def __init__(self, status_var):
+    def __init__(self, root, status_var):
         super().__init__()
+        self.root = root
         self.status_var = status_var
 
     def emit(self, record):
         try:
             message = self.format(record)
-            self.status_var.set(message)
+            if threading.current_thread() is threading.main_thread():
+                self.status_var.set(message)
+            else:
+                self.root.after(0, self.status_var.set, message)
         except Exception:
             pass
 
@@ -444,7 +448,9 @@ class GedcomViewer:
         self.note_tab = ttk.Frame(self.entity_detail_container)
         note_scroll = _ScrollableFrame(self.note_tab)
         note_scroll.pack(fill="both", expand=True)
-        self.note_view = NoteView(note_scroll.content, self.navigate_to, self.translator)
+        self.note_view = NoteView(
+            note_scroll.content, self.navigate_to, self.translator
+        )
         self.note_view.set_reference_resolver(self.controller.get_source)
         self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -493,7 +499,7 @@ class GedcomViewer:
         if hasattr(self, "_ui_log_handler"):
             return
 
-        self._ui_log_handler = _UiLogHandler(self.status_var)
+        self._ui_log_handler = _UiLogHandler(self.root, self.status_var)
         self._ui_log_handler.setFormatter(
             logging.Formatter("%(levelname)s: %(message)s")
         )
@@ -514,7 +520,9 @@ class GedcomViewer:
                     try:
                         self.translator.set_language(language)
                     except ValueError:
-                        logger.warning("Langue non supportee dans les preferences: %s", language)
+                        logger.warning(
+                            "Langue non supportee dans les preferences: %s", language
+                        )
                 last_directory = data.get("last_directory")
                 if isinstance(last_directory, str) and os.path.isdir(last_directory):
                     self.last_directory = last_directory
@@ -776,9 +784,7 @@ class GedcomViewer:
             button.config(
                 relief="solid" if is_selected else "flat",
                 borderwidth=2 if is_selected else 1,
-                bg=(
-                    COLORS["sidebar_active"] if is_selected else COLORS["sidebar"]
-                ),
+                bg=(COLORS["sidebar_active"] if is_selected else COLORS["sidebar"]),
                 fg=(
                     COLORS["sidebar_active_text"]
                     if is_selected
@@ -842,9 +848,7 @@ class GedcomViewer:
         )
 
         self.filtered_entities = [entity for _, _, entity, _ in rows]
-        self._entity_by_item_id = {
-            item_id: entity for item_id, _, entity, _ in rows
-        }
+        self._entity_by_item_id = {item_id: entity for item_id, _, entity, _ in rows}
         for index, (item_id, _, _, _) in enumerate(rows):
             self.entity_tree.move(item_id, "", index)
 

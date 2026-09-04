@@ -37,6 +37,8 @@ main.py
 - Chargement de fichiers GEDCOM et affichage du bloc brut.
 - Support des types `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
 - Recherche instantanée et tri par nom, titre ou identifiant.
+- Recherche par pointeur et champs GEDCOM documentés dans `README.md`, avec résolution des membres `HUSB`, `WIFE` et `CHIL` pour les familles.
+- Recherche de tous les types d'entités insensible à la casse et aux accents.
 - Effacement rapide du filtre de recherche avec le bouton `×`.
 - Style du bouton harmonisé avec les couleurs de surface, de séparation et de survol de l'interface.
 - Tri numérique des pointeurs comme `@I2@` et `@I10@`.
@@ -76,7 +78,7 @@ Les résolveurs de noms et de pointeurs des vues ainsi que la sauvegarde des fic
 
 ### 3. Validation GEDCOM configurable
 
-Le parser reste tolérant par défaut : les lignes invalides et fichiers incomplets sont signalés, mais peuvent être chargés. La méthode `load(..., strict=True)` refuse désormais les anomalies structurelles détectées, notamment les lignes malformées, les sauts de niveau, les pointeurs dupliqués et l'absence ou la multiplicité de `HEAD`/`TRLR`. Cette validation ne couvre pas encore toutes les règles sémantiques de GEDCOM.
+Le parser reste tolérant par défaut : les lignes invalides et fichiers incomplets sont signalés, mais peuvent être chargés. La méthode `load(..., strict=True)` refuse désormais les anomalies structurelles détectées, notamment les lignes malformées, les sauts de niveau, les pointeurs dupliqués, l'ordre des enregistrements `HEAD`/`TRLR` et leur absence ou multiplicité. Cette validation ne couvre pas encore toutes les règles sémantiques de GEDCOM.
 
 Le menu `Fichier` propose maintenant les deux comportements : l'ouverture
 standard reste tolérante et `Ouvrir et valider un fichier GEDCOM` active le mode
@@ -93,7 +95,7 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 94 tests présents dans la suite.
+- 104 tests présents dans la suite.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 

@@ -4,6 +4,8 @@ from gedcom.models.source import Source
 from gedcom.models.repository import Repository
 from gedcom.models.note import Note
 from gedcom.models.object import MultimediaObject
+import unicodedata
+
 from gedcom.models.submitter import Submitter
 
 
@@ -112,17 +114,56 @@ class EntityController:
     def get_submitter(self, pointer):
         return self.submitters.get(pointer)
 
+    @staticmethod
+    def _normalize_search_text(value):
+        if not isinstance(value, str):
+            return ""
+
+        decomposed = unicodedata.normalize("NFKD", value)
+        without_accents = "".join(
+            character
+            for character in decomposed
+            if not unicodedata.combining(character)
+        )
+        return without_accents.casefold()
+
     def search_individuals(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_individuals()
 
         return [
             indi
             for indi in self.individuals.values()
-            if (indi.name and normalized in indi.name.lower())
-            or (indi.pointer and normalized in indi.pointer.lower())
+            if (indi.name and normalized in self._normalize_search_text(indi.name))
+            or (
+                indi.pointer and normalized in self._normalize_search_text(indi.pointer)
+            )
         ]
+
+    def search_families(self, query):
+        normalized = self._normalize_search_text(query)
+        if not normalized:
+            return self.list_families()
+
+        results = []
+        for family in self.families.values():
+            searchable_values = [family.pointer]
+            member_pointers = [family.husband, family.wife, *family.children]
+            searchable_values.extend(
+                individual.name
+                for pointer in member_pointers
+                if (individual := self.get_individual(pointer)) is not None
+            )
+
+            if any(
+                normalized in self._normalize_search_text(value)
+                for value in searchable_values
+                if value
+            ):
+                results.append(family)
+
+        return results
 
     def list_sources(self):
         return list(self.sources.values())
@@ -131,27 +172,38 @@ class EntityController:
         return list(self.repositories.values())
 
     def search_sources(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_sources()
 
         return [
             source
             for source in self.sources.values()
-            if (source.pointer and normalized in source.pointer.lower())
-            or (getattr(source, "title", "") and normalized in source.title.lower())
+            if (
+                source.pointer
+                and normalized in self._normalize_search_text(source.pointer)
+            )
+            or (
+                getattr(source, "title", "")
+                and normalized in self._normalize_search_text(source.title)
+            )
         ]
 
     def search_repositories(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_repositories()
 
         return [
             repo
             for repo in self.repositories.values()
-            if (repo.pointer and normalized in repo.pointer.lower())
-            or (getattr(repo, "name", "") and normalized in repo.name.lower())
+            if (
+                repo.pointer and normalized in self._normalize_search_text(repo.pointer)
+            )
+            or (
+                getattr(repo, "name", "")
+                and normalized in self._normalize_search_text(repo.name)
+            )
         ]
 
     def list_notes(self):
@@ -164,42 +216,59 @@ class EntityController:
         return list(self.submitters.values())
 
     def search_notes(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_notes()
 
         return [
             note
             for note in self.notes.values()
-            if (note.pointer and normalized in note.pointer.lower())
-            or (getattr(note, "text", "") and normalized in note.text.lower())
+            if (
+                note.pointer and normalized in self._normalize_search_text(note.pointer)
+            )
+            or (
+                getattr(note, "text", "")
+                and normalized in self._normalize_search_text(note.text)
+            )
         ]
 
     def search_objects(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_objects()
 
         return [
             obj
             for obj in self.objects.values()
-            if (obj.pointer and normalized in obj.pointer.lower())
-            or (getattr(obj, "title", "") and normalized in obj.title.lower())
-            or (getattr(obj, "file", "") and normalized in obj.file.lower())
+            if (obj.pointer and normalized in self._normalize_search_text(obj.pointer))
+            or (
+                getattr(obj, "title", "")
+                and normalized in self._normalize_search_text(obj.title)
+            )
+            or (
+                getattr(obj, "file", "")
+                and normalized in self._normalize_search_text(obj.file)
+            )
         ]
 
     def search_submitters(self, query):
-        normalized = (query or "").lower()
+        normalized = self._normalize_search_text(query)
         if not normalized:
             return self.list_submitters()
 
         return [
             submitter
             for submitter in self.submitters.values()
-            if (submitter.pointer and normalized in submitter.pointer.lower())
-            or (getattr(submitter, "name", "") and normalized in submitter.name.lower())
+            if (
+                submitter.pointer
+                and normalized in self._normalize_search_text(submitter.pointer)
+            )
+            or (
+                getattr(submitter, "name", "")
+                and normalized in self._normalize_search_text(submitter.name)
+            )
             or (
                 getattr(submitter, "email", "")
-                and normalized in submitter.email.lower()
+                and normalized in self._normalize_search_text(submitter.email)
             )
         ]

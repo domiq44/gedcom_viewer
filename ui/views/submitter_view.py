@@ -55,7 +55,9 @@ class SubmitterView(ttk.Frame):
             return
 
         self.title_label.config(
-            text=self.translator.get("view.submitter_pointer", pointer=submitter.pointer)
+            text=self.translator.get(
+                "view.submitter_pointer", pointer=submitter.pointer
+            )
         )
         for key, widget in self.labels.items():
             values = getattr(submitter, f"{key}s", None)

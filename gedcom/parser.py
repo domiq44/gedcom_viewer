@@ -1,7 +1,6 @@
 import logging
 import re
 
-
 logger = logging.getLogger(__name__)
 
 REFERENCE_TAGS = {
@@ -98,6 +97,7 @@ class GedcomParser:
         pointer_counts = {}
         head_count = 0
         trailer_count = 0
+        level_zero_records = []
 
         for idx, line in enumerate(self.lines):
             if not line.strip():
@@ -116,6 +116,7 @@ class GedcomParser:
             previous_level = level
 
             if level == 0:
+                level_zero_records.append((line_number, tag))
                 if tag in {"HEAD", "TRLR"} and pointer is not None:
                     errors.append(f"pointeur inattendu ligne {line_number}")
                 if tag == "HEAD":
@@ -129,9 +130,7 @@ class GedcomParser:
 
             if tag in REFERENCE_TAGS and re.fullmatch(r"@[^@\s]+@", value or ""):
                 if value not in self._by_pointer:
-                    errors.append(
-                        f"référence inconnue {value} ligne {line_number}"
-                    )
+                    errors.append(f"référence inconnue {value} ligne {line_number}")
 
         errors.extend(
             f"pointeur dupliqué {pointer}"
@@ -142,6 +141,15 @@ class GedcomParser:
             errors.append("HEAD absent ou multiple")
         if trailer_count != 1:
             errors.append("TRLR absent ou multiple")
+        if level_zero_records and level_zero_records[0][1] != "HEAD":
+            errors.append("HEAD doit être le premier enregistrement")
+        if trailer_count == 1 and level_zero_records[-1][1] != "TRLR":
+            trailer_line = next(
+                line_number for line_number, tag in level_zero_records if tag == "TRLR"
+            )
+            errors.append(
+                f"TRLR doit être le dernier enregistrement ligne {trailer_line}"
+            )
         return errors
 
     def _parse_entities(self):

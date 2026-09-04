@@ -5,7 +5,6 @@ from tkinter import ttk
 from ui.views.link_utils import configure_label
 from ui.i18n import Translator
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +22,9 @@ class RepositoryView(ttk.Frame):
         self.configure(padding=10)
 
         self.title_label = ttk.Label(
-            self, text=self.translator.get("view.repository"), font=("Segoe UI", 12, "bold")
+            self,
+            text=self.translator.get("view.repository"),
+            font=("Segoe UI", 12, "bold"),
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
@@ -91,9 +92,11 @@ class RepositoryView(ttk.Frame):
             value = getattr(repo, key, "")
             if isinstance(value, list):
                 value = ", ".join(
-                    self._format_additional_field(item)
-                    if isinstance(item, dict)
-                    else str(item)
+                    (
+                        self._format_additional_field(item)
+                        if isinstance(item, dict)
+                        else str(item)
+                    )
                     for item in value
                 )
             configure_label(widget, value)

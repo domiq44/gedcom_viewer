@@ -5,7 +5,6 @@ from tkinter import ttk
 from ui.views.link_utils import configure_label, configure_text_widget
 from ui.i18n import Translator
 
-
 logger = logging.getLogger(__name__)
 
 

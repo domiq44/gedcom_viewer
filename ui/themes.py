@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 COLORS = {
     "background": "#f6f7f9",
     "surface": "#ffffff",

@@ -81,8 +81,18 @@ class Source:
                     current_section = "DATA"
 
                 elif tag not in {
-                    "TITL", "AUTH", "DATE", "TEXT", "NOTE", "REPO", "PUBL",
-                    "ABBR", "SOUR", "REFN", "RIN", "DATA",
+                    "TITL",
+                    "AUTH",
+                    "DATE",
+                    "TEXT",
+                    "NOTE",
+                    "REPO",
+                    "PUBL",
+                    "ABBR",
+                    "SOUR",
+                    "REFN",
+                    "RIN",
+                    "DATA",
                 }:
                     current_additional = {"tag": tag, "value": value, "details": []}
                     self.additional_fields.append(current_additional)

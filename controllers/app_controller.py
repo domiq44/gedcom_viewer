@@ -61,9 +61,11 @@ class AppController:
         if self.search_controller is None:
             return [
                 (
-                    self.translator.get(f"entity.{entity_type}")
-                    if self.translator is not None
-                    else label,
+                    (
+                        self.translator.get(f"entity.{entity_type}")
+                        if self.translator is not None
+                        else label
+                    ),
                     entity_type,
                 )
                 for entity_type, label in self.ENTITY_LABELS.items()

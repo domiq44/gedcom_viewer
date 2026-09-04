@@ -3,7 +3,6 @@ import webbrowser
 
 from ui.themes import COLORS
 
-
 _URL_PATTERN = re.compile(r"https?://[^\s<>\"]+")
 _TRAILING_URL_CHARS = ".,;:!?)]}"
 
@@ -11,7 +10,10 @@ _TRAILING_URL_CHARS = ".,;:!?)]}"
 def find_urls(value):
     if not isinstance(value, str):
         return []
-    return [match.group(0).rstrip(_TRAILING_URL_CHARS) for match in _URL_PATTERN.finditer(value)]
+    return [
+        match.group(0).rstrip(_TRAILING_URL_CHARS)
+        for match in _URL_PATTERN.finditer(value)
+    ]
 
 
 def configure_label(label, value):
@@ -37,7 +39,9 @@ def configure_text_widget(text_widget, value):
         if not url:
             continue
         end_offset = match.start() + len(url)
-        text_widget.tag_add("url", f"1.0 + {match.start()} chars", f"1.0 + {end_offset} chars")
+        text_widget.tag_add(
+            "url", f"1.0 + {match.start()} chars", f"1.0 + {end_offset} chars"
+        )
 
     text_widget.tag_configure("url", foreground=COLORS["link"], underline=True)
     text_widget.tag_bind("url", "<Button-1>", _open_url_at_click)

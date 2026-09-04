@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+import threading
 import tkinter as tk
 import unittest
 from unittest.mock import Mock, patch, call
@@ -72,9 +73,7 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertEqual(self.viewer.translator.language, "fr")
         save_settings.assert_called_once_with()
-        schedule_restart.assert_called_once_with(
-            100, self.viewer._restart_application
-        )
+        schedule_restart.assert_called_once_with(100, self.viewer._restart_application)
 
     def test_set_language_decline_restores_previous_language(self):
         with patch.object(self.viewer, "_save_recent_files") as save_settings:
@@ -101,7 +100,9 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.controller.get_entity_types.return_value = []
         self.viewer.search_var.set("Doe")
 
-        self.assertEqual(self.viewer.clear_search_button.cget("style"), "ClearSearch.TButton")
+        self.assertEqual(
+            self.viewer.clear_search_button.cget("style"), "ClearSearch.TButton"
+        )
         self.viewer.clear_search_button.invoke()
 
         self.assertEqual(self.viewer.search_var.get(), "")
@@ -333,6 +334,20 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.status_label.selection_range(0, tk.END)
         self.viewer.status_label.event_generate("<<Copy>>")
 
+    def test_ui_status_handles_log_from_worker_thread(self):
+        logger = logging.getLogger("ui.main_window")
+
+        with patch.object(self.viewer.root, "after") as schedule:
+            worker = threading.Thread(
+                target=logger.error, args=("worker log ui status",)
+            )
+            worker.start()
+            worker.join()
+
+        schedule.assert_called_once_with(
+            0, self.viewer.status_var.set, "ERROR: worker log ui status"
+        )
+
     def test_load_file_logs_elapsed_time(self):
         self.viewer.controller.get_entity_types.return_value = ["INDI"]
         self.viewer.controller.get_all_entity_type_menu_display_items.return_value = [
@@ -373,7 +388,9 @@ class TestGedcomViewer(unittest.TestCase):
             with self.assertLogs("ui.main_window", level="WARNING") as logs:
                 self.viewer._save_recent_files()
 
-        self.assertIn("Impossible d'enregistrer la liste des fichiers récents", logs.output[0])
+        self.assertIn(
+            "Impossible d'enregistrer la liste des fichiers récents", logs.output[0]
+        )
 
     def test_load_recent_files_logs_read_errors(self):
         with patch("ui.main_window.os.path.isfile", return_value=True):
@@ -382,7 +399,9 @@ class TestGedcomViewer(unittest.TestCase):
                     recent_files = self.viewer._load_recent_files()
 
         self.assertEqual(recent_files, [])
-        self.assertIn("Impossible de lire la liste des fichiers récents", logs.output[0])
+        self.assertIn(
+            "Impossible de lire la liste des fichiers récents", logs.output[0]
+        )
 
     def test_find_urls_in_form_value(self):
         value = "Voir https://example.org/document, puis http://example.net."

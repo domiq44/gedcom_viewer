@@ -18,9 +18,7 @@ class MenuBar:
 
         # --- MENU FICHIER ---
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(
-            label=tr("menu.open"), command=self.app.load_file
-        )
+        file_menu.add_command(label=tr("menu.open"), command=self.app.load_file)
         file_menu.add_command(
             label=tr("menu.open_validate"),
             command=self.app.open_validated_file,
@@ -37,9 +35,7 @@ class MenuBar:
         file_menu.add_separator()
 
         inspect_menu = tk.Menu(file_menu, tearoff=0)
-        inspect_menu.add_command(
-            label=tr("menu.header"), command=self.app.show_header
-        )
+        inspect_menu.add_command(label=tr("menu.header"), command=self.app.show_header)
         inspect_menu.add_command(
             label=tr("menu.trailer"), command=self.app.show_trailer
         )

@@ -233,6 +233,22 @@ class TestGedcomParser(unittest.TestCase):
 
         self.assertIn("TRLR absent ou multiple", parser.validation_errors)
 
+    def test_validate_requires_head_first_and_trlr_last(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @I1@ INDI",
+            "1 NAME John /Doe/",
+            "0 HEAD",
+            "0 TRLR",
+            "0 @I2@ INDI",
+        ]
+        parser._parse_entities()
+
+        errors = parser.validate()
+
+        self.assertIn("HEAD doit être le premier enregistrement", errors)
+        self.assertIn("TRLR doit être le dernier enregistrement ligne 4", errors)
+
     def test_duplicate_pointer_keeps_first_entity_for_resolution(self):
         parser = GedcomParser()
         parser.lines = [
@@ -245,7 +261,9 @@ class TestGedcomParser(unittest.TestCase):
         with self.assertLogs("gedcom.parser", level="WARNING") as logs:
             parser._parse_entities()
 
-        self.assertEqual(parser.get_entity("@I1@").get_tag_value("NAME"), "First /Person/")
+        self.assertEqual(
+            parser.get_entity("@I1@").get_tag_value("NAME"), "First /Person/"
+        )
         self.assertIn("Pointeur GEDCOM dupliqué", logs.output[0])
 
     def test_validate_reports_unknown_pointer_reference(self):
@@ -397,9 +415,7 @@ class TestGedcomParser(unittest.TestCase):
         submitter = Submitter(parser.get_entity("@M10@"))
 
         self.assertEqual(submitter.phones, ["01 02 03 04 05", "06 07 08 09 10"])
-        self.assertEqual(
-            submitter.emails, ["first@example.org", "second@example.org"]
-        )
+        self.assertEqual(submitter.emails, ["first@example.org", "second@example.org"])
         self.assertEqual(submitter.phone, "06 07 08 09 10")
         self.assertEqual(submitter.email, "second@example.org")
 

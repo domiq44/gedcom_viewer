@@ -8,7 +8,6 @@ from ui.views.link_utils import configure_label, configure_text_widget
 from ui.themes import FONTS
 from ui.i18n import Translator
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +27,9 @@ class IndividualView(ttk.Frame):
 
         # Titre
         self.title_label = ttk.Label(
-            self, text=self.translator.get("view.individual"), font=("Segoe UI", 12, "bold")
+            self,
+            text=self.translator.get("view.individual"),
+            font=("Segoe UI", 12, "bold"),
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 12))
 
@@ -65,7 +66,9 @@ class IndividualView(ttk.Frame):
             field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
 
             if key in ("fams", "occupations", "properties", "texts", "notes"):
-                container = ttk.Frame(self, padding=(8, 4), relief="solid", borderwidth=1)
+                container = ttk.Frame(
+                    self, padding=(8, 4), relief="solid", borderwidth=1
+                )
                 container.grid(row=i, column=1, sticky="nw", padx=10, pady=2)
                 self.labels[key] = container
             else:
@@ -151,7 +154,9 @@ class IndividualView(ttk.Frame):
             return
 
         self.title_label.config(
-            text=self.translator.get("view.individual_pointer", pointer=individual.pointer)
+            text=self.translator.get(
+                "view.individual_pointer", pointer=individual.pointer
+            )
         )
 
         # Fonction utilitaire pour rendre un label cliquable

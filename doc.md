@@ -29,6 +29,15 @@ Fichier GEDCOM -> GedcomParser -> GedcomEntity -> modèles métier -> contrôleu
 - `Ouvrir un fichier GEDCOM` utilise le mode tolérant ; `Ouvrir et valider un fichier GEDCOM` utilise le mode strict.
 - `Fichier > Effacer la liste des fichiers récents` vide l’historique enregistré après confirmation ; les fichiers GEDCOM ne sont jamais supprimés.
 
+### Champs de recherche GEDCOM
+
+La recherche utilise le pointeur et les champs suivants : `INDI` utilise
+`NAME` ; `FAM` utilise les `NAME` des individus référencés par `HUSB`, `WIFE`
+ou `CHIL` ; `SOUR` utilise `TITL` ; `REPO` utilise `NAME` ; `NOTE` utilise
+son texte ; `OBJE` utilise `TITL` et `FILE` ; `SUBM` utilise `NAME` et `EMAIL`.
+
+La casse et les accents sont ignorés pour tous les types.
+
 ## Formulaires
 
 Les vues spécialisées couvrent `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
@@ -56,7 +65,7 @@ Exécuter les tests :
 python3 -m unittest discover -s tests
 ```
 
-La suite contient actuellement `93 tests`.
+La suite contient actuellement `104 tests`.
 
 Le chargement standard reste tolérant. La validation stricte est disponible
 avec l’API Python et refuse les anomalies structurelles détectées :

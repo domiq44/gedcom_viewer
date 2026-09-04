@@ -5,7 +5,6 @@ from tkinter import ttk
 from ui.views.link_utils import configure_label, configure_text_widget
 from ui.i18n import Translator
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -139,9 +138,11 @@ class SourceView(ttk.Frame):
 
             if isinstance(value, list):
                 value = ", ".join(
-                    self._format_additional_field(item)
-                    if isinstance(item, dict)
-                    else str(item)
+                    (
+                        self._format_additional_field(item)
+                        if isinstance(item, dict)
+                        else str(item)
+                    )
                     for item in value
                 )
 

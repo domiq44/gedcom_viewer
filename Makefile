@@ -27,7 +27,7 @@ venv:
 
 # Assurez-vous que PYTHON pointe vers le bon exécutable après venv
 # On réévalue PYTHON pour s'assurer qu'il pointe vers .venv/bin/python
-PYTHON_ACTUAL := $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+PYTHON_ACTUAL = $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 # --- Vérifications ---
 
@@ -71,7 +71,7 @@ test: venv install
 
 # --- Formatage et Linting ---
 
-format:
+format: install
 	@echo "--- Formatting sources with Black ---"
 	$(PYTHON_ACTUAL) -m black .
 
