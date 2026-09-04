@@ -159,8 +159,6 @@ récents sont enregistrés dans :
 ~/.gedcom_viewer.json
 ```
 
-L'ancien fichier `~/.gedcom_viewer_recent.json` est encore lu pour permettre la
-migration automatique vers le nouveau format.
 
 ## Limites connues
 

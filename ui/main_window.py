@@ -128,7 +128,6 @@ class _ScrollableFrame(ttk.Frame):
 
 class GedcomViewer:
     SETTINGS_PATH = "~/.gedcom_viewer.json"
-    LEGACY_RECENT_PATH = "~/.gedcom_viewer_recent.json"
 
     def __init__(self, root):
         self.root = root
@@ -473,8 +472,7 @@ class GedcomViewer:
 
     def _load_recent_files(self):
         settings_path = os.path.expanduser(self.SETTINGS_PATH)
-        legacy_path = os.path.expanduser(self.LEGACY_RECENT_PATH)
-        recent_path = settings_path if os.path.isfile(settings_path) else legacy_path
+        recent_path = settings_path
         if not os.path.isfile(recent_path):
             return []
 
