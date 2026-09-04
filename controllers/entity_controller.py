@@ -36,49 +36,54 @@ class EntityController:
         for entity in indi_entities:
             if not entity.pointer:
                 continue
-            self.individuals[entity.pointer] = Individual(entity)
+            self._store_first(self.individuals, entity.pointer, Individual(entity))
 
     def _build_families(self):
         fam_entities = self.parser.entities.get("FAM", [])
         for entity in fam_entities:
             if not entity.pointer:
                 continue
-            self.families[entity.pointer] = Family(entity)
+            self._store_first(self.families, entity.pointer, Family(entity))
 
     def _build_sources(self):
         source_entities = self.parser.entities.get("SOUR", [])
         for entity in source_entities:
             if not entity.pointer:
                 continue
-            self.sources[entity.pointer] = Source(entity)
+            self._store_first(self.sources, entity.pointer, Source(entity))
 
     def _build_repositories(self):
         repo_entities = self.parser.entities.get("REPO", [])
         for entity in repo_entities:
             if not entity.pointer:
                 continue
-            self.repositories[entity.pointer] = Repository(entity)
+            self._store_first(self.repositories, entity.pointer, Repository(entity))
 
     def _build_notes(self):
         note_entities = self.parser.entities.get("NOTE", [])
         for entity in note_entities:
             if not entity.pointer:
                 continue
-            self.notes[entity.pointer] = Note(entity)
+            self._store_first(self.notes, entity.pointer, Note(entity))
 
     def _build_objects(self):
         object_entities = self.parser.entities.get("OBJE", [])
         for entity in object_entities:
             if not entity.pointer:
                 continue
-            self.objects[entity.pointer] = MultimediaObject(entity)
+            self._store_first(self.objects, entity.pointer, MultimediaObject(entity))
 
     def _build_submitters(self):
         submitter_entities = self.parser.entities.get("SUBM", [])
         for entity in submitter_entities:
             if not entity.pointer:
                 continue
-            self.submitters[entity.pointer] = Submitter(entity)
+            self._store_first(self.submitters, entity.pointer, Submitter(entity))
+
+    @staticmethod
+    def _store_first(collection, pointer, value):
+        if pointer not in collection:
+            collection[pointer] = value
 
     def list_individuals(self):
         return list(self.individuals.values())

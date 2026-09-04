@@ -108,7 +108,7 @@ Ou directement :
 python3 -m unittest discover -s tests
 ```
 
-Dernière validation : 81 tests réussis.
+Dernière validation : 82 tests réussis.
 
 Vérifier la syntaxe Python :
 

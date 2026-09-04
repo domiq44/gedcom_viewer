@@ -56,7 +56,7 @@ Exécuter les tests :
 python3 -m unittest discover -s tests
 ```
 
-Dernier résultat vérifié : `81 tests`, `OK`.
+Dernier résultat vérifié : `82 tests`, `OK`.
 
 Le chargement standard reste tolérant. La validation stricte est disponible
 avec l’API Python et refuse les anomalies structurelles détectées :

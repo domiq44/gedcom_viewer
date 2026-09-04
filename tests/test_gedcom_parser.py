@@ -233,6 +233,34 @@ class TestGedcomParser(unittest.TestCase):
 
         self.assertIn("TRLR absent ou multiple", parser.validation_errors)
 
+    def test_duplicate_pointer_keeps_first_entity_for_resolution(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @I1@ INDI",
+            "1 NAME First /Person/",
+            "0 @I1@ INDI",
+            "1 NAME Second /Person/",
+        ]
+
+        with self.assertLogs("gedcom.parser", level="WARNING") as logs:
+            parser._parse_entities()
+
+        self.assertEqual(parser.get_entity("@I1@").get_tag_value("NAME"), "First /Person/")
+        self.assertIn("Pointeur GEDCOM dupliqué", logs.output[0])
+
+    def test_validate_reports_unknown_pointer_reference(self):
+        parser = GedcomParser()
+        parser.lines = [
+            "0 @F1@ FAM",
+            "1 HUSB @I404@",
+            "0 HEAD",
+            "1 SOUR GEDCOM",
+            "0 TRLR",
+        ]
+        parser._parse_entities()
+
+        self.assertIn("référence inconnue @I404@ ligne 2", parser.validate())
+
     def test_strict_load_rejects_invalid_structure(self):
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as temp_file:
             temp_file.write("0 HEAD\n1 SOUR TEST\n")

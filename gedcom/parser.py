@@ -4,6 +4,20 @@ import re
 
 logger = logging.getLogger(__name__)
 
+REFERENCE_TAGS = {
+    "ASSO",
+    "CHIL",
+    "FAMC",
+    "FAMS",
+    "HUSB",
+    "NOTE",
+    "OBJE",
+    "REPO",
+    "SOUR",
+    "SUBM",
+    "WIFE",
+}
+
 
 def _parse_line(line):
     stripped = line.strip()
@@ -87,7 +101,7 @@ class GedcomParser:
             if not line.strip():
                 continue
 
-            level, pointer, tag, _ = _parse_line(line)
+            level, pointer, tag, value = _parse_line(line)
             line_number = idx + 1
             if level is None or tag is None:
                 errors.append(f"ligne {line_number} malformée")
@@ -110,6 +124,12 @@ class GedcomParser:
                     pointer_counts[pointer] = pointer_counts.get(pointer, 0) + 1
                     if not re.fullmatch(r"@[^@\s]+@", pointer):
                         errors.append(f"pointeur invalide ligne {line_number}")
+
+            if tag in REFERENCE_TAGS and re.fullmatch(r"@[^@\s]+@", value or ""):
+                if value not in self._by_pointer:
+                    errors.append(
+                        f"référence inconnue {value} ligne {line_number}"
+                    )
 
         errors.extend(
             f"pointeur dupliqué {pointer}"
@@ -179,7 +199,13 @@ class GedcomParser:
         self.entities.setdefault(entity.tag, []).append(entity)
 
         if entity.pointer:
-            self._by_pointer[entity.pointer] = entity
+            if entity.pointer in self._by_pointer:
+                logger.warning(
+                    "Pointeur GEDCOM dupliqué, première occurrence conservée: %s",
+                    entity.pointer,
+                )
+            else:
+                self._by_pointer[entity.pointer] = entity
 
     def get_entity(self, pointer):
         return self._by_pointer.get(pointer)

@@ -527,6 +527,9 @@ class GedcomViewer:
                 view.display(None)
 
     def _show_entity_view(self, entity_type, entity=None):
+        if entity is not None and not getattr(entity, "pointer", None):
+            entity = None
+
         for current_type, (view, tab) in self._entity_view_map.items():
             if current_type == entity_type:
                 tab.pack(fill="both", expand=True)

@@ -22,7 +22,7 @@ main.py
 ```
 
 | Composant | Responsabilité |
-|---|---|
+| --- | --- |
 | `gedcom/parser.py` | Lecture du fichier, découpage en blocs, indexation par type et pointeur, extraction des valeurs et continuations. |
 | `gedcom/models/` | Conversion des blocs bruts en modèles `Individual`, `Family`, `Source`, `Repository`, `Note`, `MultimediaObject` et `Submitter`. |
 | `controllers/gedcom_service.py` | Encapsulation du parser et accès aux données chargées. |
@@ -85,8 +85,8 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 81 tests exécutés.
-- 81 tests réussis.
+- 82 tests exécutés.
+- 82 tests réussis.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 
@@ -95,7 +95,7 @@ La suite couvre principalement le parser, les services, les contrôleurs et des 
 ## Dépendances et exécution
 
 | Élément | Utilisation |
-|---|---|
+| --- | --- |
 | Python 3 | Langage principal |
 | Tkinter | Interface graphique |
 | Pillow | Prévisualisation des images, installé par `make install` |
