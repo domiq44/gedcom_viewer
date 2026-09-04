@@ -127,12 +127,16 @@ class _ScrollableFrame(ttk.Frame):
 
 
 class GedcomViewer:
+    SETTINGS_PATH = "~/.gedcom_viewer.json"
+    LEGACY_RECENT_PATH = "~/.gedcom_viewer_recent.json"
+
     def __init__(self, root):
         self.root = root
         self.root.title("GEDCOM Viewer 5.5.1")
         self.root.configure(bg=COLORS["background"])
         self.root.minsize(1100, 700)
 
+        self.last_directory = os.path.expanduser("~")
         self.recent_files = self._load_recent_files()
         self.menu_bar = MenuBar(self.root, self)
         self.controller = AppController()
@@ -468,15 +472,29 @@ class GedcomViewer:
         logging.getLogger().addHandler(self._ui_log_handler)
 
     def _load_recent_files(self):
-        recent_path = os.path.expanduser("~/.gedcom_viewer_recent.json")
+        settings_path = os.path.expanduser(self.SETTINGS_PATH)
+        legacy_path = os.path.expanduser(self.LEGACY_RECENT_PATH)
+        recent_path = settings_path if os.path.isfile(settings_path) else legacy_path
         if not os.path.isfile(recent_path):
             return []
 
         try:
             with open(recent_path, "r", encoding="utf-8") as handle:
                 data = json.load(handle)
+            if isinstance(data, dict):
+                last_directory = data.get("last_directory")
+                if isinstance(last_directory, str) and os.path.isdir(last_directory):
+                    self.last_directory = last_directory
+                data = data.get("recent_files", [])
             if isinstance(data, list):
-                return [path for path in data if isinstance(path, str)]
+                recent_files = [path for path in data if isinstance(path, str)]
+                if self.last_directory == os.path.expanduser("~"):
+                    for path in recent_files:
+                        directory = os.path.dirname(os.path.abspath(path))
+                        if os.path.isdir(directory):
+                            self.last_directory = directory
+                            break
+                return recent_files
         except Exception as exc:
             logger.warning(
                 "Impossible de lire la liste des fichiers récents %s: %s",
@@ -487,10 +505,16 @@ class GedcomViewer:
         return []
 
     def _save_recent_files(self):
-        recent_path = os.path.expanduser("~/.gedcom_viewer_recent.json")
+        recent_path = os.path.expanduser(self.SETTINGS_PATH)
         try:
             with open(recent_path, "w", encoding="utf-8") as handle:
-                json.dump(self.recent_files[:10], handle)
+                json.dump(
+                    {
+                        "recent_files": self.recent_files[:10],
+                        "last_directory": self.last_directory,
+                    },
+                    handle,
+                )
         except Exception as exc:
             logger.warning(
                 "Impossible d'enregistrer la liste des fichiers récents %s: %s",
@@ -509,6 +533,7 @@ class GedcomViewer:
         if not normalized:
             return
 
+        self.last_directory = os.path.dirname(normalized)
         self.recent_files = [
             path for path in self.recent_files if os.path.abspath(path) != normalized
         ]
@@ -517,6 +542,12 @@ class GedcomViewer:
         self._save_recent_files()
         if hasattr(self, "menu_bar"):
             self.menu_bar.refresh_recent_menu()
+
+    def _file_dialog_options(self):
+        initialdir = self.last_directory
+        if not initialdir or not os.path.isdir(initialdir):
+            initialdir = os.path.expanduser("~")
+        return {"initialdir": initialdir}
 
     def _load_file_from_path(self, filename, strict=False):
         if not filename:
@@ -719,6 +750,7 @@ class GedcomViewer:
         filename = filedialog.askopenfilename(
             title="Choisir un fichier GEDCOM à valider",
             filetypes=[("GEDCOM files", "*.ged")],
+            **self._file_dialog_options(),
         )
         if not filename:
             return
@@ -727,7 +759,9 @@ class GedcomViewer:
 
     def load_file(self):
         filename = filedialog.askopenfilename(
-            title="Choisir un fichier GEDCOM", filetypes=[("GEDCOM files", "*.ged")]
+            title="Choisir un fichier GEDCOM",
+            filetypes=[("GEDCOM files", "*.ged")],
+            **self._file_dialog_options(),
         )
         if not filename:
             return

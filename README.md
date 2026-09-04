@@ -152,11 +152,15 @@ Les journaux sont écrits dans :
 ~/.gedcom_viewer.log
 ```
 
-La liste des fichiers récents est enregistrée dans :
+Les préférences, le répertoire du dernier GEDCOM chargé et la liste des fichiers
+récents sont enregistrés dans :
 
 ```text
-~/.gedcom_viewer_recent.json
+~/.gedcom_viewer.json
 ```
+
+L'ancien fichier `~/.gedcom_viewer_recent.json` est encore lu pour permettre la
+migration automatique vers le nouveau format.
 
 ## Limites connues
 

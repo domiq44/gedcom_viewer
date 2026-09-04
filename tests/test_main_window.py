@@ -58,6 +58,18 @@ class TestGedcomViewer(unittest.TestCase):
 
         load_file.assert_called_once_with("/tmp/validated.ged", strict=True)
 
+    def test_file_dialog_uses_last_directory(self):
+        self.viewer.last_directory = "/tmp"
+
+        with patch(
+            "ui.main_window.filedialog.askopenfilename",
+            return_value="/tmp/example.ged",
+        ) as askopenfilename:
+            with patch.object(self.viewer, "_load_file_from_path"):
+                self.viewer.load_file()
+
+        self.assertEqual(askopenfilename.call_args.kwargs["initialdir"], "/tmp")
+
     def test_show_header_displays_head_block(self):
         self.viewer.controller.is_loaded.return_value = True
         self.viewer.controller.extract_head.return_value = "0 HEAD\n1 SOUR GEDCOM"
@@ -297,6 +309,18 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertEqual(self.viewer.recent_files, [])
         save_recent.assert_called_once_with()
+
+    def test_save_recent_files_writes_settings_and_last_directory(self):
+        self.viewer.recent_files = ["/tmp/example.ged"]
+        self.viewer.last_directory = "/tmp"
+
+        with patch("ui.main_window.open", create=True) as open_file:
+            self.viewer._save_recent_files()
+
+        write_mock = open_file.return_value.__enter__.return_value.write
+        written = "".join(call_args.args[0] for call_args in write_mock.call_args_list)
+        self.assertIn('"recent_files": ["/tmp/example.ged"]', written)
+        self.assertIn('"last_directory": "/tmp"', written)
 
     def test_save_recent_files_logs_write_errors(self):
         self.viewer.recent_files = ["/tmp/example.ged"]
