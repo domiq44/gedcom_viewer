@@ -8,7 +8,7 @@ help:
 	@echo "Targets:"
 	@echo "  venv        Create the virtual environment (.venv)"
 	@echo "  install     Install pip, Tkinter (system check), Pillow, PyInstaller and Black"
-	@echo "  run         Launch the application locally (requires venv)"
+	@echo "  run         Create the venv if needed and launch the application locally"
 	@echo "  test        Run the Python unit tests"
 	@echo "  format      Format Python sources with Black"
 	@echo "  lint        Check Python syntax for all source files"

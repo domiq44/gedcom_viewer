@@ -45,6 +45,7 @@ main.py
 - Prévisualisation des images locales avec Pillow.
 - Journalisation locale et affichage du dernier message dans la barre de statut.
 - Affichage du temps de chargement du GEDCOM dans cette barre de statut.
+- Chargement GEDCOM en arrière-plan, avec application des résultats dans le thread Tkinter principal.
 - Formulaires défilants pour les données détaillées.
 
 ## Corrections déjà réalisées
@@ -55,12 +56,17 @@ main.py
 - Les caractères remplacés par `errors="replace"` sont comptabilisés dans `encoding_replacements` et journalisés.
 - Pillow est installé par `make install` avec PyInstaller et Black.
 - Le temps de chargement est mesuré avec `time.perf_counter()` et publié dans le log de succès.
+- Les tests UI utilisent la langue active au lieu de textes codés en dur.
+- Les objets `GedcomEntity` utilisent `__slots__` pour réduire leur surcharge mémoire.
+- `run.sh` utilise `.venv/bin/python` lorsqu'il est disponible.
 
 ## Défauts et limites encore présents
 
 ### 1. Chargement entièrement en mémoire
 
-Le parser conserve toutes les lignes et `EntityController` construit immédiatement tous les modèles. Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde et 169 Mo de mémoire maximale. Le temps est acceptable, mais la mémoire consommée justifie une future conception d'index compact ou de chargement différé. Cette évolution devra préserver l'API actuelle, qui expose des listes et objets métier matérialisés.
+Le parser conserve toutes les lignes et `EntityController` construit immédiatement tous les modèles. Une mesure synthétique sur 100 000 individus donne environ 1,45 seconde et 169 Mo de mémoire maximale. `GedcomEntity` utilise désormais `__slots__`, mais la mémoire consommée justifie encore une future conception d'index compact ou de chargement différé. Cette évolution devra préserver l'API actuelle, qui expose des listes et objets métier matérialisés.
+
+Le chargement est maintenant exécuté dans un thread de travail afin d'éviter le gel de l'interface. Tkinter reste manipulé uniquement dans le thread principal.
 
 ### 2. Gestion d'erreurs périphériques
 
@@ -85,11 +91,11 @@ python3 -m unittest discover -s tests
 
 Dernier résultat :
 
-- 93 tests présents dans la suite.
+- 94 tests présents dans la suite.
 - Compilation Python réussie sur les fichiers du projet.
 - `git diff --check` réussi.
 
-La suite couvre principalement le parser, les services, les contrôleurs et des scénarios Tkinter. Les principales lacunes concernent les gros fichiers réels, la validation GEDCOM stricte et les erreurs périphériques de l'interface.
+La suite couvre principalement le parser, les services, les contrôleurs et des scénarios Tkinter. Les principales lacunes concernent les gros fichiers réels, la validation GEDCOM sémantique et les scénarios de concurrence pendant un chargement.
 
 ## Dépendances et exécution
 
@@ -102,7 +108,7 @@ La suite couvre principalement le parser, les services, les contrôleurs et des 
 | Black | Formatage |
 | PyInstaller | Exécutable autonome |
 
-Les cibles principales sont `make test`, `make lint`, `make run`, `make format` et `make dist`. `run.sh` lance l'application avec Python 3 ou Python si Python 3 n'est pas disponible.
+Les cibles principales sont `make test`, `make lint`, `make run`, `make format` et `make dist`. `run.sh` utilise l'interpréteur du venv lorsqu'il existe, puis retombe sur Python 3 ou Python système.
 
 ## Priorités recommandées
 

@@ -20,6 +20,7 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 - Gestion des fichiers récemment ouverts.
 - Vues détaillées pour les individus, familles, sources, dépôts, notes, médias et submitters.
 - Prévisualisation des images locales dans l'onglet multimédia avec Pillow.
+- Chargement des fichiers en arrière-plan afin de maintenir l'interface réactive.
 - Journalisation dans `~/.gedcom_viewer.log`.
 - Affichage du temps de chargement dans la barre de statut.
 - Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
@@ -34,10 +35,14 @@ L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers
 
 ```text
 UI Tkinter (ui/)
-    -> contrôleurs (controllers/)
+  -> contrôleurs (controllers/) [thread principal]
         -> service GEDCOM
             -> parser et modèles métier (gedcom/)
 ```
+
+Le chargement et la construction des modèles sont exécutés dans un thread de
+travail. Les résultats et les erreurs sont ensuite appliqués à l'interface dans
+le thread Tkinter principal.
 
 - `gedcom/` contient le parser et les modèles métier.
 - `controllers/` coordonne le chargement, la recherche, le tri et la résolution des pointeurs.
@@ -113,10 +118,10 @@ make test
 Ou directement :
 
 ```bash
-python3 -m unittest discover -s tests
+.venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 93 tests présents dans la suite.
+Dernière validation : 94 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 
@@ -169,7 +174,7 @@ récents sont enregistrés dans :
 
 ## Limites connues
 
-- Les gros fichiers sont chargés entièrement en mémoire. Une mesure synthétique sur 100 000 individus a donné environ 1,45 seconde et 169 Mo de mémoire maximale.
+- Les gros fichiers sont toujours chargés entièrement en mémoire. Une mesure synthétique sur 100 000 individus a donné environ 1,45 seconde et 169 Mo de mémoire maximale. Les entités brutes utilisent `__slots__` pour limiter leur surcharge, mais il n'y a pas encore de chargement différé.
 - Les événements familiaux sont représentés par le modèle `Event`, mais leur structure reste volontairement simple : un tag, une valeur et une liste de sous-tags.
 - Les événements de mariage multiples sont affichés dans la vue famille, mais ne disposent pas encore d'une présentation détaillée dédiée.
 - Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
