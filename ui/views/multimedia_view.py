@@ -118,8 +118,11 @@ class MultimediaView(ttk.Frame):
     def set_base_path(self, base_path):
         self.base_path = base_path if base_path and os.path.isdir(base_path) else None
 
-    def _show_preview_placeholder(self, reason="Prévisualisation indisponible"):
-        logger.info("Prévisualisation non disponible: %s", reason)
+    def _show_preview_placeholder(
+        self, reason="Prévisualisation indisponible", log=True
+    ):
+        if log:
+            logger.info("Prévisualisation non disponible: %s", reason)
         self.preview_label.config(text=reason)
         self.preview_label.configure(image="")
         self._preview_photo = None
@@ -186,7 +189,7 @@ class MultimediaView(ttk.Frame):
     def display(self, media):
         if not media:
             self.title_label.config(text="Multimédia")
-            self._show_preview_placeholder()
+            self._show_preview_placeholder(log=False)
             for key, widget in self.labels.items():
                 if isinstance(widget, tk.Text):
                     configure_text_widget(widget, "")
