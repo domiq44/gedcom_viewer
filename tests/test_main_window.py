@@ -15,12 +15,18 @@ class TestGedcomViewer(unittest.TestCase):
         self.root.withdraw()
         with patch.object(GedcomViewer, "_load_recent_files", return_value=[]):
             self.viewer = GedcomViewer(self.root)
+        settings_file = tempfile.NamedTemporaryFile(delete=False)
+        settings_file.close()
+        self.viewer.SETTINGS_PATH = settings_file.name
+        self.settings_file = settings_file.name
         self.viewer.family_view.set_name_resolver(lambda pointer: None)
         self.viewer.highlighter = Mock()
         self.viewer.controller = Mock()
 
     def tearDown(self):
         self.root.destroy()
+        if os.path.exists(self.settings_file):
+            os.unlink(self.settings_file)
 
     def test_opens_last_recent_file_on_startup(self):
         root = tk.Tk()

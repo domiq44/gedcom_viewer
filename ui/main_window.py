@@ -133,6 +133,7 @@ class GedcomViewer:
     def __init__(self, root):
         self.root = root
         self.translator = Translator()
+        tr = self.translator.get
         self.root.title("GEDCOM Viewer 5.5.1")
         self.root.configure(bg=COLORS["background"])
         self.root.minsize(1100, 700)
@@ -161,7 +162,7 @@ class GedcomViewer:
 
         self.app_title = tk.Label(
             self.app_header,
-            text="GEDCOM Viewer",
+            text=tr("app.title"),
             font=("Segoe UI", 18, "bold"),
             bg="#dfeaf5",
             fg="#163a57",
@@ -170,7 +171,7 @@ class GedcomViewer:
 
         self.app_subtitle = tk.Label(
             self.app_header,
-            text="Explorateur de fichiers GEDCOM",
+            text=tr("app.subtitle"),
             font=("Segoe UI", 9),
             bg="#dfeaf5",
             fg="#44627a",
@@ -208,7 +209,7 @@ class GedcomViewer:
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
 
-        tk.Label(left_frame, text="Recherche :").grid(
+        tk.Label(left_frame, text=tr("ui.search")).grid(
             row=0, column=0, sticky="w", pady=(0, 5)
         )
         self.search_var = tk.StringVar()
@@ -227,7 +228,7 @@ class GedcomViewer:
         )
         self.search_entry.grid(row=1, column=0, sticky="ew")
 
-        tk.Label(left_frame, text="Entités :").grid(
+        tk.Label(left_frame, text=tr("ui.entities")).grid(
             row=2, column=0, sticky="w", pady=(10, 0)
         )
         self.entity_tree = ttk.Treeview(
@@ -239,11 +240,11 @@ class GedcomViewer:
             padding=(6, 0),
         )
         self.entity_tree.heading(
-            "name", text="Nom", command=lambda: self._sort_entity_tree("name")
+            "name", text=tr("ui.name"), command=lambda: self._sort_entity_tree("name")
         )
         self.entity_tree.heading(
             "pointer",
-            text="Identifiant",
+            text=tr("ui.identifier"),
             command=lambda: self._sort_entity_tree("pointer"),
         )
         self.entity_tree.column("name", width=230, minwidth=140, anchor="w")
@@ -303,17 +304,17 @@ class GedcomViewer:
 
         self.history_status = tk.Label(
             self.nav_toolbar,
-            text="Historique : 0/0",
+            text=tr("ui.history", current=0, total=0),
             bg=COLORS["background"],
             foreground=COLORS["muted_text"],
             font=FONTS["ui"],
         )
         self.history_status.pack(side="right", padx=(12, 4))
 
-        self.status_var = tk.StringVar(value="Prêt")
+        self.status_var = tk.StringVar(value=tr("ui.ready"))
         self.log_status_frame = tk.LabelFrame(
             right_frame,
-            text="Dernière erreur log",
+            text=tr("ui.log_status"),
             padx=6,
             pady=4,
         )
@@ -349,7 +350,7 @@ class GedcomViewer:
         right_content.add(self.gedcom_frame, minsize=300, width=370)
         right_content.paneconfigure(self.gedcom_frame, stretch="always")
 
-        tk.Label(self.gedcom_frame, text="Contenu brut du fichier :").pack(
+        tk.Label(self.gedcom_frame, text=tr("ui.raw_content")).pack(
             anchor="w", pady=(0, 5)
         )
         self.text_area = tk.Text(
@@ -369,7 +370,7 @@ class GedcomViewer:
 
         self.entity_detail_frame = tk.LabelFrame(
             right_content,
-            text="Vue de l’entité",
+            text=tr("ui.entity_view"),
             padx=8,
             pady=8,
             bg=COLORS["background"],
@@ -454,7 +455,7 @@ class GedcomViewer:
         if self.recent_files:
             startup_file = self.recent_files[0]
             if os.path.isfile(startup_file):
-                self.status_var.set("Chargement du dernier fichier GEDCOM…")
+                self.status_var.set(self.translator.get("ui.loading_last_file"))
                 self.root.after(50, self._load_file_from_path, startup_file)
 
         right_frame.grid_columnconfigure(0, weight=1)
@@ -628,7 +629,9 @@ class GedcomViewer:
         )
         total = len(self._nav_history)
         current = self._nav_index + 1 if self._nav_index >= 0 else 0
-        self.history_status.config(text=f"Historique : {current}/{total}")
+        self.history_status.config(
+            text=self.translator.get("ui.history", current=current, total=total)
+        )
 
     def on_entity_type_change(self, *args):
         entity_type = self.entity_type_var.get()
@@ -789,7 +792,7 @@ class GedcomViewer:
                 "",
                 "end",
                 iid="empty",
-                values=("Aucune entité de ce type", "—"),
+                values=(self.translator.get("ui.no_entity_type"), "—"),
             )
             self._show_entity_view(entity_type, None)
             self._display_raw_text("")
@@ -803,7 +806,7 @@ class GedcomViewer:
                 "",
                 "end",
                 iid="empty",
-                values=("Aucune entité de ce type", "—"),
+                values=(self.translator.get("ui.no_entity_type"), "—"),
             )
             self._show_entity_view(entity_type, None)
             self._display_raw_text("")
@@ -837,7 +840,7 @@ class GedcomViewer:
                 "",
                 "end",
                 iid="empty",
-                values=("Aucune entité de ce type", "—"),
+                values=(self.translator.get("ui.no_entity_type"), "—"),
             )
             self._show_entity_view(entity_type, None)
             self._display_raw_text("")
@@ -851,7 +854,7 @@ class GedcomViewer:
                 "",
                 "end",
                 iid="empty",
-                values=("Aucune entité de ce type", "—"),
+                values=(self.translator.get("ui.no_entity_type"), "—"),
             )
             self._show_entity_view(entity_type, None)
             self._display_raw_text("")
