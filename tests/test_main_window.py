@@ -361,6 +361,61 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertIn("GEDCOM chargé avec succès en 2.345 s", logs.output[-1])
 
+    def test_async_load_publishes_controller_only_after_success(self):
+        previous_controller = self.viewer.controller
+        loaded_controller = Mock()
+
+        with patch("ui.main_window.AppController", return_value=loaded_controller):
+            with patch.object(self.viewer.root, "after"):
+                with patch("ui.main_window.threading.Thread") as thread_class:
+                    self.viewer._load_file_async("/tmp/test.ged", strict=True)
+
+                    worker = thread_class.return_value
+                    worker.start.assert_called_once_with()
+                    worker_target = thread_class.call_args.kwargs["target"]
+                    worker_target()
+
+        loaded_controller.load_file.assert_called_once_with(
+            "/tmp/test.ged", strict=True
+        )
+        self.assertIs(self.viewer.controller, previous_controller)
+
+        with patch.object(self.viewer, "_apply_loaded_file") as apply_loaded_file:
+            self.viewer._poll_load_result()
+
+        self.assertIs(self.viewer.controller, loaded_controller)
+        apply_loaded_file.assert_called_once_with("/tmp/test.ged", unittest.mock.ANY)
+
+    def test_async_load_error_keeps_previous_controller(self):
+        previous_controller = self.viewer.controller
+        error = ValueError("invalid GEDCOM")
+        self.viewer._load_results.put(("/tmp/test.ged", 1.0, error, None))
+
+        with patch.object(self.viewer, "_show_load_error") as show_load_error:
+            self.viewer._poll_load_result()
+
+        self.assertIs(self.viewer.controller, previous_controller)
+        show_load_error.assert_called_once_with("/tmp/test.ged", error)
+
+    def test_async_load_result_is_ignored_when_closing(self):
+        self.viewer._is_closing = True
+        self.viewer._load_results.put(("/tmp/test.ged", 1.0, None, Mock()))
+
+        with patch.object(self.viewer, "_apply_loaded_file") as apply_loaded_file:
+            with patch.object(self.viewer, "_show_load_error") as show_load_error:
+                self.viewer._poll_load_result()
+
+        apply_loaded_file.assert_not_called()
+        show_load_error.assert_not_called()
+
+    def test_close_stops_async_loading_and_destroys_window(self):
+        with patch.object(self.viewer.root, "destroy") as destroy:
+            self.viewer._on_close()
+
+        self.assertTrue(self.viewer._is_closing)
+        self.assertFalse(self.viewer._load_in_progress)
+        destroy.assert_called_once_with()
+
     def test_clear_recent_files_removes_all_entries(self):
         self.viewer.recent_files = ["/tmp/one.ged", "/tmp/two.ged"]
         with patch.object(self.viewer, "_save_recent_files") as save_recent:

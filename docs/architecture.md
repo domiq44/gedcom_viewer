@@ -98,7 +98,15 @@ Fichier GEDCOM
   -> affichage Tkinter
 ```
 
-Le chargement est exécuté dans un thread de travail pour éviter de bloquer l’interface, puis les résultats sont remis dans le thread principal de Tkinter.
+Le chargement est exécuté dans un thread de travail pour éviter de bloquer
+l’interface. Le worker construit une nouvelle instance complète de
+`AppController` sans modifier la session active, puis transmet le résultat au
+thread principal de Tkinter via une file de messages. L’interface publie cette
+nouvelle session uniquement après un chargement réussi.
+
+En cas d’erreur, l’ancienne session reste disponible. Lors de la fermeture de la
+fenêtre, les résultats asynchrones en attente sont ignorés et aucun nouveau
+chargement n’est accepté.
 
 ## Gestion des entités
 
@@ -167,6 +175,10 @@ Les dépendances sont gérées via `requirements.txt`, `requirements-dev.txt`, e
 - l’UI est fortement centralisée dans un seul composant
 - le chargement des gros fichiers est entièrement en mémoire
 - la validation GEDCOM est structurée mais reste limitée à un niveau fonctionnel
+
+Le chargement asynchrone est désormais isolé et testé. Les points encore ouverts
+concernent principalement la mémoire des gros fichiers, l’annulation explicite
+d’un chargement et l’affichage éventuel d’une progression.
 
 ## Conclusion
 

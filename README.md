@@ -1,8 +1,6 @@
 # GEDCOM Viewer 5.5.1
 
-<p align="center">
-  <img src="docs/screenshots/gedcom-viewer-overview.png" alt="Interface de GEDCOM Viewer" width="1000" />
-</p>
+![Interface de GEDCOM Viewer](docs/screenshots/gedcom-viewer-overview.png)
 
 GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explorer des fichiers GEDCOM.
 
@@ -31,7 +29,10 @@ Le dépôt conserve une documentation minimale et ciblée :
 - Gestion des fichiers récemment ouverts.
 - Vues détaillées pour les individus, familles, sources, dépôts, notes, médias et submitters.
 - Prévisualisation des images locales dans l'onglet multimédia avec Pillow.
-- Chargement des fichiers en arrière-plan afin de maintenir l'interface réactive.
+- Chargement des fichiers en arrière-plan afin de maintenir l'interface réactive,
+  avec publication atomique du contrôleur après succès.
+- Conservation de l'état chargé en cas d'échec et arrêt propre du polling lors de
+  la fermeture de la fenêtre.
 - Journalisation dans `~/.gedcom_viewer.log`.
 - Affichage du temps de chargement dans la barre de statut.
 - Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
@@ -151,7 +152,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 104 tests présents dans la suite.
+Dernière validation : 117 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 

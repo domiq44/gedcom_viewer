@@ -160,6 +160,7 @@ class GedcomViewer:
         self.menu_bar = MenuBar(self.root, self)
         self.controller = AppController(translator=self.translator)
         self._initialize_state()
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._build_app_header(root, tr)
         self._build_layout(root)
@@ -178,6 +179,7 @@ class GedcomViewer:
     def _initialize_state(self):
         self._load_results = queue.Queue()
         self._load_in_progress = False
+        self._is_closing = False
         self.filtered_entities = []
         self._navigation_history = NavigationHistory()
         self._entity_sort_column = None
@@ -656,7 +658,7 @@ class GedcomViewer:
         return {"initialdir": initialdir}
 
     def _load_file_async(self, filename, strict=False):
-        if not filename or self._load_in_progress:
+        if not filename or self._load_in_progress or self._is_closing:
             return
 
         self._load_in_progress = True
@@ -665,18 +667,27 @@ class GedcomViewer:
 
         def load_in_worker():
             error = None
+            loaded_controller = None
             try:
-                self.controller.load_file(filename, strict=strict)
+                loaded_controller = AppController(translator=self.translator)
+                loaded_controller.load_file(filename, strict=strict)
             except Exception as exc:
                 error = exc
-            self._load_results.put((filename, load_started_at, error))
+            self._load_results.put(
+                (filename, load_started_at, error, loaded_controller)
+            )
 
         threading.Thread(target=load_in_worker, daemon=True).start()
         self.root.after(25, self._poll_load_result)
 
     def _poll_load_result(self):
+        if self._is_closing:
+            return
+
         try:
-            filename, load_started_at, error = self._load_results.get_nowait()
+            filename, load_started_at, error, loaded_controller = (
+                self._load_results.get_nowait()
+            )
         except queue.Empty:
             self.root.after(25, self._poll_load_result)
             return
@@ -686,7 +697,13 @@ class GedcomViewer:
             self._show_load_error(filename, error)
             return
 
+        self.controller = loaded_controller
         self._apply_loaded_file(filename, load_started_at)
+
+    def _on_close(self):
+        self._is_closing = True
+        self._load_in_progress = False
+        self.root.destroy()
 
     def _load_file_from_path(self, filename, strict=False):
         if not filename:

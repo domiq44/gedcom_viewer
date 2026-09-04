@@ -2,112 +2,122 @@
 
 ## Objectif
 
-Donner une trajectoire claire pour faire évoluer GEDCOM Viewer sans casser l’architecture existante ni perdre la simplicité d’usage actuelle.
+Donner une trajectoire claire pour faire évoluer GEDCOM Viewer sans casser
+l’architecture existante ni perdre la simplicité d’usage actuelle.
 
-## [Priorité 1 — améliorer la maintenabilité de l’interface](#priorité-1--améliorer-la-maintenabilité-de-linterface)
+## Priorité 1 — stabiliser le chargement asynchrone
 
-### [Objectif](#objectif-1)
+### Statut
+
+Terminée.
+
+### Réalisations
+
+- construction d’un `AppController` isolé dans le thread de travail ;
+- publication de la nouvelle session uniquement après succès ;
+- conservation de l’ancienne session en cas d’erreur ;
+- gestion de la fermeture de la fenêtre et des résultats tardifs ;
+- ajout de quatre tests dédiés au chargement asynchrone.
+
+## Priorité 2 — améliorer la maintenabilité de l’interface
+
+### Objectif interface
+
 Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 
-### [Actions](#actions)
-- extraire les sous-parties de la fenêtre en composants plus petits
-- séparer la logique de recherche, de tri et de navigation
-- isoler les vues détaillées derrière une API cohérente
-- limiter la logique UI dans `ui/main_window.py`
+### Actions interface
 
-### [Bénéfice](#bénéfice)
-- code plus lisible
-- moins de couplage
-- ajout de fonctionnalités plus simple
+- extraire les sous-parties de la fenêtre en composants plus petits ;
+- séparer la logique de recherche, de tri et de navigation ;
+- isoler les vues détaillées derrière une API cohérente ;
+- limiter la logique UI dans `ui/main_window.py`.
 
-## Priorité 2 — gérer les gros GEDCOM plus proprement
+### Bénéfice interface
 
-### Objectif
+- code plus lisible ;
+- moins de couplage ;
+- ajout de fonctionnalités plus simple.
+
+## Priorité 3 — gérer les gros GEDCOM plus proprement
+
+### Objectif performance
+
 Réduire le coût mémoire et améliorer la scalabilité.
 
-### Actions
-- identifier les points de chargement en mémoire complète
-- introduire des structures d’index plus compactes
-- étudier un chargement partiel ou paresseux pour les gros fichiers
-- conserver une API stable pour les contrôleurs existants
+### Actions performance
 
-### Bénéfice
-- meilleure tolérance aux fichiers volumineux
-- plus d’aisance dans les cas de grande généalogie
-- réduction des risques de saturation mémoire
+- identifier les points de chargement en mémoire complète ;
+- introduire des structures d’index plus compactes ;
+- étudier un chargement partiel ou paresseux pour les gros fichiers ;
+- conserver une API stable pour les contrôleurs existants.
 
-## Priorité 3 — enrichir la validation GEDCOM
+### Bénéfice performance
 
-### Objectif
+- meilleure tolérance aux fichiers volumineux ;
+- plus d’aisance dans les cas de grande généalogie ;
+- réduction des risques de saturation mémoire.
+
+## Priorité 4 — enrichir la validation GEDCOM
+
+### Objectif validation
+
 Aller au-delà des anomalies structurelles de base.
 
-### Actions
-- formaliser les règles de validation GEDCOM
-- distinguer mieux les erreurs de structure et les erreurs de sémantique
-- exposer des diagnostics plus explicites dans l’interface
-- étendre la couverture de tests sur les cas non conformes
+### Actions validation
 
-### Bénéfice
-- meilleure fiabilité du chargement
-- plus de confiance pour les fichiers réels
-- meilleure qualité des messages utilisateur
+- formaliser les règles de validation GEDCOM ;
+- distinguer les erreurs de structure et les erreurs de sémantique ;
+- exposer des diagnostics plus explicites dans l’interface ;
+- étendre la couverture de tests sur les cas non conformes.
 
-## Priorité 4 — renforcer la robustesse des vues et des références
+### Bénéfice validation
 
-### Objectif
+- meilleure fiabilité du chargement ;
+- plus de confiance pour les fichiers réels ;
+- meilleure qualité des messages utilisateur.
+
+## Priorité 5 — renforcer la robustesse des vues et des références
+
+### Objectif robustesse
+
 Rendre l’application plus stable face aux données incomplètes ou mal formées.
 
-### Actions
-- sécuriser davantage les résolutions de pointeurs
-- traiter proprement les entités inconnues ou manquantes
-- normaliser les messages d’erreur autour des liens brisés
-- augmenter la couverture des scénarios de navigation
+### Actions robustesse
 
-### Bénéfice
-- moins de bugs sur les fichiers hétérogènes
-- meilleure UX dans les cas limites
-- plus de confiance sur les liens internes
+- sécuriser davantage les résolutions de pointeurs ;
+- traiter proprement les entités inconnues ou manquantes ;
+- normaliser les messages d’erreur autour des liens brisés ;
+- augmenter la couverture des scénarios de navigation.
 
-## Priorité 5 — préparer l’avenir de la base fonctionnelle
+### Bénéfice robustesse
 
-### Objectif
-Faire du projet un outil plus durable et plus facile à faire évoluer.
+- moins de bugs sur les fichiers hétérogènes ;
+- meilleure expérience dans les cas limites ;
+- plus de confiance sur les liens internes.
 
-### Actions
-- documenter les conventions de développement
-- clarifier les interfaces entre couches
-- stabiliser les tests autour des cas critiques
-- garder le niveau de complexité du projet compatible avec sa taille actuelle
+## Priorité 6 — automatiser la qualité du projet
 
-### Bénéfice
-- évolution maîtrisée
-- moins de régressions
-- meilleure contribution de nouveaux développeurs
+### Objectif automatisation
+
+Rendre les validations reproductibles pour les futures évolutions.
+
+### Actions automatisation
+
+- ajouter une CI exécutant les tests et la compilation syntaxique ;
+- exécuter les tests Tkinter en environnement headless ;
+- vérifier la construction PyInstaller ;
+- documenter les conventions de développement.
 
 ## Plan d’exécution recommandé
 
-### Phase 1 : stabilisation
-- refactorer l’UI sans modifier le comportement
-- renforcer les tests autour de la recherche et de la navigation
-- corriger les petits défauts de robustesse
-
-### Phase 2 : performance
-- réduire la charge mémoire
-- optimiser les traitements de recherche et de tri
-- garder l’API applicative stable
-
-### Phase 3 : qualité GEDCOM
-- enrichir la validation
-- améliorer les diagnostics
-- couvrir davantage de cas réels
-
-### Phase 4 : évolutivité
-- modulariser davantage la couche interface
-- sécuriser la structure du projet
-- préparer les prochaines fonctionnalités sans rupture
+1. Extraire progressivement les responsabilités de `ui/main_window.py`.
+2. Ajouter les benchmarks mémoire et recherche.
+3. Borner l’historique et optimiser la recherche si les mesures le justifient.
+4. Enrichir la validation GEDCOM avec des diagnostics séparés par catégorie.
+5. Mettre en place la CI et fiabiliser les commandes du `Makefile`.
 
 ## Conclusion
 
-Le projet est déjà fonctionnel et cohérent. La feuille de route la plus utile n’est pas de “tout réécrire”, mais de consolider les bases existantes en améliorant la maintenabilité, la performance et la qualité de validation.
-
-C’est le bon niveau d’évolution pour un outil de consultation GEDCOM qui a déjà une vraie valeur métier.
+Le chargement asynchrone est stabilisé et couvert par les tests. La suite logique
+porte désormais sur la maintenabilité de l’interface, la mémoire des gros fichiers,
+la validation GEDCOM et l’automatisation de la qualité.

@@ -86,9 +86,62 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 - validation GEDCOM standard complète
 - potentiel de couplage entre UI et logique métier
 
+### Constats vérifiés
+
+- La suite de tests contient 117 tests et passe intégralement.
+- La compilation syntaxique de tous les fichiers Python passe.
+- Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
+- Le chargement asynchrone construit un contrôleur local dans le thread de travail
+  puis le publie dans le thread Tkinter après succès.
+- L'historique de navigation conserve les contextes complets sans limite de taille.
+- La recherche renormalise les valeurs à chaque requête, ce qui peut devenir coûteux
+  sur de gros volumes.
+
+Le risque de concurrence initial a été traité : le parser du service actif n'est
+plus remplacé depuis le thread de travail. L'ancienne session reste cohérente
+pendant le chargement et est conservée en cas d'erreur. Les résultats tardifs sont
+ignorés lorsque la fenêtre est en cours de fermeture.
+
+La commande de validation utilisée est :
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
+```
+
+Résultat : `Ran 117 tests ... OK`.
+
 ## Recommandations prioritaires
 
-### Priorité 1 : réduire le couplage UI / logique
+### Priorité 1 : sécuriser le chargement asynchrone
+
+Construire une session complète dans le thread de travail, puis la publier dans
+l'interface en une seule opération après succès. Ajouter un test qui vérifie que
+l'ancien état reste cohérent pendant le chargement et qu'un échec ne le remplace
+pas.
+
+Cette correction est désormais implémentée dans `ui/main_window.py` : le thread
+de travail construit un nouvel `AppController` local et transmet son résultat via
+la file de messages. Le contrôleur actif n'est remplacé par l'interface qu'après
+un chargement réussi ; en cas d'erreur, l'ancien état est conservé.
+
+La suite UI ciblée passe avec 40 tests, dont quatre tests dédiés au chargement
+asynchrone : échange atomique du contrôleur, conservation de l'ancien état en
+cas d'échec et arrêt propre lors de la fermeture de la fenêtre.
+
+### Priorité 2 : mesurer et maîtriser la mémoire
+
+Avant toute refonte du parser, ajouter un benchmark avec plusieurs tailles de
+fichiers. Le parser conserve actuellement les lignes, les blocs bruts, les index
+et les modèles métier. Selon les mesures, étudier un index plus compact ou un
+chargement différé.
+
+### Priorité 3 : borner l'historique et la recherche
+
+Limiter l'historique à un nombre raisonnable d'entrées, ou y stocker seulement les
+pointeurs. Construire ensuite un index de recherche normalisé et ajouter un léger
+debounce côté interface.
+
+### Priorité 4 : réduire le couplage UI / logique
 
 Il serait bénéfique de découper les responsabilités de la fenêtre principale en composants plus petits :
 
@@ -100,7 +153,7 @@ Il serait bénéfique de découper les responsabilités de la fenêtre principal
 
 Cela améliorerait la maintenabilité.
 
-### Priorité 2 : sécuriser la gestion des fichiers volumineux
+### Priorité 5 : sécuriser la gestion des fichiers volumineux
 
 Le projet mériterait un axe de travail sur :
 
@@ -110,9 +163,25 @@ Le projet mériterait un axe de travail sur :
 
 Même sans changer l’API publique, on peut faire évoluer la façon dont les données sont stockées.
 
-### Priorité 3 : consolider la validation GEDCOM
+### Priorité 6 : consolider la validation GEDCOM
 
 Le mode strict est une bonne base. L’étape suivante serait d’ajouter des règles de validation plus complètes, avec diagnostics plus explicites pour les fichiers GEDCOM réels.
+
+### Priorité 7 : automatiser la qualité du projet
+
+Ajouter une CI exécutant les tests, la compilation syntaxique, les tests Tkinter
+en environnement headless et, si possible, une construction PyInstaller. Mettre à
+jour le nombre de tests indiqué dans `README.md` et corriger les diagnostics
+Markdown de `docs/roadmap.md`.
+
+## Ordre d'exécution recommandé
+
+1. Corriger l'échange atomique de la session et ajouter le test de régression.
+2. Ajouter les benchmarks mémoire et recherche.
+3. Borner l'historique et optimiser la recherche si les mesures le justifient.
+4. Mettre en place la CI et fiabiliser les commandes du `Makefile`.
+5. Extraire progressivement les responsabilités de `ui/main_window.py`.
+6. Enrichir la validation GEDCOM avec des diagnostics séparés par catégorie.
 
 ## Conclusion
 
