@@ -19,6 +19,7 @@ from ui.views.note_view import NoteView
 from ui.views.multimedia_view import MultimediaView
 from ui.views.submitter_view import SubmitterView
 from ui.themes import COLORS, FONTS
+from ui.i18n import Translator
 
 
 class _UiLogHandler(logging.Handler):
@@ -131,6 +132,7 @@ class GedcomViewer:
 
     def __init__(self, root):
         self.root = root
+        self.translator = Translator()
         self.root.title("GEDCOM Viewer 5.5.1")
         self.root.configure(bg=COLORS["background"])
         self.root.minsize(1100, 700)
@@ -480,6 +482,12 @@ class GedcomViewer:
             with open(recent_path, "r", encoding="utf-8") as handle:
                 data = json.load(handle)
             if isinstance(data, dict):
+                language = data.get("language")
+                if isinstance(language, str):
+                    try:
+                        self.translator.set_language(language)
+                    except ValueError:
+                        logger.warning("Langue non supportee dans les preferences: %s", language)
                 last_directory = data.get("last_directory")
                 if isinstance(last_directory, str) and os.path.isdir(last_directory):
                     self.last_directory = last_directory
@@ -510,6 +518,7 @@ class GedcomViewer:
                     {
                         "recent_files": self.recent_files[:10],
                         "last_directory": self.last_directory,
+                        "language": self.translator.language,
                     },
                     handle,
                 )

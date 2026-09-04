@@ -12,22 +12,23 @@ class MenuBar:
         self.app = app
 
         menubar = tk.Menu(root)
+        tr = self.app.translator.get
 
         # --- MENU FICHIER ---
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(
-            label="Ouvrir un fichier GEDCOM", command=self.app.load_file
+            label=tr("menu.open"), command=self.app.load_file
         )
         file_menu.add_command(
-            label="Ouvrir et valider un fichier GEDCOM",
+            label=tr("menu.open_validate"),
             command=self.app.open_validated_file,
         )
 
         self.recent_menu = tk.Menu(file_menu, tearoff=0)
-        file_menu.add_cascade(label="Récents", menu=self.recent_menu)
+        file_menu.add_cascade(label=tr("menu.recent"), menu=self.recent_menu)
         self.refresh_recent_menu()
         file_menu.add_command(
-            label="Effacer la liste des fichiers récents",
+            label=tr("menu.clear_recent"),
             command=self.clear_recent_files,
         )
 
@@ -35,34 +36,36 @@ class MenuBar:
 
         inspect_menu = tk.Menu(file_menu, tearoff=0)
         inspect_menu.add_command(
-            label="Afficher l'en-tête GEDCOM", command=self.app.show_header
+            label=tr("menu.header"), command=self.app.show_header
         )
         inspect_menu.add_command(
-            label="Afficher le bloc TRLR", command=self.app.show_trailer
+            label=tr("menu.trailer"), command=self.app.show_trailer
         )
-        file_menu.add_cascade(label="Inspecter", menu=inspect_menu)
+        file_menu.add_cascade(label=tr("menu.inspect"), menu=inspect_menu)
 
         file_menu.add_separator()
         navigation_menu = tk.Menu(file_menu, tearoff=0)
-        navigation_menu.add_command(label="Précédent", command=self.app.go_back)
-        navigation_menu.add_command(label="Suivant", command=self.app.go_forward)
-        file_menu.add_cascade(label="Navigation", menu=navigation_menu)
+        navigation_menu.add_command(label=tr("menu.previous"), command=self.app.go_back)
+        navigation_menu.add_command(label=tr("menu.next"), command=self.app.go_forward)
+        file_menu.add_cascade(label=tr("menu.navigation"), menu=navigation_menu)
 
         file_menu.add_separator()
-        file_menu.add_command(label="Quitter", command=self.quit_app)
-        menubar.add_cascade(label="Fichier", menu=file_menu)
+        file_menu.add_command(label=tr("menu.quit"), command=self.quit_app)
+        menubar.add_cascade(label=tr("menu.file"), menu=file_menu)
 
         # --- MENU AIDE ---
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="À propos", command=self.show_about)
-        menubar.add_cascade(label="Aide", menu=help_menu)
+        help_menu.add_command(label=tr("menu.about"), command=self.show_about)
+        menubar.add_cascade(label=tr("menu.help"), menu=help_menu)
 
         root.config(menu=menubar)
 
     def refresh_recent_menu(self):
         self.recent_menu.delete(0, "end")
         if not getattr(self.app, "recent_files", None):
-            self.recent_menu.add_command(label="Aucun fichier récent")
+            self.recent_menu.add_command(
+                label=self.app.translator.get("menu.no_recent")
+            )
             return
 
         for filename in self.app.recent_files:
@@ -89,5 +92,6 @@ class MenuBar:
 
     def show_about(self):
         messagebox.showinfo(
-            "À propos", "GEDCOM Viewer 5.5.1\nDéveloppé avec Python et Tkinter\n© 2026"
+            self.app.translator.get("menu.about"),
+            self.app.translator.get("menu.about_text"),
         )
