@@ -484,52 +484,71 @@ class GedcomViewer:
         self.entity_detail_frame.grid_rowconfigure(0, weight=1)
 
     def _build_detail_views(self):
-        self.individual_view = self._create_scrollable_detail_view(
-            "individual",
-            IndividualView,
-            set_family_name_resolver=self.controller.get_family,
-            set_family_member_resolver=self.controller.get_individual,
-        )
-        self.family_view = self._create_scrollable_detail_view(
-            "family",
-            FamilyView,
-            set_name_resolver=self.controller.get_individual,
-            set_source_resolver=self.controller.get_source,
-        )
-        self.repo_view = self._create_scrollable_detail_view(
-            "repo",
-            RepositoryView,
-            set_reference_resolver=self.controller.get_repository,
-        )
-        self.source_view = self._create_scrollable_detail_view(
-            "source",
-            SourceView,
-            set_reference_resolver=self.controller.get_repository,
-        )
-        self.note_view = self._create_scrollable_detail_view(
-            "note",
-            NoteView,
-            set_reference_resolver=self.controller.get_source,
-        )
-        self.object_view = self._create_detail_view(
-            "object",
-            MultimediaView,
-        )
-        self.submitter_view = self._create_scrollable_detail_view(
-            "submitter",
-            SubmitterView,
-            set_reference_resolver=self.controller.get_submitter,
-        )
+        view_specs = [
+            (
+                "individual",
+                "INDI",
+                IndividualView,
+                True,
+                {
+                    "set_family_name_resolver": self.controller.get_family,
+                    "set_family_member_resolver": self.controller.get_individual,
+                },
+            ),
+            (
+                "family",
+                "FAM",
+                FamilyView,
+                True,
+                {
+                    "set_name_resolver": self.controller.get_individual,
+                    "set_source_resolver": self.controller.get_source,
+                },
+            ),
+            (
+                "repo",
+                "REPO",
+                RepositoryView,
+                True,
+                {"set_reference_resolver": self.controller.get_repository},
+            ),
+            (
+                "source",
+                "SOUR",
+                SourceView,
+                True,
+                {"set_reference_resolver": self.controller.get_repository},
+            ),
+            (
+                "note",
+                "NOTE",
+                NoteView,
+                True,
+                {"set_reference_resolver": self.controller.get_source},
+            ),
+            ("object", "OBJE", MultimediaView, False, {}),
+            (
+                "submitter",
+                "SUBM",
+                SubmitterView,
+                True,
+                {"set_reference_resolver": self.controller.get_submitter},
+            ),
+        ]
 
-        self._entity_view_map = {
-            "INDI": (self.individual_view, self.individual_tab),
-            "FAM": (self.family_view, self.family_tab),
-            "REPO": (self.repo_view, self.repo_tab),
-            "SOUR": (self.source_view, self.source_tab),
-            "NOTE": (self.note_view, self.note_tab),
-            "OBJE": (self.object_view, self.object_tab),
-            "SUBM": (self.submitter_view, self.submitter_tab),
-        }
+        self._entity_view_map = {}
+        for name, entity_type, view_class, scrollable, resolvers in view_specs:
+            creator = (
+                self._create_scrollable_detail_view
+                if scrollable
+                else self._create_detail_view
+            )
+            view = creator(name, view_class, **resolvers)
+            setattr(self, f"{name}_view", view)
+            self._entity_view_map[entity_type] = (
+                view,
+                getattr(self, f"{name}_tab"),
+            )
 
     def _create_scrollable_detail_view(self, name, view_class, **resolvers):
         tab = ttk.Frame(self.entity_detail_container)
@@ -664,11 +683,7 @@ class GedcomViewer:
 
         self._load_in_progress = False
         if error is not None:
-            logger.error("Échec du chargement du GEDCOM %s: %s", filename, error)
-            messagebox.showerror(
-                self.translator.get("ui.error"),
-                self.translator.get("ui.load_error", error=error),
-            )
+            self._show_load_error(filename, error)
             return
 
         self._apply_loaded_file(filename, load_started_at)
@@ -682,14 +697,18 @@ class GedcomViewer:
         try:
             self.controller.load_file(filename, strict=strict)
         except Exception as e:
-            logger.exception("Échec du chargement du GEDCOM %s", filename)
-            messagebox.showerror(
-                self.translator.get("ui.error"),
-                self.translator.get("ui.load_error", error=e),
-            )
+            self._show_load_error(filename, e, include_traceback=True)
             return
 
         self._apply_loaded_file(filename, load_started_at)
+
+    def _show_load_error(self, filename, error, include_traceback=False):
+        log_method = logger.exception if include_traceback else logger.error
+        log_method("Échec du chargement du GEDCOM %s: %s", filename, error)
+        messagebox.showerror(
+            self.translator.get("ui.error"),
+            self.translator.get("ui.load_error", error=error),
+        )
 
     def _apply_loaded_file(self, filename, load_started_at):
         self._prepare_loaded_file(filename)
@@ -809,7 +828,6 @@ class GedcomViewer:
     def _update_entity_type_tab_state(self, selected_type):
         for entity_type, button in self._entity_type_buttons.items():
             is_selected = entity_type == selected_type
-            has_entities = entity_type in self.controller.get_entity_types()
             button.config(
                 relief="solid" if is_selected else "flat",
                 borderwidth=2 if is_selected else 1,
@@ -828,15 +846,6 @@ class GedcomViewer:
                     bg=COLORS["sidebar_active"],
                     highlightbackground=COLORS["selection"],
                     highlightcolor=COLORS["selection"],
-                    activebackground=COLORS["sidebar_hover"],
-                    activeforeground=COLORS["sidebar_active_text"],
-                )
-            elif not has_entities:
-                button.config(
-                    fg=COLORS["sidebar_text"],
-                    bg=COLORS["sidebar"],
-                    highlightbackground=COLORS["sidebar"],
-                    highlightcolor=COLORS["sidebar"],
                     activebackground=COLORS["sidebar_hover"],
                     activeforeground=COLORS["sidebar_active_text"],
                 )
