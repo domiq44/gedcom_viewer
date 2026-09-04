@@ -248,17 +248,20 @@ class GedcomViewer:
         )
         self.text_area.pack(fill="both", expand=True)
 
-        self.entity_notebook_frame = tk.LabelFrame(
+        self.entity_detail_frame = tk.LabelFrame(
             right_content, text="Vue de l’entité", padx=8, pady=8
         )
-        right_content.add(self.entity_notebook_frame, minsize=450)
-        right_content.paneconfigure(self.entity_notebook_frame, stretch="always")
+        right_content.add(self.entity_detail_frame, minsize=450)
+        right_content.paneconfigure(self.entity_detail_frame, stretch="always")
 
-        self.notebook = ttk.Notebook(self.entity_notebook_frame)
-        self.notebook.pack(fill="both", expand=True)
+        self.entity_detail_container = tk.Frame(
+            self.entity_detail_frame, bg=COLORS["surface"]
+        )
+        self.entity_detail_container.pack(fill="both", expand=True)
+        self.entity_detail_container.grid_rowconfigure(0, weight=1)
+        self.entity_detail_container.grid_columnconfigure(0, weight=1)
 
-        self.individual_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.individual_tab, text="Individu")
+        self.individual_tab = ttk.Frame(self.entity_detail_container)
         individual_scroll = _ScrollableFrame(self.individual_tab)
         individual_scroll.pack(fill="both", expand=True)
         self.individual_view = IndividualView(individual_scroll.content, self.navigate_to)
@@ -266,8 +269,7 @@ class GedcomViewer:
         self.individual_view.set_family_member_resolver(self.controller.get_individual)
         self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.family_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.family_tab, text="Famille")
+        self.family_tab = ttk.Frame(self.entity_detail_container)
         family_scroll = _ScrollableFrame(self.family_tab)
         family_scroll.pack(fill="both", expand=True)
         self.family_view = FamilyView(family_scroll.content, self.navigate_to)
@@ -275,37 +277,32 @@ class GedcomViewer:
         self.family_view.set_source_resolver(self.controller.get_source)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.repo_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.repo_tab, text="Dépôt")
+        self.repo_tab = ttk.Frame(self.entity_detail_container)
         repo_scroll = _ScrollableFrame(self.repo_tab)
         repo_scroll.pack(fill="both", expand=True)
         self.repo_view = RepositoryView(repo_scroll.content, self.navigate_to)
         self.repo_view.set_reference_resolver(self.controller.get_repository)
         self.repo_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.source_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.source_tab, text="Source")
+        self.source_tab = ttk.Frame(self.entity_detail_container)
         source_scroll = _ScrollableFrame(self.source_tab)
         source_scroll.pack(fill="both", expand=True)
         self.source_view = SourceView(source_scroll.content, self.navigate_to)
         self.source_view.set_reference_resolver(self.controller.get_repository)
         self.source_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.note_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.note_tab, text="Note")
+        self.note_tab = ttk.Frame(self.entity_detail_container)
         note_scroll = _ScrollableFrame(self.note_tab)
         note_scroll.pack(fill="both", expand=True)
         self.note_view = NoteView(note_scroll.content, self.navigate_to)
         self.note_view.set_reference_resolver(self.controller.get_source)
         self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.object_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.object_tab, text="Multimédia")
+        self.object_tab = ttk.Frame(self.entity_detail_container)
         self.object_view = MultimediaView(self.object_tab, self.navigate_to)
         self.object_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.submitter_tab = ttk.Frame(self.notebook)
-        self.notebook.add(self.submitter_tab, text="Submitter")
+        self.submitter_tab = ttk.Frame(self.entity_detail_container)
         submitter_scroll = _ScrollableFrame(self.submitter_tab)
         submitter_scroll.pack(fill="both", expand=True)
         self.submitter_view = SubmitterView(submitter_scroll.content, self.navigate_to)
@@ -335,8 +332,8 @@ class GedcomViewer:
 
         right_frame.grid_columnconfigure(0, weight=1)
         right_frame.grid_rowconfigure(1, weight=1)
-        self.entity_notebook_frame.grid_columnconfigure(0, weight=1)
-        self.entity_notebook_frame.grid_rowconfigure(0, weight=1)
+        self.entity_detail_frame.grid_columnconfigure(0, weight=1)
+        self.entity_detail_frame.grid_rowconfigure(0, weight=1)
 
     def _attach_ui_log_handler(self):
         if hasattr(self, "_ui_log_handler"):
@@ -442,16 +439,20 @@ class GedcomViewer:
         )
 
     def _clear_entity_views(self, keep_type=None):
-        for entity_type, (view, _) in self._entity_view_map.items():
-            if entity_type != keep_type:
+        for entity_type, (view, tab) in self._entity_view_map.items():
+            if entity_type == keep_type:
+                tab.pack(fill="both", expand=True)
+            else:
+                tab.pack_forget()
                 view.display(None)
 
     def _show_entity_view(self, entity_type, entity=None):
         for current_type, (view, tab) in self._entity_view_map.items():
             if current_type == entity_type:
+                tab.pack(fill="both", expand=True)
                 view.display(entity)
-                self.notebook.select(tab)
             else:
+                tab.pack_forget()
                 view.display(None)
 
     def _update_navigation_buttons(self):
@@ -470,8 +471,6 @@ class GedcomViewer:
         entity_type = self.entity_type_var.get()
         self._update_entity_type_tab_state(entity_type)
         self._clear_entity_views(keep_type=entity_type)
-        if entity_type in self._entity_view_map:
-            self.notebook.select(self._entity_view_map[entity_type][1])
         self.list_entities()
 
     def _update_entity_type_tabs(self):
@@ -488,21 +487,23 @@ class GedcomViewer:
                 command=lambda value=entity_type: self.entity_type_var.set(value),
                 anchor="w",
                 justify="left",
-                padx=10,
-                pady=7,
+                padx=12,
+                pady=8,
                 relief="flat",
-                bd=0,
+                bd=1,
                 bg=COLORS["sidebar"],
                 fg=COLORS["sidebar_text"],
                 activebackground=COLORS["sidebar_hover"],
                 activeforeground=COLORS["sidebar_active_text"],
                 cursor="hand2",
+                highlightthickness=0,
+                font=("Segoe UI", 10, "bold"),
             )
             if entity_type not in self.controller.get_entity_types():
                 button.config(
                     state="disabled", cursor="arrow", fg=COLORS["disabled_text"]
                 )
-            button.grid(row=row, column=0, sticky="ew", pady=(0, 1))
+            button.grid(row=row, column=0, sticky="ew", padx=6, pady=(0, 4))
             self._entity_type_buttons[entity_type] = button
 
         self._update_entity_type_tab_state(self.entity_type_var.get())
@@ -511,14 +512,24 @@ class GedcomViewer:
         for entity_type, button in self._entity_type_buttons.items():
             is_selected = entity_type == selected_type
             button.config(
-                relief="sunken" if is_selected else "flat",
+                relief="solid" if is_selected else "flat",
+                borderwidth=2 if is_selected else 1,
                 bg=COLORS["sidebar_active"] if is_selected else COLORS["sidebar"],
                 fg=(
                     COLORS["sidebar_active_text"]
                     if is_selected
                     else COLORS["sidebar_text"]
                 ),
+                padx=12,
+                pady=8,
             )
+            if is_selected:
+                button.config(
+                    highlightbackground=COLORS["selection"],
+                    highlightcolor=COLORS["selection"],
+                )
+            else:
+                button.config(highlightbackground=COLORS["sidebar"], highlightcolor=COLORS["sidebar"])
 
     def _sort_entity_tree(self, column):
         if self._entity_sort_column == column:
@@ -740,9 +751,6 @@ class GedcomViewer:
             self._show_entity_view(entity_type, context["entity"])
         else:
             self._clear_entity_views()
-            if len(self._entity_view_map) > 0:
-                first_tab = next(iter(self._entity_view_map.values()))[1]
-                self.notebook.select(first_tab)
 
         if context.get("raw_block") is not None:
             self._display_raw_text(context["raw_block"])
