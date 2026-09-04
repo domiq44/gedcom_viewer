@@ -137,6 +137,15 @@ class _ScrollableFrame(ttk.Frame):
 
 class GedcomViewer:
     SETTINGS_PATH = "~/.gedcom_viewer.json"
+    DISPLAY_TYPE_MAP = {
+        "individual": "INDI",
+        "family": "FAM",
+        "repository": "REPO",
+        "source": "SOUR",
+        "note": "NOTE",
+        "object": "OBJE",
+        "submitter": "SUBM",
+    }
 
     def __init__(self, root):
         self.root = root
@@ -1054,19 +1063,9 @@ class GedcomViewer:
         self._update_navigation_buttons()
 
     def display_entity_context(self, context):
-        display_type_map = {
-            "individual": "INDI",
-            "family": "FAM",
-            "repository": "REPO",
-            "source": "SOUR",
-            "note": "NOTE",
-            "object": "OBJE",
-            "submitter": "SUBM",
-        }
-
         self._record_navigation(context)
 
-        entity_type = display_type_map.get(context["type"])
+        entity_type = self.DISPLAY_TYPE_MAP.get(context["type"])
         if entity_type is not None:
             self._show_entity_view(entity_type, context["entity"])
         else:
