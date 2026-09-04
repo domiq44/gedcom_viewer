@@ -240,6 +240,14 @@ class TestGedcomViewer(unittest.TestCase):
         content = self.viewer.text_area.get("1.0", tk.END).strip()
         self.assertEqual(content, "0 @I2@ FAM")
 
+    def test_navigation_bar_updates_history_state(self):
+        self.viewer.nav_toolbar.update_state(True, False, 2, 3)
+
+        self.assertEqual(self.viewer.back_button.instate(("disabled",)), False)
+        self.assertEqual(self.viewer.forward_button.instate(("disabled",)), True)
+        self.assertIn("2", self.viewer.history_status.cget("text"))
+        self.assertIn("3", self.viewer.history_status.cget("text"))
+
     def test_display_entity_context_records_navigation_history(self):
         class DummyEntity:
             pointer = "@I1@"

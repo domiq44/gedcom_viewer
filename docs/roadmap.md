@@ -30,6 +30,8 @@ Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 
 - extraire les sous-parties de la fenêtre en composants plus petits ;
 - isoler la coordination du chargement dans `ui/load_coordinator.py` ;
+- isoler le panneau de recherche et de liste dans `ui/entity_list_panel.py` ;
+- isoler la barre de navigation dans `ui/navigation_bar.py` ;
 - séparer la logique de recherche, de tri et de navigation ;
 - limiter les recalculs de recherche avec un debounce côté interface ;
 - isoler les vues détaillées derrière une API cohérente ;

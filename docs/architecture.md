@@ -56,6 +56,8 @@ Le dossier `ui/` contient tout ce qui concerne l’interface utilisateur :
 
 - `main_window.py` : fenêtre principale, layout, recherche, navigation, historique
 - `load_coordinator.py` : chargement asynchrone, polling et cycle de fermeture
+- `entity_list_panel.py` : recherche, effacement du filtre et liste des entités
+- `navigation_bar.py` : boutons et état visuel de l’historique
 - `menus.py` : menu principal de l’application
 - `themes.py` : palette visuelle et styles
 - `syntax_highlighter.py` : coloration syntaxique du bloc GEDCOM brut
@@ -185,4 +187,5 @@ d’un chargement et l’affichage éventuel d’une progression.
 
 L’architecture est cohérente pour une application de consultation de fichiers GEDCOM. Elle est simple à comprendre, proprement découpée, et suffisamment modulable pour évoluer sans réécrire tout le projet.
 
-Le principal travail d’évolution à venir porte surtout sur la modularisation de l’interface et sur la gestion de fichiers très volumineux.
+Le principal travail d’évolution à venir porte surtout sur la modularisation
+progressive de l’interface et sur la gestion de fichiers très volumineux.

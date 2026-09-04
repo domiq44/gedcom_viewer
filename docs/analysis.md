@@ -88,13 +88,17 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite de tests contient 123 tests et passe intégralement.
+- La suite de tests contient 124 tests et passe intégralement.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le chargement asynchrone construit un contrôleur local dans le thread de travail
   puis le publie dans le thread Tkinter après succès.
 - La coordination du chargement est isolée dans `ui/load_coordinator.py`, tandis
   que `ui/main_window.py` conserve l’application du résultat à l’interface.
+- Le panneau de recherche et de liste est isolé dans `ui/entity_list_panel.py`,
+  tandis que la fenêtre conserve le filtrage métier et la sélection courante.
+- La barre de navigation est isolée dans `ui/navigation_bar.py`, tandis que la
+  fenêtre conserve la navigation métier et l'historique.
 - L'historique de navigation conserve les contextes complets sans limite de taille.
 - La recherche renormalise les valeurs à chaque requête, ce qui peut devenir coûteux
   sur de gros volumes.
@@ -112,7 +116,7 @@ La commande de validation utilisée est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Résultat : `Ran 123 tests ... OK`.
+Résultat : `Ran 124 tests ... OK`.
 
 ## Recommandations prioritaires
 

@@ -152,7 +152,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 123 tests présents dans la suite.
+Dernière validation : 124 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 

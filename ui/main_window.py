@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 from controllers.app_controller import AppController
 from controllers.navigation_history import NavigationHistory
 from controllers.recent_files_store import RecentFilesStore
+from ui.entity_list_panel import EntityListPanel
 from ui.load_coordinator import LoadCoordinator
+from ui.navigation_bar import NavigationBar
 from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
@@ -290,73 +292,20 @@ class GedcomViewer:
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
 
-        self._build_search_controls()
-        self._build_entity_list()
-
-    def _build_search_controls(self):
-        tk.Label(self.left_frame, text=self.translator.get("ui.search")).grid(
-            row=0, column=0, sticky="w", pady=(0, 5)
-        )
-        self.search_var = tk.StringVar()
-        self.search_var.trace_add("write", self.filter_entities)
-        self.search_entry = tk.Entry(
+        self.entity_list_panel = EntityListPanel(
             self.left_frame,
-            textvariable=self.search_var,
-            width=30,
-            relief="solid",
-            highlightthickness=1,
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["selection"],
-            bg="#ffffff",
-            fg=COLORS["text"],
-            insertbackground=COLORS["text"],
+            self.translator,
+            on_search=self.filter_entities,
+            on_clear_search=self.clear_search,
+            on_sort=self._sort_entity_tree,
+            on_select=self.show_entity,
+            tooltip_factory=_Tooltip,
         )
-        self.search_entry.grid(row=1, column=0, sticky="ew")
-        self.clear_search_button = ttk.Button(
-            self.left_frame,
-            text="×",
-            command=self.clear_search,
-            width=3,
-            style="ClearSearch.TButton",
-        )
-        self.clear_search_button.grid(row=1, column=1, padx=(6, 0))
-        _Tooltip(self.clear_search_button, self.translator.get("ui.clear_search"))
-
-    def _build_entity_list(self):
-        tk.Label(self.left_frame, text=self.translator.get("ui.entities")).grid(
-            row=2, column=0, sticky="w", pady=(10, 0)
-        )
-        self.entity_tree = ttk.Treeview(
-            self.left_frame,
-            columns=("name", "pointer"),
-            show="headings",
-            selectmode="browse",
-            style="Entity.Treeview",
-            padding=(6, 0),
-        )
-        self.entity_tree.heading(
-            "name",
-            text=self.translator.get("ui.name"),
-            command=lambda: self._sort_entity_tree("name"),
-        )
-        self.entity_tree.heading(
-            "pointer",
-            text=self.translator.get("ui.identifier"),
-            command=lambda: self._sort_entity_tree("pointer"),
-        )
-        self.entity_tree.column("name", width=230, minwidth=140, anchor="w")
-        self.entity_tree.column("pointer", width=80, minwidth=70, anchor="e")
-        self.entity_tree.grid(row=3, column=0, sticky="nsew")
-        self.entity_tree.bind("<<TreeviewSelect>>", self.show_entity)
-
-        entity_scrollbar = ttk.Scrollbar(
-            self.left_frame, orient="vertical", command=self.entity_tree.yview
-        )
-        entity_scrollbar.grid(row=3, column=1, sticky="ns")
-        self.entity_tree.configure(yscrollcommand=entity_scrollbar.set)
-
-        self.left_frame.grid_rowconfigure(3, weight=1)
-        self.left_frame.grid_columnconfigure(0, weight=1)
+        self.entity_list_panel.pack(fill="both", expand=True)
+        self.search_var = self.entity_list_panel.search_var
+        self.search_entry = self.entity_list_panel.search_entry
+        self.clear_search_button = self.entity_list_panel.clear_search_button
+        self.entity_tree = self.entity_list_panel.entity_tree
 
     def _build_entity_viewer(self):
         self._build_navigation_bar()
@@ -364,51 +313,17 @@ class GedcomViewer:
         self._build_content_panels()
 
     def _build_navigation_bar(self):
-        self.nav_toolbar = tk.Frame(
+        self.nav_toolbar = NavigationBar(
             self.right_frame,
-            bg=COLORS["background"],
-            padx=0,
-            pady=2,
+            self.translator,
+            on_back=self.go_back,
+            on_forward=self.go_forward,
+            tooltip_factory=_Tooltip,
         )
         self.nav_toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 7))
-
-        navigation_group = tk.Frame(
-            self.nav_toolbar,
-            bg=COLORS["surface"],
-            highlightthickness=1,
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["separator"],
-        )
-        navigation_group.pack(side="left")
-
-        self.back_button = ttk.Button(
-            navigation_group,
-            text="←",
-            command=self.go_back,
-            style="Nav.TButton",
-            width=3,
-        )
-        self.back_button.pack(side="left")
-        _Tooltip(self.back_button, self.translator.get("tooltip.previous"))
-
-        self.forward_button = ttk.Button(
-            navigation_group,
-            text="→",
-            command=self.go_forward,
-            style="Nav.TButton",
-            width=3,
-        )
-        self.forward_button.pack(side="left")
-        _Tooltip(self.forward_button, self.translator.get("tooltip.next"))
-
-        self.history_status = tk.Label(
-            self.nav_toolbar,
-            text=self.translator.get("ui.history", current=0, total=0),
-            bg=COLORS["background"],
-            foreground=COLORS["muted_text"],
-            font=FONTS["ui"],
-        )
-        self.history_status.pack(side="right", padx=(12, 4))
+        self.back_button = self.nav_toolbar.back_button
+        self.forward_button = self.nav_toolbar.forward_button
+        self.history_status = self.nav_toolbar.history_status
 
     def _build_status_bar(self):
         self.status_var = tk.StringVar(value=self.translator.get("ui.ready"))
@@ -758,24 +673,17 @@ class GedcomViewer:
                 view.display(None)
 
     def _update_navigation_buttons(self):
-        self.back_button.state(
-            ("disabled",)
-            if not self._navigation_history.can_go_back
-            else ("!disabled",)
-        )
-        self.forward_button.state(
-            ("disabled",)
-            if not self._navigation_history.can_go_forward
-            else ("!disabled",)
-        )
         total = len(self._navigation_history.entries)
         current = (
             self._navigation_history.index + 1
             if self._navigation_history.index >= 0
             else 0
         )
-        self.history_status.config(
-            text=self.translator.get("ui.history", current=current, total=total)
+        self.nav_toolbar.update_state(
+            self._navigation_history.can_go_back,
+            self._navigation_history.can_go_forward,
+            current,
+            total,
         )
 
     def on_entity_type_change(self, *args):
