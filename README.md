@@ -6,6 +6,15 @@
 
 GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explorer des fichiers GEDCOM.
 
+## Documentation
+
+Le dépôt conserve une documentation minimale et ciblée :
+
+- [README.md](README.md) : vue d’ensemble, installation, lancement, tests et utilisation quotidienne.
+- [docs/architecture.md](docs/architecture.md) : description technique de l’architecture, des flux et des composants.
+- [docs/analysis.md](docs/analysis.md) : analyse du projet, limites connues, points de vigilance et recommandations.
+- [docs/roadmap.md](docs/roadmap.md) : priorités d’évolution et plan de refonte / consolidation.
+
 ## Fonctionnalités
 
 - Ouverture de fichiers GEDCOM `.ged`.
