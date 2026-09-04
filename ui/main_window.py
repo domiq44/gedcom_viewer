@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import queue
 import sys
+import threading
 import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -143,6 +145,8 @@ class GedcomViewer:
         self.recent_files = self._load_recent_files()
         self.menu_bar = MenuBar(self.root, self)
         self.controller = AppController(translator=self.translator)
+        self._load_results = queue.Queue()
+        self._load_in_progress = False
         self.filtered_entities = []
         self._nav_history = []
         self._nav_index = -1
@@ -469,7 +473,7 @@ class GedcomViewer:
             startup_file = self.recent_files[0]
             if os.path.isfile(startup_file):
                 self.status_var.set(self.translator.get("ui.loading_last_file"))
-                self.root.after(50, self._load_file_from_path, startup_file)
+                self.root.after(50, self._load_file_async, startup_file)
 
         right_frame.grid_columnconfigure(0, weight=1)
         right_frame.grid_rowconfigure(1, weight=1)
@@ -595,6 +599,43 @@ class GedcomViewer:
             initialdir = os.path.expanduser("~")
         return {"initialdir": initialdir}
 
+    def _load_file_async(self, filename, strict=False):
+        if not filename or self._load_in_progress:
+            return
+
+        self._load_in_progress = True
+        load_started_at = time.perf_counter()
+        self.status_var.set(self.translator.get("ui.loading_last_file"))
+
+        def load_in_worker():
+            error = None
+            try:
+                self.controller.load_file(filename, strict=strict)
+            except Exception as exc:
+                error = exc
+            self._load_results.put((filename, load_started_at, error))
+
+        threading.Thread(target=load_in_worker, daemon=True).start()
+        self.root.after(25, self._poll_load_result)
+
+    def _poll_load_result(self):
+        try:
+            filename, load_started_at, error = self._load_results.get_nowait()
+        except queue.Empty:
+            self.root.after(25, self._poll_load_result)
+            return
+
+        self._load_in_progress = False
+        if error is not None:
+            logger.error("Échec du chargement du GEDCOM %s: %s", filename, error)
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.load_error", error=error),
+            )
+            return
+
+        self._apply_loaded_file(filename, load_started_at)
+
     def _load_file_from_path(self, filename, strict=False):
         if not filename:
             return
@@ -611,6 +652,9 @@ class GedcomViewer:
             )
             return
 
+        self._apply_loaded_file(filename, load_started_at)
+
+    def _apply_loaded_file(self, filename, load_started_at):
         base_path = os.path.dirname(filename)
         self.object_view.set_base_path(base_path)
         logger.info("Base de chemins multimédia définie sur: %s", base_path)
@@ -796,7 +840,7 @@ class GedcomViewer:
             self.entity_tree.move(item_id, "", index)
 
     def open_recent_file(self, filename):
-        self._load_file_from_path(filename)
+        self._load_file_async(filename)
 
     def open_validated_file(self):
         filename = filedialog.askopenfilename(
@@ -807,7 +851,7 @@ class GedcomViewer:
         if not filename:
             return
 
-        self._load_file_from_path(filename, strict=True)
+        self._load_file_async(filename, strict=True)
 
     def load_file(self):
         filename = filedialog.askopenfilename(
@@ -818,7 +862,7 @@ class GedcomViewer:
         if not filename:
             return
 
-        self._load_file_from_path(filename)
+        self._load_file_async(filename)
 
     def list_entities(self):
         if not self.controller.is_loaded():

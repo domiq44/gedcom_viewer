@@ -38,7 +38,7 @@ class TestGedcomViewer(unittest.TestCase):
                 "_load_recent_files",
                 return_value=["/tmp/last_gedcom.ged"],
             ), patch("ui.main_window.os.path.isfile", return_value=True), patch.object(
-                GedcomViewer, "_load_file_from_path"
+                GedcomViewer, "_load_file_async"
             ) as load_file:
                 viewer = GedcomViewer(root)
                 root.update()
@@ -59,7 +59,7 @@ class TestGedcomViewer(unittest.TestCase):
             "ui.main_window.filedialog.askopenfilename",
             return_value="/tmp/validated.ged",
         ):
-            with patch.object(self.viewer, "_load_file_from_path") as load_file:
+            with patch.object(self.viewer, "_load_file_async") as load_file:
                 self.viewer.open_validated_file()
 
         load_file.assert_called_once_with("/tmp/validated.ged", strict=True)
@@ -91,7 +91,7 @@ class TestGedcomViewer(unittest.TestCase):
             "ui.main_window.filedialog.askopenfilename",
             return_value="/tmp/example.ged",
         ) as askopenfilename:
-            with patch.object(self.viewer, "_load_file_from_path"):
+            with patch.object(self.viewer, "_load_file_async"):
                 self.viewer.load_file()
 
         self.assertEqual(askopenfilename.call_args.kwargs["initialdir"], "/tmp")

@@ -279,6 +279,8 @@ class GedcomParser:
 
 
 class GedcomEntity:
+    __slots__ = ("pointer", "tag", "start_index", "lines")
+
     def __init__(self, pointer, tag, start_index, lines):
         self.pointer = pointer  # ex: "@I1@" ou None
         self.tag = tag  # ex: "INDI", "FAM", "HEAD", "NOTE"
