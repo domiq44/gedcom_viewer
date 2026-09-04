@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import queue
@@ -12,6 +11,8 @@ from tkinter import ttk
 logger = logging.getLogger(__name__)
 
 from controllers.app_controller import AppController
+from controllers.navigation_history import NavigationHistory
+from controllers.recent_files_store import RecentFilesStore
 from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
@@ -149,15 +150,55 @@ class GedcomViewer:
         self.recent_files = self._load_recent_files()
         self.menu_bar = MenuBar(self.root, self)
         self.controller = AppController(translator=self.translator)
+        self._initialize_state()
+
+        self._build_app_header(root, tr)
+        self._build_layout(root)
+        self._build_entity_type_panel()
+        self._build_entity_viewer()
+        self._build_detail_views()
+        self._update_entity_type_tabs()
+
+        self.highlighter = GedcomHighlighter(self.text_area)
+        self._attach_ui_log_handler()
+        self._update_navigation_buttons()
+        self._open_recent_file_on_startup()
+
+        self.root.grid_columnconfigure(0, weight=1)
+
+    def _initialize_state(self):
         self._load_results = queue.Queue()
         self._load_in_progress = False
         self.filtered_entities = []
-        self._nav_history = []
-        self._nav_index = -1
+        self._navigation_history = NavigationHistory()
         self._entity_sort_column = None
         self._entity_sort_reverse = False
         self._entity_by_item_id = {}
 
+    @property
+    def _nav_history(self):
+        return self._navigation_history.entries
+
+    @_nav_history.setter
+    def _nav_history(self, value):
+        self._navigation_history.entries = value
+
+    @property
+    def _nav_index(self):
+        return self._navigation_history.index
+
+    @_nav_index.setter
+    def _nav_index(self, value):
+        self._navigation_history.index = value
+
+    def _open_recent_file_on_startup(self):
+        if self.recent_files:
+            startup_file = self.recent_files[0]
+            if os.path.isfile(startup_file):
+                self.status_var.set(self.translator.get("ui.loading_last_file"))
+                self.root.after(50, self._load_file_async, startup_file)
+
+    def _build_app_header(self, root, tr):
         self.app_header = tk.Frame(
             root,
             bg="#dfeaf5",
@@ -187,16 +228,30 @@ class GedcomViewer:
         )
         self.app_subtitle.pack(anchor="w")
 
+    def _build_layout(self, root):
         content_frame = ttk.Frame(root)
         content_frame.pack(fill="both", expand=True, padx=10, pady=10)
         content_frame.grid_rowconfigure(0, weight=1)
         content_frame.grid_columnconfigure(0, weight=1)
 
-        layout_pane = tk.PanedWindow(content_frame, orient="horizontal")
-        layout_pane.grid(row=0, column=0, sticky="nsew")
+        self.layout_pane = tk.PanedWindow(content_frame, orient="horizontal")
+        self.layout_pane.grid(row=0, column=0, sticky="nsew")
 
+        self.main_pane = tk.PanedWindow(self.layout_pane, orient="horizontal")
+        self.layout_pane.add(self.main_pane, minsize=700, stretch="always")
+
+        self.left_frame = tk.Frame(self.main_pane)
+        self.main_pane.add(self.left_frame, minsize=280, width=320, stretch="never")
+
+        self.right_frame = tk.Frame(self.main_pane)
+        self.main_pane.add(self.right_frame, minsize=420, width=580, stretch="always")
+
+        self.right_frame.grid_columnconfigure(0, weight=1)
+        self.right_frame.grid_rowconfigure(1, weight=1)
+
+    def _build_entity_type_panel(self):
         self.entity_type_tabs = tk.Frame(
-            layout_pane,
+            self.layout_pane,
             bg=COLORS["sidebar"],
             width=220,
             highlightthickness=1,
@@ -206,25 +261,27 @@ class GedcomViewer:
         self.entity_type_tabs.grid_propagate(False)
         self.entity_type_tabs.grid_columnconfigure(0, weight=1)
         self._entity_type_buttons = {}
-        layout_pane.add(self.entity_type_tabs, minsize=190, width=220)
-
-        main_pane = tk.PanedWindow(layout_pane, orient="horizontal")
-        layout_pane.add(main_pane, minsize=700, stretch="always")
-
-        # --- FRAME GAUCHE ---
-        left_frame = tk.Frame(main_pane)
-        main_pane.add(left_frame, minsize=280, width=320, stretch="never")
+        self.layout_pane.add(
+            self.entity_type_tabs,
+            before=self.main_pane,
+            minsize=190,
+            width=220,
+        )
 
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
 
-        tk.Label(left_frame, text=tr("ui.search")).grid(
+        self._build_search_controls()
+        self._build_entity_list()
+
+    def _build_search_controls(self):
+        tk.Label(self.left_frame, text=self.translator.get("ui.search")).grid(
             row=0, column=0, sticky="w", pady=(0, 5)
         )
         self.search_var = tk.StringVar()
         self.search_var.trace_add("write", self.filter_entities)
         self.search_entry = tk.Entry(
-            left_frame,
+            self.left_frame,
             textvariable=self.search_var,
             width=30,
             relief="solid",
@@ -237,20 +294,21 @@ class GedcomViewer:
         )
         self.search_entry.grid(row=1, column=0, sticky="ew")
         self.clear_search_button = ttk.Button(
-            left_frame,
+            self.left_frame,
             text="×",
             command=self.clear_search,
             width=3,
             style="ClearSearch.TButton",
         )
         self.clear_search_button.grid(row=1, column=1, padx=(6, 0))
-        _Tooltip(self.clear_search_button, tr("ui.clear_search"))
+        _Tooltip(self.clear_search_button, self.translator.get("ui.clear_search"))
 
-        tk.Label(left_frame, text=tr("ui.entities")).grid(
+    def _build_entity_list(self):
+        tk.Label(self.left_frame, text=self.translator.get("ui.entities")).grid(
             row=2, column=0, sticky="w", pady=(10, 0)
         )
         self.entity_tree = ttk.Treeview(
-            left_frame,
+            self.left_frame,
             columns=("name", "pointer"),
             show="headings",
             selectmode="browse",
@@ -258,11 +316,13 @@ class GedcomViewer:
             padding=(6, 0),
         )
         self.entity_tree.heading(
-            "name", text=tr("ui.name"), command=lambda: self._sort_entity_tree("name")
+            "name",
+            text=self.translator.get("ui.name"),
+            command=lambda: self._sort_entity_tree("name"),
         )
         self.entity_tree.heading(
             "pointer",
-            text=tr("ui.identifier"),
+            text=self.translator.get("ui.identifier"),
             command=lambda: self._sort_entity_tree("pointer"),
         )
         self.entity_tree.column("name", width=230, minwidth=140, anchor="w")
@@ -271,20 +331,22 @@ class GedcomViewer:
         self.entity_tree.bind("<<TreeviewSelect>>", self.show_entity)
 
         entity_scrollbar = ttk.Scrollbar(
-            left_frame, orient="vertical", command=self.entity_tree.yview
+            self.left_frame, orient="vertical", command=self.entity_tree.yview
         )
         entity_scrollbar.grid(row=3, column=1, sticky="ns")
         self.entity_tree.configure(yscrollcommand=entity_scrollbar.set)
 
-        left_frame.grid_rowconfigure(3, weight=1)
-        left_frame.grid_columnconfigure(0, weight=1)
+        self.left_frame.grid_rowconfigure(3, weight=1)
+        self.left_frame.grid_columnconfigure(0, weight=1)
 
-        # --- FRAME DROITE ---
-        right_frame = tk.Frame(main_pane)
-        main_pane.add(right_frame, minsize=420, width=580, stretch="always")
+    def _build_entity_viewer(self):
+        self._build_navigation_bar()
+        self._build_status_bar()
+        self._build_content_panels()
 
+    def _build_navigation_bar(self):
         self.nav_toolbar = tk.Frame(
-            right_frame,
+            self.right_frame,
             bg=COLORS["background"],
             padx=0,
             pady=2,
@@ -322,17 +384,18 @@ class GedcomViewer:
 
         self.history_status = tk.Label(
             self.nav_toolbar,
-            text=tr("ui.history", current=0, total=0),
+            text=self.translator.get("ui.history", current=0, total=0),
             bg=COLORS["background"],
             foreground=COLORS["muted_text"],
             font=FONTS["ui"],
         )
         self.history_status.pack(side="right", padx=(12, 4))
 
-        self.status_var = tk.StringVar(value=tr("ui.ready"))
+    def _build_status_bar(self):
+        self.status_var = tk.StringVar(value=self.translator.get("ui.ready"))
         self.log_status_frame = tk.LabelFrame(
-            right_frame,
-            text=tr("ui.log_status"),
+            self.right_frame,
+            text=self.translator.get("ui.log_status"),
             padx=6,
             pady=4,
         )
@@ -349,8 +412,9 @@ class GedcomViewer:
         )
         self.status_label.pack(fill="x", expand=True)
 
+    def _build_content_panels(self):
         right_content = tk.PanedWindow(
-            right_frame, orient="horizontal", sashrelief="raised", sashwidth=8
+            self.right_frame, orient="horizontal", sashrelief="raised", sashwidth=8
         )
         right_content.grid(row=1, column=0, sticky="nsew")
 
@@ -368,7 +432,7 @@ class GedcomViewer:
         right_content.add(self.gedcom_frame, minsize=300, width=370)
         right_content.paneconfigure(self.gedcom_frame, stretch="always")
 
-        tk.Label(self.gedcom_frame, text=tr("ui.raw_content")).pack(
+        tk.Label(self.gedcom_frame, text=self.translator.get("ui.raw_content")).pack(
             anchor="w", pady=(0, 5)
         )
         self.text_area = tk.Text(
@@ -388,7 +452,7 @@ class GedcomViewer:
 
         self.entity_detail_frame = tk.LabelFrame(
             right_content,
-            text=tr("ui.entity_view"),
+            text=self.translator.get("ui.entity_view"),
             padx=8,
             pady=8,
             bg=COLORS["background"],
@@ -407,67 +471,46 @@ class GedcomViewer:
         self.entity_detail_container.grid_rowconfigure(0, weight=1)
         self.entity_detail_container.grid_columnconfigure(0, weight=1)
 
-        self.individual_tab = ttk.Frame(self.entity_detail_container)
-        individual_scroll = _ScrollableFrame(self.individual_tab)
-        individual_scroll.pack(fill="both", expand=True)
-        self.individual_view = IndividualView(
-            individual_scroll.content, self.navigate_to, self.translator
-        )
-        self.individual_view.set_family_name_resolver(self.controller.get_family)
-        self.individual_view.set_family_member_resolver(self.controller.get_individual)
-        self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
+        self.entity_detail_frame.grid_columnconfigure(0, weight=1)
+        self.entity_detail_frame.grid_rowconfigure(0, weight=1)
 
-        self.family_tab = ttk.Frame(self.entity_detail_container)
-        family_scroll = _ScrollableFrame(self.family_tab)
-        family_scroll.pack(fill="both", expand=True)
-        self.family_view = FamilyView(
-            family_scroll.content, self.navigate_to, self.translator
+    def _build_detail_views(self):
+        self.individual_view = self._create_scrollable_detail_view(
+            "individual",
+            IndividualView,
+            set_family_name_resolver=self.controller.get_family,
+            set_family_member_resolver=self.controller.get_individual,
         )
-        self.family_view.set_name_resolver(self.controller.get_individual)
-        self.family_view.set_source_resolver(self.controller.get_source)
-        self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.repo_tab = ttk.Frame(self.entity_detail_container)
-        repo_scroll = _ScrollableFrame(self.repo_tab)
-        repo_scroll.pack(fill="both", expand=True)
-        self.repo_view = RepositoryView(
-            repo_scroll.content, self.navigate_to, self.translator
+        self.family_view = self._create_scrollable_detail_view(
+            "family",
+            FamilyView,
+            set_name_resolver=self.controller.get_individual,
+            set_source_resolver=self.controller.get_source,
         )
-        self.repo_view.set_reference_resolver(self.controller.get_repository)
-        self.repo_view.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.source_tab = ttk.Frame(self.entity_detail_container)
-        source_scroll = _ScrollableFrame(self.source_tab)
-        source_scroll.pack(fill="both", expand=True)
-        self.source_view = SourceView(
-            source_scroll.content, self.navigate_to, self.translator
+        self.repo_view = self._create_scrollable_detail_view(
+            "repo",
+            RepositoryView,
+            set_reference_resolver=self.controller.get_repository,
         )
-        self.source_view.set_reference_resolver(self.controller.get_repository)
-        self.source_view.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.note_tab = ttk.Frame(self.entity_detail_container)
-        note_scroll = _ScrollableFrame(self.note_tab)
-        note_scroll.pack(fill="both", expand=True)
-        self.note_view = NoteView(
-            note_scroll.content, self.navigate_to, self.translator
+        self.source_view = self._create_scrollable_detail_view(
+            "source",
+            SourceView,
+            set_reference_resolver=self.controller.get_repository,
         )
-        self.note_view.set_reference_resolver(self.controller.get_source)
-        self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.object_tab = ttk.Frame(self.entity_detail_container)
-        self.object_view = MultimediaView(
-            self.object_tab, self.navigate_to, self.translator
+        self.note_view = self._create_scrollable_detail_view(
+            "note",
+            NoteView,
+            set_reference_resolver=self.controller.get_source,
         )
-        self.object_view.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.submitter_tab = ttk.Frame(self.entity_detail_container)
-        submitter_scroll = _ScrollableFrame(self.submitter_tab)
-        submitter_scroll.pack(fill="both", expand=True)
-        self.submitter_view = SubmitterView(
-            submitter_scroll.content, self.navigate_to, self.translator
+        self.object_view = self._create_detail_view(
+            "object",
+            MultimediaView,
         )
-        self.submitter_view.set_reference_resolver(self.controller.get_submitter)
-        self.submitter_view.pack(fill="both", expand=True, padx=10, pady=10)
+        self.submitter_view = self._create_scrollable_detail_view(
+            "submitter",
+            SubmitterView,
+            set_reference_resolver=self.controller.get_submitter,
+        )
 
         self._entity_view_map = {
             "INDI": (self.individual_view, self.individual_tab),
@@ -478,22 +521,28 @@ class GedcomViewer:
             "OBJE": (self.object_view, self.object_tab),
             "SUBM": (self.submitter_view, self.submitter_tab),
         }
-        self._update_entity_type_tabs()
 
-        self.highlighter = GedcomHighlighter(self.text_area)
-        self._attach_ui_log_handler()
-        self._update_navigation_buttons()
+    def _create_scrollable_detail_view(self, name, view_class, **resolvers):
+        tab = ttk.Frame(self.entity_detail_container)
+        scroll = _ScrollableFrame(tab)
+        scroll.pack(fill="both", expand=True)
+        view = view_class(scroll.content, self.navigate_to, self.translator)
+        for resolver_name, resolver in resolvers.items():
+            if hasattr(view, resolver_name):
+                getattr(view, resolver_name)(resolver)
+        view.pack(fill="both", expand=True, padx=10, pady=10)
+        setattr(self, f"{name}_tab", tab)
+        return view
 
-        if self.recent_files:
-            startup_file = self.recent_files[0]
-            if os.path.isfile(startup_file):
-                self.status_var.set(self.translator.get("ui.loading_last_file"))
-                self.root.after(50, self._load_file_async, startup_file)
-
-        right_frame.grid_columnconfigure(0, weight=1)
-        right_frame.grid_rowconfigure(1, weight=1)
-        self.entity_detail_frame.grid_columnconfigure(0, weight=1)
-        self.entity_detail_frame.grid_rowconfigure(0, weight=1)
+    def _create_detail_view(self, name, view_class, **resolvers):
+        tab = ttk.Frame(self.entity_detail_container)
+        view = view_class(tab, self.navigate_to, self.translator)
+        for resolver_name, resolver in resolvers.items():
+            if hasattr(view, resolver_name):
+                getattr(view, resolver_name)(resolver)
+        view.pack(fill="both", expand=True, padx=10, pady=10)
+        setattr(self, f"{name}_tab", tab)
+        return view
 
     def _attach_ui_log_handler(self):
         if hasattr(self, "_ui_log_handler"):
@@ -506,63 +555,25 @@ class GedcomViewer:
         logging.getLogger().addHandler(self._ui_log_handler)
 
     def _load_recent_files(self):
-        settings_path = os.path.expanduser(self.SETTINGS_PATH)
-        recent_path = settings_path
-        if not os.path.isfile(recent_path):
-            return []
-
-        try:
-            with open(recent_path, "r", encoding="utf-8") as handle:
-                data = json.load(handle)
-            if isinstance(data, dict):
-                language = data.get("language")
-                if isinstance(language, str):
-                    try:
-                        self.translator.set_language(language)
-                    except ValueError:
-                        logger.warning(
-                            "Langue non supportee dans les preferences: %s", language
-                        )
-                last_directory = data.get("last_directory")
-                if isinstance(last_directory, str) and os.path.isdir(last_directory):
-                    self.last_directory = last_directory
-                data = data.get("recent_files", [])
-            if isinstance(data, list):
-                recent_files = [path for path in data if isinstance(path, str)]
-                if self.last_directory == os.path.expanduser("~"):
-                    for path in recent_files:
-                        directory = os.path.dirname(os.path.abspath(path))
-                        if os.path.isdir(directory):
-                            self.last_directory = directory
-                            break
-                return recent_files
-        except Exception as exc:
-            logger.warning(
-                "Impossible de lire la liste des fichiers récents %s: %s",
-                recent_path,
-                exc,
-            )
-            return []
-        return []
+        store = RecentFilesStore(self.SETTINGS_PATH, file_opener=open, log=logger)
+        recent_files, last_directory, language = store.load(self.last_directory)
+        self.last_directory = last_directory
+        if isinstance(language, str):
+            try:
+                self.translator.set_language(language)
+            except ValueError:
+                logger.warning(
+                    "Langue non supportee dans les preferences: %s", language
+                )
+        return recent_files
 
     def _save_recent_files(self):
-        recent_path = os.path.expanduser(self.SETTINGS_PATH)
-        try:
-            with open(recent_path, "w", encoding="utf-8") as handle:
-                json.dump(
-                    {
-                        "recent_files": self.recent_files[:10],
-                        "last_directory": self.last_directory,
-                        "language": self.translator.language,
-                    },
-                    handle,
-                )
-        except Exception as exc:
-            logger.warning(
-                "Impossible d'enregistrer la liste des fichiers récents %s: %s",
-                recent_path,
-                exc,
-            )
+        store = RecentFilesStore(self.SETTINGS_PATH, file_opener=open, log=logger)
+        store.save(
+            self.recent_files,
+            self.last_directory,
+            self.translator.language,
+        )
 
     def set_language(self, language):
         if language == self.translator.language:
@@ -672,14 +683,7 @@ class GedcomViewer:
         self._apply_loaded_file(filename, load_started_at)
 
     def _apply_loaded_file(self, filename, load_started_at):
-        base_path = os.path.dirname(filename)
-        self.object_view.set_base_path(base_path)
-        logger.info("Base de chemins multimédia définie sur: %s", base_path)
-        self._remember_recent_file(filename)
-        self._clear_entity_views()
-        self._nav_history = []
-        self._nav_index = -1
-        self._update_navigation_buttons()
+        self._prepare_loaded_file(filename)
 
         entity_types = self.controller.get_entity_types()
         if not entity_types:
@@ -702,6 +706,15 @@ class GedcomViewer:
             filename,
         )
 
+    def _prepare_loaded_file(self, filename):
+        base_path = os.path.dirname(filename)
+        self.object_view.set_base_path(base_path)
+        logger.info("Base de chemins multimédia définie sur: %s", base_path)
+        self._remember_recent_file(filename)
+        self._clear_entity_views()
+        self._navigation_history.reset()
+        self._update_navigation_buttons()
+
     def _clear_entity_views(self, keep_type=None):
         for entity_type, (view, tab) in self._entity_view_map.items():
             if entity_type == keep_type:
@@ -723,15 +736,22 @@ class GedcomViewer:
                 view.display(None)
 
     def _update_navigation_buttons(self):
-        can_go_back = self._nav_index > 0
-        can_go_forward = self._nav_index < len(self._nav_history) - 1
-
-        self.back_button.state(("disabled",) if not can_go_back else ("!disabled",))
-        self.forward_button.state(
-            ("disabled",) if not can_go_forward else ("!disabled",)
+        self.back_button.state(
+            ("disabled",)
+            if not self._navigation_history.can_go_back
+            else ("!disabled",)
         )
-        total = len(self._nav_history)
-        current = self._nav_index + 1 if self._nav_index >= 0 else 0
+        self.forward_button.state(
+            ("disabled",)
+            if not self._navigation_history.can_go_forward
+            else ("!disabled",)
+        )
+        total = len(self._navigation_history.entries)
+        current = (
+            self._navigation_history.index + 1
+            if self._navigation_history.index >= 0
+            else 0
+        )
         self.history_status.config(
             text=self.translator.get("ui.history", current=current, total=total)
         )
@@ -881,48 +901,7 @@ class GedcomViewer:
         if not self.controller.is_loaded():
             return
 
-        entity_type = self.entity_type_var.get()
-        self.entity_tree.delete(*self.entity_tree.get_children())
-        self._entity_by_item_id = {}
-        self.filtered_entities = []
-
-        if entity_type not in self.controller.get_entity_types():
-            self.entity_tree.insert(
-                "",
-                "end",
-                iid="empty",
-                values=(self.translator.get("ui.no_entity_type"), "—"),
-            )
-            self._show_entity_view(entity_type, None)
-            self._display_raw_text("")
-            return
-
-        items = self.controller.get_entity_list_items(entity_type)
-        self.filtered_entities = [entity for entity, _ in items]
-
-        if not items:
-            self.entity_tree.insert(
-                "",
-                "end",
-                iid="empty",
-                values=(self.translator.get("ui.no_entity_type"), "—"),
-            )
-            self._show_entity_view(entity_type, None)
-            self._display_raw_text("")
-            return
-
-        for index, (entity, _) in enumerate(items):
-            item_id = str(index)
-            self._entity_by_item_id[item_id] = entity
-            self.entity_tree.insert(
-                "",
-                "end",
-                iid=item_id,
-                values=(
-                    self.controller.format_entity_display_name(entity, entity_type),
-                    getattr(entity, "pointer", "") or "—",
-                ),
-            )
+        self._refresh_entity_list()
 
     def clear_search(self):
         self.search_var.set("")
@@ -932,37 +911,38 @@ class GedcomViewer:
         if not self.controller.is_loaded():
             return
 
+        self._refresh_entity_list(self.search_var.get())
+
+    def _refresh_entity_list(self, query=""):
         entity_type = self.entity_type_var.get()
-        query = self.search_var.get()
         self.entity_tree.delete(*self.entity_tree.get_children())
         self._entity_by_item_id = {}
         self.filtered_entities = []
 
         if entity_type not in self.controller.get_entity_types():
-            self.entity_tree.insert(
-                "",
-                "end",
-                iid="empty",
-                values=(self.translator.get("ui.no_entity_type"), "—"),
-            )
-            self._show_entity_view(entity_type, None)
-            self._display_raw_text("")
+            self._show_empty_entity_list(entity_type)
             return
 
         items = self.controller.get_entity_list_items(entity_type, query)
         self.filtered_entities = [entity for entity, _ in items]
 
         if not items:
-            self.entity_tree.insert(
-                "",
-                "end",
-                iid="empty",
-                values=(self.translator.get("ui.no_entity_type"), "—"),
-            )
-            self._show_entity_view(entity_type, None)
-            self._display_raw_text("")
+            self._show_empty_entity_list(entity_type)
             return
 
+        self._populate_entity_tree(items, entity_type)
+
+    def _show_empty_entity_list(self, entity_type):
+        self.entity_tree.insert(
+            "",
+            "end",
+            iid="empty",
+            values=(self.translator.get("ui.no_entity_type"), "—"),
+        )
+        self._show_entity_view(entity_type, None)
+        self._display_raw_text("")
+
+    def _populate_entity_tree(self, items, entity_type):
         for index, (entity, _) in enumerate(items):
             item_id = str(index)
             self._entity_by_item_id[item_id] = entity
@@ -1034,27 +1014,7 @@ class GedcomViewer:
         self.highlighter.highlight()
 
     def _record_navigation(self, context):
-        if not context or not context.get("entity"):
-            return
-
-        pointer = getattr(context["entity"], "pointer", None)
-        if not pointer:
-            return
-
-        current_pointer = None
-        if self._nav_index >= 0 and self._nav_history:
-            current_pointer = getattr(
-                self._nav_history[self._nav_index]["entity"], "pointer", None
-            )
-
-        if current_pointer == pointer:
-            return
-
-        if self._nav_index < len(self._nav_history) - 1:
-            self._nav_history = self._nav_history[: self._nav_index + 1]
-
-        self._nav_history.append(context)
-        self._nav_index = len(self._nav_history) - 1
+        self._navigation_history.record(context)
         self._update_navigation_buttons()
 
     def navigate_to(self, pointer):
@@ -1078,20 +1038,18 @@ class GedcomViewer:
         self.display_entity_context(context)
 
     def go_back(self):
-        if self._nav_index <= 0:
+        context = self._navigation_history.back()
+        if context is None:
             return
 
-        self._nav_index -= 1
-        context = self._nav_history[self._nav_index]
         self.display_entity_context(context)
         self._update_navigation_buttons()
 
     def go_forward(self):
-        if self._nav_index >= len(self._nav_history) - 1:
+        context = self._navigation_history.forward()
+        if context is None:
             return
 
-        self._nav_index += 1
-        context = self._nav_history[self._nav_index]
         self.display_entity_context(context)
         self._update_navigation_buttons()
 

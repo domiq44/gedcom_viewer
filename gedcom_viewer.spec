@@ -22,6 +22,7 @@ a = Analysis(
         'controllers.entity_controller',
         'controllers.search_controller',
         'gedcom.parser',
+        'PIL._tkinter_finder',
     ],
     hookspath=[],
     hooksconfig={},

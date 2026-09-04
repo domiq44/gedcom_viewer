@@ -4,18 +4,18 @@
 
 Donner une trajectoire claire pour faire évoluer GEDCOM Viewer sans casser l’architecture existante ni perdre la simplicité d’usage actuelle.
 
-## Priorité 1 — améliorer la maintenabilité de l’interface
+## [Priorité 1 — améliorer la maintenabilité de l’interface](#priorité-1--améliorer-la-maintenabilité-de-linterface)
 
-### Objectif
+### [Objectif](#objectif-1)
 Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 
-### Actions
+### [Actions](#actions)
 - extraire les sous-parties de la fenêtre en composants plus petits
 - séparer la logique de recherche, de tri et de navigation
 - isoler les vues détaillées derrière une API cohérente
 - limiter la logique UI dans `ui/main_window.py`
 
-### Bénéfice
+### [Bénéfice](#bénéfice)
 - code plus lisible
 - moins de couplage
 - ajout de fonctionnalités plus simple
