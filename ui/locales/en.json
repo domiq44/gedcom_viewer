@@ -2,6 +2,7 @@
   "app.title": "GEDCOM Viewer",
   "app.subtitle": "GEDCOM file explorer",
   "ui.search": "Search:",
+  "ui.clear_search": "Clear search",
   "ui.entities": "Entities:",
   "ui.name": "Name",
   "ui.identifier": "Identifier",

@@ -12,6 +12,8 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 - Deux modes d'ouverture : tolérant ou strict avec validation structurelle.
 - Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
 - Recherche instantanée dans les entités.
+- Bouton d'effacement rapide du filtre de recherche.
+- Bouton d'effacement intégré à la palette visuelle de l'application.
 - Tri par nom, titre ou identifiant, avec tri numérique des pointeurs.
 - Navigation entre les pointeurs GEDCOM tels que `@I1@` ou `@F1@`.
 - Historique de navigation précédent/suivant.

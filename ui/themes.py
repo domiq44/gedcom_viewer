@@ -50,6 +50,20 @@ def apply_modern_theme(root):
         background=[("active", COLORS["sidebar_hover"])],
         foreground=[("disabled", COLORS["disabled_text"])],
     )
+    style.configure(
+        "ClearSearch.TButton",
+        font=("Segoe UI", 11, "bold"),
+        padding=(3, 1),
+        background=COLORS["surface"],
+        foreground=COLORS["muted_text"],
+        borderwidth=1,
+        relief="solid",
+    )
+    style.map(
+        "ClearSearch.TButton",
+        background=[("active", COLORS["sidebar_hover"])],
+        foreground=[("active", COLORS["text"]), ("disabled", COLORS["disabled_text"])],
+    )
     style.configure("TSeparator", background=COLORS["separator"])
     style.configure("TLabelframe", background=COLORS["background"])
     style.configure(

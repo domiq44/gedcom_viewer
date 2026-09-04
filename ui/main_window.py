@@ -232,6 +232,15 @@ class GedcomViewer:
             insertbackground=COLORS["text"],
         )
         self.search_entry.grid(row=1, column=0, sticky="ew")
+        self.clear_search_button = ttk.Button(
+            left_frame,
+            text="×",
+            command=self.clear_search,
+            width=3,
+            style="ClearSearch.TButton",
+        )
+        self.clear_search_button.grid(row=1, column=1, padx=(6, 0))
+        _Tooltip(self.clear_search_button, tr("ui.clear_search"))
 
         tk.Label(left_frame, text=tr("ui.entities")).grid(
             row=2, column=0, sticky="w", pady=(10, 0)
@@ -910,6 +919,10 @@ class GedcomViewer:
                     getattr(entity, "pointer", "") or "—",
                 ),
             )
+
+    def clear_search(self):
+        self.search_var.set("")
+        self.search_entry.focus_set()
 
     def filter_entities(self, *args):
         if not self.controller.is_loaded():

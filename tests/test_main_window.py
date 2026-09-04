@@ -96,6 +96,16 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertEqual(askopenfilename.call_args.kwargs["initialdir"], "/tmp")
 
+    def test_clear_search_clears_filter(self):
+        self.viewer.controller.is_loaded.return_value = True
+        self.viewer.controller.get_entity_types.return_value = []
+        self.viewer.search_var.set("Doe")
+
+        self.assertEqual(self.viewer.clear_search_button.cget("style"), "ClearSearch.TButton")
+        self.viewer.clear_search_button.invoke()
+
+        self.assertEqual(self.viewer.search_var.get(), "")
+
     def test_show_header_displays_head_block(self):
         self.viewer.controller.is_loaded.return_value = True
         self.viewer.controller.extract_head.return_value = "0 HEAD\n1 SOUR GEDCOM"

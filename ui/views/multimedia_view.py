@@ -1,6 +1,5 @@
 import logging
 import os
-import tempfile
 import tkinter as tk
 from tkinter import ttk
 
@@ -10,9 +9,10 @@ from ui.i18n import Translator
 logger = logging.getLogger(__name__)
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageTk
 except ImportError:
     Image = None
+    ImageTk = None
 
 
 class MultimediaView(ttk.Frame):
@@ -174,16 +174,7 @@ class MultimediaView(ttk.Frame):
                 max_width = 640
                 max_height = 480
                 image.thumbnail((max_width, max_height))
-
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    temp_path = tmp.name
-
-                try:
-                    image.save(temp_path, format="PNG")
-                    photo = tk.PhotoImage(file=temp_path)
-                finally:
-                    if os.path.exists(temp_path):
-                        os.unlink(temp_path)
+                photo = ImageTk.PhotoImage(image)
         except Exception as exc:
             logger.exception("Échec du chargement de l’image %s", resolved_path)
             self._show_preview_placeholder(f"Impossible d’ouvrir l’image: {exc}")

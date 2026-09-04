@@ -61,11 +61,11 @@ install: venv check_pip check_tk
 
 # --- Exécution et Test ---
 
-run: venv
+run: venv install
 	echo "--- Running application ---"
 	$(PYTHON_ACTUAL) main.py
 
-test: venv
+test: venv install
 	echo "--- Running tests ---"
 	$(PYTHON_ACTUAL) -m unittest discover -s tests
 

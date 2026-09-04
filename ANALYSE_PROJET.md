@@ -37,6 +37,8 @@ main.py
 - Chargement de fichiers GEDCOM et affichage du bloc brut.
 - Support des types `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
 - Recherche instantanée et tri par nom, titre ou identifiant.
+- Effacement rapide du filtre de recherche avec le bouton `×`.
+- Style du bouton harmonisé avec les couleurs de surface, de séparation et de survol de l'interface.
 - Tri numérique des pointeurs comme `@I2@` et `@I10@`.
 - Navigation entre pointeurs GEDCOM et historique précédent/suivant.
 - Gestion des fichiers récents.

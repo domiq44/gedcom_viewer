@@ -1,6 +1,7 @@
 {
   "app.subtitle": "Explorador de archivos GEDCOM",
   "ui.search": "Buscar:",
+  "ui.clear_search": "Borrar la búsqueda",
   "ui.entities": "Entidades:",
   "ui.name": "Nombre",
   "ui.identifier": "Identificador",
