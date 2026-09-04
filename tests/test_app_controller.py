@@ -167,15 +167,10 @@ class TestAppController(unittest.TestCase):
 
     def test_get_entity_type_menu_display_items(self):
         items = self.controller.get_entity_type_menu_display_items()
-        self.assertTrue(
-            any(
-                "INDI" in label and entity_type == "INDI"
-                for label, entity_type in items
-            )
-        )
-        self.assertTrue(
-            any("FAM" in label and entity_type == "FAM" for label, entity_type in items)
-        )
+        self.assertIn(("Individu", "INDI"), items)
+        self.assertIn(("Famille", "FAM"), items)
+        self.assertFalse(any("INDI" in label for label, _ in items))
+        self.assertFalse(any("FAM" in label for label, _ in items))
 
     def test_format_entity_label_and_context(self):
         entity = self.controller.get_entity("@I1@")

@@ -183,7 +183,7 @@ class GedcomViewer:
         self.entity_type_tabs = tk.Frame(
             layout_pane,
             bg=COLORS["sidebar"],
-            width=140,
+            width=220,
             highlightthickness=1,
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
@@ -191,14 +191,14 @@ class GedcomViewer:
         self.entity_type_tabs.grid_propagate(False)
         self.entity_type_tabs.grid_columnconfigure(0, weight=1)
         self._entity_type_buttons = {}
-        layout_pane.add(self.entity_type_tabs, minsize=120, width=140)
+        layout_pane.add(self.entity_type_tabs, minsize=190, width=220)
 
         main_pane = tk.PanedWindow(layout_pane, orient="horizontal")
-        layout_pane.add(main_pane, minsize=800, stretch="always")
+        layout_pane.add(main_pane, minsize=700, stretch="always")
 
         # --- FRAME GAUCHE ---
         left_frame = tk.Frame(main_pane)
-        main_pane.add(left_frame, minsize=300, width=340, stretch="never")
+        main_pane.add(left_frame, minsize=280, width=320, stretch="never")
 
         self.entity_type_var = tk.StringVar()
         self.entity_type_var.trace_add("write", self.on_entity_type_change)
@@ -257,7 +257,7 @@ class GedcomViewer:
 
         # --- FRAME DROITE ---
         right_frame = tk.Frame(main_pane)
-        main_pane.add(right_frame, minsize=500, width=590, stretch="always")
+        main_pane.add(right_frame, minsize=420, width=580, stretch="always")
 
         self.nav_toolbar = tk.Frame(
             right_frame,
@@ -341,7 +341,7 @@ class GedcomViewer:
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        right_content.add(self.gedcom_frame, minsize=320, width=390)
+        right_content.add(self.gedcom_frame, minsize=300, width=370)
         right_content.paneconfigure(self.gedcom_frame, stretch="always")
 
         tk.Label(self.gedcom_frame, text="Contenu brut du fichier :").pack(
@@ -373,7 +373,7 @@ class GedcomViewer:
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        right_content.add(self.entity_detail_frame, minsize=360, width=430)
+        right_content.add(self.entity_detail_frame, minsize=340, width=410)
         right_content.paneconfigure(self.entity_detail_frame, stretch="always")
 
         self.entity_detail_container = tk.Frame(

@@ -280,7 +280,7 @@ class TestGedcomViewer(unittest.TestCase):
     def test_load_file_logs_elapsed_time(self):
         self.viewer.controller.get_entity_types.return_value = ["INDI"]
         self.viewer.controller.get_all_entity_type_menu_display_items.return_value = [
-            ("INDI - Individu", "INDI")
+            ("Individu", "INDI")
         ]
 
         with patch("ui.main_window.time.perf_counter", side_effect=[10.0, 12.345]):

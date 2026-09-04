@@ -61,13 +61,13 @@ class SearchController:
 
     def get_entity_type_menu_display_items(self):
         return [
-            (f"{entity_type} – {self.get_entity_type_label(entity_type)}", entity_type)
+            (self.get_entity_type_label(entity_type), entity_type)
             for entity_type in self.get_entity_types()
         ]
 
     def get_all_entity_type_menu_display_items(self):
         return [
-            (f"{entity_type} – {self.get_entity_type_label(entity_type)}", entity_type)
+            (self.get_entity_type_label(entity_type), entity_type)
             for entity_type in self.entity_labels
         ]
 
