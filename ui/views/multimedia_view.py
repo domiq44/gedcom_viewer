@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+from ui.i18n import Translator
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +20,11 @@ class MultimediaView(ttk.Frame):
     Affiche une fiche multimédia pour les entités OBJE.
     """
 
-    def __init__(self, parent, on_pointer_click):
+    def __init__(self, parent, on_pointer_click, translator=None):
         super().__init__(parent)
 
         self.on_pointer_click_callback = on_pointer_click
+        self.translator = translator or Translator()
         self.configure(padding=10)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -44,13 +46,15 @@ class MultimediaView(ttk.Frame):
         self.canvas.bind("<Configure>", self._sync_canvas_width)
 
         self.title_label = ttk.Label(
-            self.content_frame, text="Multimédia", font=("Segoe UI", 12, "bold")
+            self.content_frame,
+            text=self.translator.get("view.multimedia"),
+            font=("Segoe UI", 12, "bold"),
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         self.preview_label = tk.Label(
             self.content_frame,
-            text="Prévisualisation indisponible",
+            text=self.translator.get("view.preview_unavailable"),
             relief="sunken",
             justify="center",
             anchor="center",
@@ -62,14 +66,14 @@ class MultimediaView(ttk.Frame):
 
         self.labels = {}
         fields = [
-            ("Fichier", "file"),
-            ("Titre", "title"),
-            ("Format", "format"),
-            ("Note", "note"),
+            ("view.file", "file"),
+            ("view.title", "title"),
+            ("view.format", "format"),
+            ("view.note", "note"),
         ]
 
-        for i, (label_text, key) in enumerate(fields, start=2):
-            ttk.Label(self.content_frame, text=label_text + " :").grid(
+        for i, (label_key, key) in enumerate(fields, start=2):
+            ttk.Label(self.content_frame, text=self.translator.get(label_key) + " :").grid(
                 row=i, column=0, sticky="w"
             )
             if key == "note":
@@ -119,8 +123,9 @@ class MultimediaView(ttk.Frame):
         self.base_path = base_path if base_path and os.path.isdir(base_path) else None
 
     def _show_preview_placeholder(
-        self, reason="Prévisualisation indisponible", log=True
+        self, reason=None, log=True
     ):
+        reason = reason or self.translator.get("view.preview_unavailable")
         if log:
             logger.info("Prévisualisation non disponible: %s", reason)
         self.preview_label.config(text=reason)
@@ -129,7 +134,9 @@ class MultimediaView(ttk.Frame):
 
     def _show_preview(self, file_path):
         if not file_path:
-            self._show_preview_placeholder("Aucun chemin multimédia fourni")
+            self._show_preview_placeholder(
+                self.translator.get("view.no_media_path")
+            )
             return
 
         candidates = [file_path]
@@ -150,14 +157,14 @@ class MultimediaView(ttk.Frame):
 
         if resolved_path is None:
             self._show_preview_placeholder(
-                f"Fichier introuvable parmi les chemins testés: {candidates}"
+                self.translator.get("view.file_not_found", candidates=candidates)
             )
             return
 
         logger.info("Tentative d’affichage preview pour %s", resolved_path)
         if Image is None:
             self._show_preview_placeholder(
-                "Pillow indisponible pour la prévisualisation"
+                self.translator.get("view.pillow_unavailable")
             )
             return
 
@@ -188,7 +195,7 @@ class MultimediaView(ttk.Frame):
 
     def display(self, media):
         if not media:
-            self.title_label.config(text="Multimédia")
+            self.title_label.config(text=self.translator.get("view.multimedia"))
             self._show_preview_placeholder(log=False)
             for key, widget in self.labels.items():
                 if isinstance(widget, tk.Text):
@@ -197,7 +204,9 @@ class MultimediaView(ttk.Frame):
                     configure_label(widget, "")
             return
 
-        self.title_label.config(text=f"Multimédia : {media.pointer}")
+        self.title_label.config(
+            text=self.translator.get("view.multimedia_pointer", pointer=media.pointer)
+        )
         for key, widget in self.labels.items():
             value = getattr(media, key, "")
             if key == "note":

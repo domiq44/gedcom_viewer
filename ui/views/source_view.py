@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+from ui.i18n import Translator
 
 
 logger = logging.getLogger(__name__)
@@ -13,39 +14,44 @@ class SourceView(ttk.Frame):
     Affiche une fiche Source (modèle Source).
     """
 
-    def __init__(self, parent, on_pointer_click):
+    def __init__(self, parent, on_pointer_click, translator=None):
         super().__init__(parent)
 
         self.on_pointer_click_callback = on_pointer_click
+        self.translator = translator or Translator()
         self.reference_resolver = None
         self.configure(padding=10)
 
-        self.title_label = ttk.Label(self, text="Source", font=("Segoe UI", 12, "bold"))
+        self.title_label = ttk.Label(
+            self, text=self.translator.get("view.source"), font=("Segoe UI", 12, "bold")
+        )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         self.labels = {}
         fields = [
-            ("Titre", "title"),
-            ("Abréviation", "abbreviation"),
-            ("Auteur", "author"),
-            ("Date publication", "pub_date"),
-            ("Publication", "publication"),
-            ("Texte", "text"),
-            ("Dépôt associé", "repository"),
-            ("Cote", "call_number"),
-            ("Support", "media"),
-            ("Agence", "agency"),
-            ("Notes", "notes"),
-            ("Sources", "sources"),
-            ("Références", "references"),
-            ("Identifiant interne", "record_id"),
-            ("Note du dépôt", "repo_note"),
-            ("Données / événements", "data_events"),
-            ("Autres informations GEDCOM", "additional_fields"),
+            ("view.title", "title"),
+            ("view.abbreviation", "abbreviation"),
+            ("view.author", "author"),
+            ("view.publication_date", "pub_date"),
+            ("view.publication", "publication"),
+            ("view.text", "text"),
+            ("view.associated_repository", "repository"),
+            ("view.call_number", "call_number"),
+            ("view.media", "media"),
+            ("view.agency", "agency"),
+            ("view.notes", "notes"),
+            ("view.sources", "sources"),
+            ("view.references", "references"),
+            ("view.internal_id", "record_id"),
+            ("view.repository_note", "repo_note"),
+            ("view.data_events", "data_events"),
+            ("view.additional_fields", "additional_fields"),
         ]
 
-        for i, (label_text, key) in enumerate(fields, start=1):
-            ttk.Label(self, text=label_text + " :").grid(row=i, column=0, sticky="w")
+        for i, (label_key, key) in enumerate(fields, start=1):
+            ttk.Label(self, text=self.translator.get(label_key) + " :").grid(
+                row=i, column=0, sticky="w"
+            )
             if key == "text":
                 frame = ttk.Frame(self, padding=(2, 2, 2, 2))
                 frame.grid(row=i, column=1, sticky="nsew", padx=10, pady=2)
@@ -98,7 +104,7 @@ class SourceView(ttk.Frame):
 
     def display(self, source):
         if not source:
-            self.title_label.config(text="Source")
+            self.title_label.config(text=self.translator.get("view.source"))
             for key, widget in self.labels.items():
                 if isinstance(widget, tk.Text):
                     configure_text_widget(widget, "")
@@ -106,7 +112,9 @@ class SourceView(ttk.Frame):
                     configure_label(widget, "")
             return
 
-        self.title_label.config(text=f"Source : {source.pointer}")
+        self.title_label.config(
+            text=self.translator.get("view.source_pointer", pointer=source.pointer)
+        )
 
         for key, widget in self.labels.items():
             value = getattr(source, key, "")

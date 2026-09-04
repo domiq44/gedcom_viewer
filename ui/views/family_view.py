@@ -6,6 +6,7 @@ from tkinter import ttk
 
 from ui.views.link_utils import configure_label
 from ui.themes import FONTS
+from ui.i18n import Translator
 
 
 logger = logging.getLogger(__name__)
@@ -16,46 +17,51 @@ class FamilyView(ttk.Frame):
     Affiche une fiche Famille (modèle Family).
     """
 
-    def __init__(self, parent, on_pointer_click):
+    def __init__(self, parent, on_pointer_click, translator=None):
         super().__init__(parent)
 
         self.on_pointer_click_callback = on_pointer_click
+        self.translator = translator or Translator()
         self.name_resolver = None
         self.source_resolver = None
         self.configure(padding=10)
 
         self.title_label = ttk.Label(
-            self, text="Famille", font=("Segoe UI", 12, "bold")
+            self, text=self.translator.get("view.family"), font=("Segoe UI", 12, "bold")
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 12))
 
         self.labels = {}
 
         fields = [
-            ("Mari", "husband"),
-            ("Femme", "wife"),
-            ("Enfants", "children"),
-            ("Nombre d'enfants", "number_of_children"),
-            ("Date mariage", "marriage_date"),
-            ("Lieu mariage", "marriage_place"),
-            ("Mariages", "marriages"),
-            ("Engagement", "engagement"),
-            ("Bans", "marriage_banns"),
-            ("Contrat de mariage", "marriage_contract"),
-            ("Licence de mariage", "marriage_license"),
-            ("Régime matrimonial", "marriage_settlement"),
-            ("Date divorce", "divorce_date"),
-            ("Lieu divorce", "divorce_place"),
-            ("Divorce prononcé", "divorce_final"),
-            ("Annulation", "annulment"),
-            ("Notes", "notes"),
-            ("Sources", "sources"),
-            ("Événements", "events"),
-            ("Autres informations GEDCOM", "additional_fields"),
+            ("view.husband", "husband"),
+            ("view.wife", "wife"),
+            ("view.children", "children"),
+            ("view.children_count", "number_of_children"),
+            ("view.marriage_date", "marriage_date"),
+            ("view.marriage_place", "marriage_place"),
+            ("view.marriages", "marriages"),
+            ("view.engagement", "engagement"),
+            ("view.marriage_banns", "marriage_banns"),
+            ("view.marriage_contract", "marriage_contract"),
+            ("view.marriage_license", "marriage_license"),
+            ("view.marriage_settlement", "marriage_settlement"),
+            ("view.divorce_date", "divorce_date"),
+            ("view.divorce_place", "divorce_place"),
+            ("view.divorce_final", "divorce_final"),
+            ("view.annulment", "annulment"),
+            ("view.notes", "notes"),
+            ("view.sources", "sources"),
+            ("view.events", "events"),
+            ("view.additional_fields", "additional_fields"),
         ]
 
-        for i, (label, key) in enumerate(fields, start=1):
-            field_label = ttk.Label(self, text=label + " :", foreground="#3b4a5a")
+        for i, (label_key, key) in enumerate(fields, start=1):
+            field_label = ttk.Label(
+                self,
+                text=self.translator.get(label_key) + " :",
+                foreground="#3b4a5a",
+            )
             field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
             if key in (
                 "children",
@@ -104,7 +110,7 @@ class FamilyView(ttk.Frame):
 
     def display(self, family):
         if not family:
-            self.title_label.config(text="Famille")
+            self.title_label.config(text=self.translator.get("view.family"))
             for key, widget in self.labels.items():
                 if key in (
                     "children",
@@ -123,7 +129,9 @@ class FamilyView(ttk.Frame):
                     widget.unbind("<Button-1>")
             return
 
-        self.title_label.config(text=f"Famille : {family.pointer}")
+        self.title_label.config(
+            text=self.translator.get("view.family_pointer", pointer=family.pointer)
+        )
 
         def make_clickable(widget, pointer):
             widget.config(foreground="blue", cursor="hand2")

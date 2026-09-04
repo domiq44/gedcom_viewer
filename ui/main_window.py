@@ -290,7 +290,7 @@ class GedcomViewer:
             width=3,
         )
         self.back_button.pack(side="left")
-        _Tooltip(self.back_button, "Précédent")
+        _Tooltip(self.back_button, self.translator.get("tooltip.previous"))
 
         self.forward_button = ttk.Button(
             navigation_group,
@@ -300,7 +300,7 @@ class GedcomViewer:
             width=3,
         )
         self.forward_button.pack(side="left")
-        _Tooltip(self.forward_button, "Suivant")
+        _Tooltip(self.forward_button, self.translator.get("tooltip.next"))
 
         self.history_status = tk.Label(
             self.nav_toolbar,
@@ -392,7 +392,9 @@ class GedcomViewer:
         self.individual_tab = ttk.Frame(self.entity_detail_container)
         individual_scroll = _ScrollableFrame(self.individual_tab)
         individual_scroll.pack(fill="both", expand=True)
-        self.individual_view = IndividualView(individual_scroll.content, self.navigate_to)
+        self.individual_view = IndividualView(
+            individual_scroll.content, self.navigate_to, self.translator
+        )
         self.individual_view.set_family_name_resolver(self.controller.get_family)
         self.individual_view.set_family_member_resolver(self.controller.get_individual)
         self.individual_view.pack(fill="both", expand=True, padx=10, pady=10)
@@ -400,7 +402,9 @@ class GedcomViewer:
         self.family_tab = ttk.Frame(self.entity_detail_container)
         family_scroll = _ScrollableFrame(self.family_tab)
         family_scroll.pack(fill="both", expand=True)
-        self.family_view = FamilyView(family_scroll.content, self.navigate_to)
+        self.family_view = FamilyView(
+            family_scroll.content, self.navigate_to, self.translator
+        )
         self.family_view.set_name_resolver(self.controller.get_individual)
         self.family_view.set_source_resolver(self.controller.get_source)
         self.family_view.pack(fill="both", expand=True, padx=10, pady=10)
@@ -408,32 +412,40 @@ class GedcomViewer:
         self.repo_tab = ttk.Frame(self.entity_detail_container)
         repo_scroll = _ScrollableFrame(self.repo_tab)
         repo_scroll.pack(fill="both", expand=True)
-        self.repo_view = RepositoryView(repo_scroll.content, self.navigate_to)
+        self.repo_view = RepositoryView(
+            repo_scroll.content, self.navigate_to, self.translator
+        )
         self.repo_view.set_reference_resolver(self.controller.get_repository)
         self.repo_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.source_tab = ttk.Frame(self.entity_detail_container)
         source_scroll = _ScrollableFrame(self.source_tab)
         source_scroll.pack(fill="both", expand=True)
-        self.source_view = SourceView(source_scroll.content, self.navigate_to)
+        self.source_view = SourceView(
+            source_scroll.content, self.navigate_to, self.translator
+        )
         self.source_view.set_reference_resolver(self.controller.get_repository)
         self.source_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.note_tab = ttk.Frame(self.entity_detail_container)
         note_scroll = _ScrollableFrame(self.note_tab)
         note_scroll.pack(fill="both", expand=True)
-        self.note_view = NoteView(note_scroll.content, self.navigate_to)
+        self.note_view = NoteView(note_scroll.content, self.navigate_to, self.translator)
         self.note_view.set_reference_resolver(self.controller.get_source)
         self.note_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.object_tab = ttk.Frame(self.entity_detail_container)
-        self.object_view = MultimediaView(self.object_tab, self.navigate_to)
+        self.object_view = MultimediaView(
+            self.object_tab, self.navigate_to, self.translator
+        )
         self.object_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.submitter_tab = ttk.Frame(self.entity_detail_container)
         submitter_scroll = _ScrollableFrame(self.submitter_tab)
         submitter_scroll.pack(fill="both", expand=True)
-        self.submitter_view = SubmitterView(submitter_scroll.content, self.navigate_to)
+        self.submitter_view = SubmitterView(
+            submitter_scroll.content, self.navigate_to, self.translator
+        )
         self.submitter_view.set_reference_resolver(self.controller.get_submitter)
         self.submitter_view.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -568,7 +580,8 @@ class GedcomViewer:
         except Exception as e:
             logger.exception("Échec du chargement du GEDCOM %s", filename)
             messagebox.showerror(
-                "Erreur", f"Impossible de charger le fichier GEDCOM :\n{e}"
+                self.translator.get("ui.error"),
+                self.translator.get("ui.load_error", error=e),
             )
             return
 
@@ -584,7 +597,10 @@ class GedcomViewer:
         entity_types = self.controller.get_entity_types()
         if not entity_types:
             logger.warning("Aucune entité trouvée dans %s", filename)
-            messagebox.showerror("Erreur", "Aucune entité trouvée")
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.no_entities"),
+            )
             return
 
         self.entity_type_var.set(entity_types[0])
@@ -758,7 +774,7 @@ class GedcomViewer:
 
     def open_validated_file(self):
         filename = filedialog.askopenfilename(
-            title="Choisir un fichier GEDCOM à valider",
+            title=self.translator.get("ui.choose_file_validate"),
             filetypes=[("GEDCOM files", "*.ged")],
             **self._file_dialog_options(),
         )
@@ -769,7 +785,7 @@ class GedcomViewer:
 
     def load_file(self):
         filename = filedialog.askopenfilename(
-            title="Choisir un fichier GEDCOM",
+            title=self.translator.get("ui.choose_file"),
             filetypes=[("GEDCOM files", "*.ged")],
             **self._file_dialog_options(),
         )
@@ -906,7 +922,10 @@ class GedcomViewer:
 
         block = self.controller.extract_head()
         if not block:
-            messagebox.showerror("Erreur", "Aucun en-tête HEAD trouvé dans le fichier.")
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.no_header"),
+            )
             return
 
         self._display_raw_text(block)
@@ -918,7 +937,10 @@ class GedcomViewer:
 
         block = self.controller.extract_trailer()
         if not block:
-            messagebox.showerror("Erreur", "Aucun bloc TRLR trouvé dans le fichier.")
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.no_trailer"),
+            )
             return
 
         self._display_raw_text(block)
@@ -950,12 +972,18 @@ class GedcomViewer:
 
     def navigate_to(self, pointer):
         if not self.controller.is_loaded():
-            messagebox.showerror("Erreur", "Aucune session chargée.")
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.no_session"),
+            )
             return
 
         target = self.controller.resolve_pointer(pointer)
         if target is None:
-            messagebox.showerror("Erreur", f"Entité introuvable : {pointer}")
+            messagebox.showerror(
+                self.translator.get("ui.error"),
+                self.translator.get("ui.entity_not_found", pointer=pointer),
+            )
             return
 
         context = self.controller.get_entity_display_info(target)

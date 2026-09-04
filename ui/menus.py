@@ -79,9 +79,8 @@ class MenuBar:
             return
 
         confirmed = messagebox.askyesno(
-            "Effacer la liste des fichiers récents",
-            "Voulez-vous vraiment vider la liste des fichiers récents ?\n\n"
-            "Les fichiers GEDCOM eux-mêmes ne seront pas supprimés.",
+            self.app.translator.get("menu.clear_recent_title"),
+            self.app.translator.get("menu.clear_recent_confirm"),
             parent=self.root,
         )
         if confirmed:

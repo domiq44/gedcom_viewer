@@ -6,6 +6,7 @@ from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
 from ui.themes import FONTS
+from ui.i18n import Translator
 
 
 logger = logging.getLogger(__name__)
@@ -16,17 +17,18 @@ class IndividualView(ttk.Frame):
     Affiche une fiche détaillée d'un individu (modèle Individual).
     """
 
-    def __init__(self, parent, on_pointer_click):
+    def __init__(self, parent, on_pointer_click, translator=None):
         super().__init__(parent)
 
         self.on_pointer_click_callback = on_pointer_click
+        self.translator = translator or Translator()
         self.family_name_resolver = None
         self.family_member_resolver = None
         self.configure(padding=10)
 
         # Titre
         self.title_label = ttk.Label(
-            self, text="Fiche individu", font=("Segoe UI", 12, "bold")
+            self, text=self.translator.get("view.individual"), font=("Segoe UI", 12, "bold")
         )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 12))
 
@@ -34,28 +36,32 @@ class IndividualView(ttk.Frame):
         self.labels = {}
 
         fields = [
-            ("Nom", "name"),
-            ("Surnom", "nickname"),
-            ("Sexe", "sex"),
-            ("Date de naissance", "birth_date"),
-            ("Lieu de naissance", "birth_place"),
-            ("Date de baptême", "baptism_date"),
-            ("Lieu de baptême", "baptism_place"),
-            ("Date de décès", "death_date"),
-            ("Lieu de décès", "death_place"),
-            ("Décès confirmé", "death_confirmed"),
-            ("Âge au décès", "age_at_death"),
-            ("Nombre de mariages", "marriage_count"),
-            ("Famille (enfant)", "famc"),
-            ("Familles (parent)", "fams"),
-            ("Occupations", "occupations"),
-            ("Propriétés", "properties"),
-            ("Textes", "texts"),
-            ("Notes", "notes"),
+            ("view.name", "name"),
+            ("view.nickname", "nickname"),
+            ("view.sex", "sex"),
+            ("view.birth_date", "birth_date"),
+            ("view.birth_place", "birth_place"),
+            ("view.baptism_date", "baptism_date"),
+            ("view.baptism_place", "baptism_place"),
+            ("view.death_date", "death_date"),
+            ("view.death_place", "death_place"),
+            ("view.death_confirmed", "death_confirmed"),
+            ("view.age_at_death", "age_at_death"),
+            ("view.marriage_count", "marriage_count"),
+            ("view.child_family", "famc"),
+            ("view.parent_families", "fams"),
+            ("view.occupations", "occupations"),
+            ("view.properties", "properties"),
+            ("view.texts", "texts"),
+            ("view.notes", "notes"),
         ]
 
-        for i, (label, key) in enumerate(fields, start=1):
-            field_label = ttk.Label(self, text=label + " :", foreground="#3b4a5a")
+        for i, (label_key, key) in enumerate(fields, start=1):
+            field_label = ttk.Label(
+                self,
+                text=self.translator.get(label_key) + " :",
+                foreground="#3b4a5a",
+            )
             field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
 
             if key in ("fams", "occupations", "properties", "texts", "notes"):
@@ -133,7 +139,7 @@ class IndividualView(ttk.Frame):
         """
         # Effacement
         if not individual:
-            self.title_label.config(text="Fiche individu")
+            self.title_label.config(text=self.translator.get("view.individual"))
             for key, widget in self.labels.items():
                 if isinstance(widget, ttk.Frame):
                     for child in widget.winfo_children():
@@ -144,7 +150,9 @@ class IndividualView(ttk.Frame):
                     configure_label(widget, "")
             return
 
-        self.title_label.config(text=f"Fiche : {individual.pointer}")
+        self.title_label.config(
+            text=self.translator.get("view.individual_pointer", pointer=individual.pointer)
+        )
 
         # Fonction utilitaire pour rendre un label cliquable
         def make_clickable(widget, pointer):
@@ -308,7 +316,7 @@ class IndividualView(ttk.Frame):
 
                 # Traitement spécial pour death_confirmed
                 if key == "death_confirmed":
-                    text = "Oui" if value else "Non"
+                    text = self.translator.get("common.yes" if value else "common.no")
                     configure_label(widget, text)
                 else:
                     configure_label(widget, value)

@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
+from ui.i18n import Translator
 
 
 logger = logging.getLogger(__name__)
@@ -13,17 +14,22 @@ class NoteView(ttk.Frame):
     Affiche une fiche Note (modèle Note).
     """
 
-    def __init__(self, parent, on_pointer_click):
+    def __init__(self, parent, on_pointer_click, translator=None):
         super().__init__(parent)
 
         self.on_pointer_click_callback = on_pointer_click
+        self.translator = translator or Translator()
         self.reference_resolver = None
         self.configure(padding=10)
 
-        self.title_label = ttk.Label(self, text="Note", font=("Segoe UI", 12, "bold"))
+        self.title_label = ttk.Label(
+            self, text=self.translator.get("view.note"), font=("Segoe UI", 12, "bold")
+        )
         self.title_label.grid(row=0, column=0, sticky="w", pady=(0, 10))
 
-        ttk.Label(self, text="Texte :").grid(row=1, column=0, sticky="nw")
+        ttk.Label(self, text=self.translator.get("view.text") + " :").grid(
+            row=1, column=0, sticky="nw"
+        )
         self.text_frame = ttk.Frame(self, padding=(0, 0, 0, 0))
         self.text_frame.grid(row=1, column=1, sticky="nsew", padx=(10, 2), pady=(0, 4))
 
@@ -47,21 +53,25 @@ class NoteView(ttk.Frame):
         self.scrollbar.config(command=self.text_widget.yview)
         self.text_widget.config(state="disabled")
 
-        ttk.Label(self, text="Source :").grid(row=2, column=0, sticky="w")
+        ttk.Label(self, text=self.translator.get("view.source") + " :").grid(
+            row=2, column=0, sticky="w"
+        )
         self.source_label = ttk.Label(self, text="—", font=("Segoe UI", 10))
         self.source_label.grid(row=2, column=1, sticky="w", padx=10)
 
         self.info_labels = {}
         fields = [
-            ("Références", "references"),
-            ("Identifiant interne", "record_id"),
-            ("Submitters", "submitters"),
-            ("Date de modification", "change_date"),
-            ("Heure de modification", "change_time"),
-            ("Autres informations GEDCOM", "additional_fields"),
+            ("view.references", "references"),
+            ("view.internal_id", "record_id"),
+            ("view.submitters", "submitters"),
+            ("view.change_date", "change_date"),
+            ("view.change_time", "change_time"),
+            ("view.additional_fields", "additional_fields"),
         ]
-        for row, (label_text, key) in enumerate(fields, start=3):
-            ttk.Label(self, text=label_text + " :").grid(row=row, column=0, sticky="w")
+        for row, (label_key, key) in enumerate(fields, start=3):
+            ttk.Label(self, text=self.translator.get(label_key) + " :").grid(
+                row=row, column=0, sticky="w"
+            )
             value_label = ttk.Label(self, text="—", font=("Segoe UI", 10))
             value_label.grid(row=row, column=1, sticky="w", padx=10)
             self.info_labels[key] = value_label
@@ -71,7 +81,7 @@ class NoteView(ttk.Frame):
 
     def display(self, note):
         if not note:
-            self.title_label.config(text="Note")
+            self.title_label.config(text=self.translator.get("view.note"))
             configure_text_widget(self.text_widget, "")
             self.source_label.config(text="—", foreground="black", cursor="")
             self.source_label.unbind("<Button-1>")
@@ -79,7 +89,9 @@ class NoteView(ttk.Frame):
                 widget.config(text="—", foreground="black", cursor="")
             return
 
-        self.title_label.config(text=f"Note : {note.pointer}")
+        self.title_label.config(
+            text=self.translator.get("view.note_pointer", pointer=note.pointer)
+        )
         configure_text_widget(self.text_widget, note.text)
 
         source = getattr(note, "source", None)
