@@ -10,6 +10,7 @@ from gedcom.models.individual import Individual
 from gedcom.models.family import Family
 from gedcom.models.source import Source
 from gedcom.models.repository import Repository
+from ui.i18n import Translator
 
 MALFORMED_HEAD_TRLR_GEDCOM = """0 @I1@ INDI
 1 NAME John /Doe/
@@ -171,6 +172,14 @@ class TestAppController(unittest.TestCase):
         self.assertIn(("Famille", "FAM"), items)
         self.assertFalse(any("INDI" in label for label, _ in items))
         self.assertFalse(any("FAM" in label for label, _ in items))
+
+    def test_unloaded_type_menu_uses_translated_labels(self):
+        controller = AppController(translator=Translator("en"))
+
+        items = controller.get_all_entity_type_menu_display_items()
+
+        self.assertIn(("Individual", "INDI"), items)
+        self.assertIn(("Family", "FAM"), items)
 
     def test_format_entity_label_and_context(self):
         entity = self.controller.get_entity("@I1@")

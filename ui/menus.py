@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+from ui.i18n import SUPPORTED_LANGUAGES
+
 
 class MenuBar:
     def __init__(self, root, app):
@@ -56,6 +58,16 @@ class MenuBar:
         # --- MENU AIDE ---
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label=tr("menu.about"), command=self.show_about)
+        language_menu = tk.Menu(help_menu, tearoff=0)
+        self.language_var = tk.StringVar(value=self.app.translator.language)
+        for language, label in SUPPORTED_LANGUAGES.items():
+            language_menu.add_radiobutton(
+                label=label,
+                value=language,
+                variable=self.language_var,
+                command=lambda value=language: self.app.set_language(value),
+            )
+        help_menu.add_cascade(label=tr("menu.language"), menu=language_menu)
         menubar.add_cascade(label=tr("menu.help"), menu=help_menu)
 
         root.config(menu=menubar)

@@ -11,8 +11,9 @@ class AppController:
     Contrôleur principal de l'application.
     """
 
-    def __init__(self, gedcom_service=None):
+    def __init__(self, gedcom_service=None, translator=None):
         self.gedcom_service = gedcom_service or GedcomService()
+        self.translator = translator
         self.entity_controller = None
         self.search_controller = None
         self.presentation_controller = None
@@ -27,6 +28,7 @@ class AppController:
             self.gedcom_service,
             self.entity_controller,
             entity_labels=self.ENTITY_LABELS,
+            translator=self.translator,
         )
         self.presentation_controller = PresentationController(
             self.gedcom_service,
@@ -58,7 +60,12 @@ class AppController:
     def get_all_entity_type_menu_display_items(self):
         if self.search_controller is None:
             return [
-                (f"{entity_type} – {label}", entity_type)
+                (
+                    self.translator.get(f"entity.{entity_type}")
+                    if self.translator is not None
+                    else label,
+                    entity_type,
+                )
                 for entity_type, label in self.ENTITY_LABELS.items()
             ]
         return self.search_controller.get_all_entity_type_menu_display_items()

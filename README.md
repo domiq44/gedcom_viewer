@@ -24,7 +24,9 @@ GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explor
 - Affichage du temps de chargement dans la barre de statut.
 - Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
 - Validation structurelle disponible en mode strict via `load(..., strict=True)`.
-- Infrastructure d'internationalisation avec le français comme langue par défaut.
+- Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
+- Interface disponible en anglais, français, espagnol, allemand, italien et portugais.
+- Le changement de langue est appliqué au redémarrage.
 
 L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
 
@@ -40,7 +42,7 @@ UI Tkinter (ui/)
 - `gedcom/` contient le parser et les modèles métier.
 - `controllers/` coordonne le chargement, la recherche, le tri et la résolution des pointeurs.
 - `ui/` contient la fenêtre principale, les menus, le thème et les vues spécialisées.
-- `ui/i18n.py` centralise les traductions de l'interface.
+- `ui/i18n.py` charge les traductions depuis les catalogues JSON de `ui/locales/`.
 - `tests/` contient les tests unitaires et les tests UI Tkinter.
 
 ## Prérequis
@@ -110,7 +112,7 @@ Ou directement :
 python3 -m unittest discover -s tests
 ```
 
-Dernière validation : 82 tests réussis.
+Dernière validation : 93 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 
@@ -160,7 +162,6 @@ récents sont enregistrés dans :
 ```text
 ~/.gedcom_viewer.json
 ```
-
 
 ## Limites connues
 

@@ -6,11 +6,16 @@ class SearchController:
     """Gère les types d'entités, les listes et la recherche côté application."""
 
     def __init__(
-        self, gedcom_service, entity_controller: EntityController, entity_labels=None
+        self,
+        gedcom_service,
+        entity_controller: EntityController,
+        entity_labels=None,
+        translator=None,
     ):
         self.gedcom_service = gedcom_service
         self.entity_controller = entity_controller
         self.entity_labels = entity_labels or {}
+        self.translator = translator
 
     @staticmethod
     def _extract_numeric_id(entity):
@@ -51,6 +56,10 @@ class SearchController:
         ]
 
     def get_entity_type_label(self, entity_type: str):
+        if self.translator is not None:
+            translated = self.translator.get(f"entity.{entity_type}")
+            if translated != f"entity.{entity_type}":
+                return translated
         return self.entity_labels.get(entity_type, "Type inconnu")
 
     def get_entity_type_menu_items(self):

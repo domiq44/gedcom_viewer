@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 import time
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -141,7 +142,7 @@ class GedcomViewer:
         self.last_directory = os.path.expanduser("~")
         self.recent_files = self._load_recent_files()
         self.menu_bar = MenuBar(self.root, self)
-        self.controller = AppController()
+        self.controller = AppController(translator=self.translator)
         self.filtered_entities = []
         self._nav_history = []
         self._nav_index = -1
@@ -541,6 +542,31 @@ class GedcomViewer:
                 recent_path,
                 exc,
             )
+
+    def set_language(self, language):
+        if language == self.translator.language:
+            return
+
+        previous_language = self.translator.language
+        self.translator.set_language(language)
+
+        confirmed = messagebox.askyesno(
+            self.translator.get("menu.language"),
+            self.translator.get("menu.language_confirm"),
+            parent=self.root,
+        )
+        if not confirmed:
+            self.translator.set_language(previous_language)
+            if hasattr(self.menu_bar, "language_var"):
+                self.menu_bar.language_var.set(previous_language)
+            return
+
+        self._save_recent_files()
+        self.root.after(100, self._restart_application)
+
+    def _restart_application(self):
+        self.root.destroy()
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
     def clear_recent_files(self):
         self.recent_files = []

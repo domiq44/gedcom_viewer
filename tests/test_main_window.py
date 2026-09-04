@@ -64,6 +64,26 @@ class TestGedcomViewer(unittest.TestCase):
 
         load_file.assert_called_once_with("/tmp/validated.ged", strict=True)
 
+    def test_set_language_saves_and_schedules_restart(self):
+        with patch("ui.main_window.messagebox.askyesno", return_value=True):
+            with patch.object(self.viewer, "_save_recent_files") as save_settings:
+                with patch.object(self.viewer.root, "after") as schedule_restart:
+                    self.viewer.set_language("fr")
+
+        self.assertEqual(self.viewer.translator.language, "fr")
+        save_settings.assert_called_once_with()
+        schedule_restart.assert_called_once_with(
+            100, self.viewer._restart_application
+        )
+
+    def test_set_language_decline_restores_previous_language(self):
+        with patch.object(self.viewer, "_save_recent_files") as save_settings:
+            with patch("ui.main_window.messagebox.askyesno", return_value=False):
+                self.viewer.set_language("fr")
+
+            self.assertEqual(self.viewer.translator.language, "en")
+        save_settings.assert_not_called()
+
     def test_file_dialog_uses_last_directory(self):
         self.viewer.last_directory = "/tmp"
 
