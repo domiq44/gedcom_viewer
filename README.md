@@ -18,7 +18,7 @@ Le dépôt conserve une documentation minimale et ciblée :
 - Ouverture de fichiers GEDCOM `.ged`.
 - Deux modes d'ouverture : tolérant ou strict avec validation structurelle.
 - Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
-- Recherche instantanée dans les entités.
+- Recherche réactive dans les entités avec debounce pour limiter les recalculs.
 - Bouton d'effacement rapide du filtre de recherche.
 - Bouton d'effacement intégré à la palette visuelle de l'application.
 - Tri par nom, titre ou identifiant, avec tri numérique des pointeurs.
@@ -152,7 +152,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 117 tests présents dans la suite.
+Dernière validation : 123 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 

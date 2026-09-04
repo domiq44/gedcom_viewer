@@ -25,7 +25,7 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.controller = Mock()
 
     def tearDown(self):
-        self.root.destroy()
+        self.viewer._on_close()
         if os.path.exists(self.settings_file):
             os.unlink(self.settings_file)
 
@@ -106,6 +106,22 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.clear_search_button.invoke()
 
         self.assertEqual(self.viewer.search_var.get(), "")
+
+    def test_filter_entities_debounces_refresh(self):
+        self.viewer.controller.is_loaded.return_value = True
+        with patch.object(self.viewer.root, "after", return_value="search-id"):
+            self.viewer.filter_entities()
+
+        self.assertEqual(self.viewer._search_after_id, "search-id")
+
+        with patch.object(self.viewer.root, "after_cancel") as cancel:
+            with patch.object(
+                self.viewer.root, "after", return_value="next-search-id"
+            ):
+                self.viewer.filter_entities()
+
+        cancel.assert_called_once_with("search-id")
+        self.assertEqual(self.viewer._search_after_id, "next-search-id")
 
     def test_show_header_displays_head_block(self):
         self.viewer.controller.is_loaded.return_value = True
@@ -389,17 +405,23 @@ class TestGedcomViewer(unittest.TestCase):
     def test_async_load_error_keeps_previous_controller(self):
         previous_controller = self.viewer.controller
         error = ValueError("invalid GEDCOM")
-        self.viewer._load_results.put(("/tmp/test.ged", 1.0, error, None))
+        self.viewer.load_coordinator._results.put(
+            ("/tmp/test.ged", 1.0, error, None)
+        )
 
-        with patch.object(self.viewer, "_show_load_error") as show_load_error:
+        with patch.object(
+            self.viewer.load_coordinator, "on_error"
+        ) as show_load_error:
             self.viewer._poll_load_result()
 
         self.assertIs(self.viewer.controller, previous_controller)
         show_load_error.assert_called_once_with("/tmp/test.ged", error)
 
     def test_async_load_result_is_ignored_when_closing(self):
-        self.viewer._is_closing = True
-        self.viewer._load_results.put(("/tmp/test.ged", 1.0, None, Mock()))
+        self.viewer.load_coordinator.close()
+        self.viewer.load_coordinator._results.put(
+            ("/tmp/test.ged", 1.0, None, Mock())
+        )
 
         with patch.object(self.viewer, "_apply_loaded_file") as apply_loaded_file:
             with patch.object(self.viewer, "_show_load_error") as show_load_error:
@@ -412,8 +434,8 @@ class TestGedcomViewer(unittest.TestCase):
         with patch.object(self.viewer.root, "destroy") as destroy:
             self.viewer._on_close()
 
-        self.assertTrue(self.viewer._is_closing)
-        self.assertFalse(self.viewer._load_in_progress)
+        self.assertTrue(self.viewer.load_coordinator.is_closing)
+        self.assertFalse(self.viewer.load_coordinator.is_loading)
         destroy.assert_called_once_with()
 
     def test_clear_recent_files_removes_all_entries(self):

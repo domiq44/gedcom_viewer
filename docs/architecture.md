@@ -55,6 +55,7 @@ main.py
 Le dossier `ui/` contient tout ce qui concerne l’interface utilisateur :
 
 - `main_window.py` : fenêtre principale, layout, recherche, navigation, historique
+- `load_coordinator.py` : chargement asynchrone, polling et cycle de fermeture
 - `menus.py` : menu principal de l’application
 - `themes.py` : palette visuelle et styles
 - `syntax_highlighter.py` : coloration syntaxique du bloc GEDCOM brut
@@ -176,7 +177,7 @@ Les dépendances sont gérées via `requirements.txt`, `requirements-dev.txt`, e
 - le chargement des gros fichiers est entièrement en mémoire
 - la validation GEDCOM est structurée mais reste limitée à un niveau fonctionnel
 
-Le chargement asynchrone est désormais isolé et testé. Les points encore ouverts
+Le chargement asynchrone est désormais isolé dans `LoadCoordinator` et testé. Les points encore ouverts
 concernent principalement la mémoire des gros fichiers, l’annulation explicite
 d’un chargement et l’affichage éventuel d’une progression.
 

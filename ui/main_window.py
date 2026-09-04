@@ -1,6 +1,5 @@
 import logging
 import os
-import queue
 import sys
 import threading
 import time
@@ -13,6 +12,7 @@ logger = logging.getLogger(__name__)
 from controllers.app_controller import AppController
 from controllers.navigation_history import NavigationHistory
 from controllers.recent_files_store import RecentFilesStore
+from ui.load_coordinator import LoadCoordinator
 from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
@@ -177,14 +177,22 @@ class GedcomViewer:
         self.root.grid_columnconfigure(0, weight=1)
 
     def _initialize_state(self):
-        self._load_results = queue.Queue()
-        self._load_in_progress = False
-        self._is_closing = False
         self.filtered_entities = []
+        self._search_after_id = None
         self._navigation_history = NavigationHistory()
         self._entity_sort_column = None
         self._entity_sort_reverse = False
         self._entity_by_item_id = {}
+
+        self.load_coordinator = LoadCoordinator(
+            root=self.root,
+            controller_factory=lambda: AppController(translator=self.translator),
+            on_success=self._on_async_load_success,
+            on_error=self._show_load_error,
+            on_loading=lambda: self.status_var.set(
+                self.translator.get("ui.loading_last_file")
+            ),
+        )
 
     @property
     def _nav_history(self):
@@ -658,51 +666,20 @@ class GedcomViewer:
         return {"initialdir": initialdir}
 
     def _load_file_async(self, filename, strict=False):
-        if not filename or self._load_in_progress or self._is_closing:
-            return
-
-        self._load_in_progress = True
-        load_started_at = time.perf_counter()
-        self.status_var.set(self.translator.get("ui.loading_last_file"))
-
-        def load_in_worker():
-            error = None
-            loaded_controller = None
-            try:
-                loaded_controller = AppController(translator=self.translator)
-                loaded_controller.load_file(filename, strict=strict)
-            except Exception as exc:
-                error = exc
-            self._load_results.put(
-                (filename, load_started_at, error, loaded_controller)
-            )
-
-        threading.Thread(target=load_in_worker, daemon=True).start()
-        self.root.after(25, self._poll_load_result)
+        self.load_coordinator.start(filename, strict=strict)
 
     def _poll_load_result(self):
-        if self._is_closing:
-            return
+        self.load_coordinator._poll_result()
 
-        try:
-            filename, load_started_at, error, loaded_controller = (
-                self._load_results.get_nowait()
-            )
-        except queue.Empty:
-            self.root.after(25, self._poll_load_result)
-            return
-
-        self._load_in_progress = False
-        if error is not None:
-            self._show_load_error(filename, error)
-            return
-
+    def _on_async_load_success(self, filename, load_started_at, loaded_controller):
         self.controller = loaded_controller
         self._apply_loaded_file(filename, load_started_at)
 
     def _on_close(self):
-        self._is_closing = True
-        self._load_in_progress = False
+        self.load_coordinator.close()
+        if self._search_after_id is not None:
+            self.root.after_cancel(self._search_after_id)
+            self._search_after_id = None
         self.root.destroy()
 
     def _load_file_from_path(self, filename, strict=False):
@@ -946,7 +923,16 @@ class GedcomViewer:
         if not self.controller.is_loaded():
             return
 
-        self._refresh_entity_list(self.search_var.get())
+        if self._search_after_id is not None:
+            self.root.after_cancel(self._search_after_id)
+        self._search_after_id = self.root.after(
+            100, self._apply_search_filter, self.search_var.get()
+        )
+
+    def _apply_search_filter(self, query):
+        self._search_after_id = None
+        if self.controller.is_loaded():
+            self._refresh_entity_list(query)
 
     def _refresh_entity_list(self, query=""):
         entity_type = self.entity_type_var.get()

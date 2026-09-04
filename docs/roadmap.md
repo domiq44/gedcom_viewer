@@ -17,7 +17,8 @@ Terminée.
 - publication de la nouvelle session uniquement après succès ;
 - conservation de l’ancienne session en cas d’erreur ;
 - gestion de la fermeture de la fenêtre et des résultats tardifs ;
-- ajout de quatre tests dédiés au chargement asynchrone.
+- ajout de tests d’intégration et de cinq tests unitaires dédiés au chargement
+  asynchrone.
 
 ## Priorité 2 — améliorer la maintenabilité de l’interface
 
@@ -28,7 +29,9 @@ Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
 ### Actions interface
 
 - extraire les sous-parties de la fenêtre en composants plus petits ;
+- isoler la coordination du chargement dans `ui/load_coordinator.py` ;
 - séparer la logique de recherche, de tri et de navigation ;
+- limiter les recalculs de recherche avec un debounce côté interface ;
 - isoler les vues détaillées derrière une API cohérente ;
 - limiter la logique UI dans `ui/main_window.py`.
 

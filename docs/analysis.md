@@ -88,14 +88,18 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite de tests contient 117 tests et passe intégralement.
+- La suite de tests contient 123 tests et passe intégralement.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le chargement asynchrone construit un contrôleur local dans le thread de travail
   puis le publie dans le thread Tkinter après succès.
+- La coordination du chargement est isolée dans `ui/load_coordinator.py`, tandis
+  que `ui/main_window.py` conserve l’application du résultat à l’interface.
 - L'historique de navigation conserve les contextes complets sans limite de taille.
 - La recherche renormalise les valeurs à chaque requête, ce qui peut devenir coûteux
   sur de gros volumes.
+- L'interface applique désormais un debounce de 100 ms avant de relancer la
+  recherche et annule ce callback lors de la fermeture.
 
 Le risque de concurrence initial a été traité : le parser du service actif n'est
 plus remplacé depuis le thread de travail. L'ancienne session reste cohérente
@@ -108,7 +112,7 @@ La commande de validation utilisée est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Résultat : `Ran 117 tests ... OK`.
+Résultat : `Ran 123 tests ... OK`.
 
 ## Recommandations prioritaires
 
@@ -124,9 +128,10 @@ de travail construit un nouvel `AppController` local et transmet son résultat v
 la file de messages. Le contrôleur actif n'est remplacé par l'interface qu'après
 un chargement réussi ; en cas d'erreur, l'ancien état est conservé.
 
-La suite UI ciblée passe avec 40 tests, dont quatre tests dédiés au chargement
-asynchrone : échange atomique du contrôleur, conservation de l'ancien état en
-cas d'échec et arrêt propre lors de la fermeture de la fenêtre.
+La suite UI ciblée passe avec 41 tests. Cinq tests unitaires indépendants couvrent
+également `LoadCoordinator` : succès, erreur, refus d'un second chargement,
+reprogrammation du polling et fermeture avec résultat en attente. Un test UI
+vérifie aussi l'annulation et le remplacement du callback de recherche.
 
 ### Priorité 2 : mesurer et maîtriser la mémoire
 
