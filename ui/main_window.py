@@ -12,11 +12,14 @@ logger = logging.getLogger(__name__)
 from controllers.app_controller import AppController
 from controllers.navigation_history import NavigationHistory
 from controllers.recent_files_store import RecentFilesStore
+from ui.app_header import AppHeader
 from ui.detail_panel import DetailPanel
 from ui.entity_list_panel import EntityListPanel
 from ui.entity_type_panel import EntityTypePanel
+from ui.file_manager import FileManager
 from ui.load_coordinator import LoadCoordinator
 from ui.navigation_bar import NavigationBar
+from ui.status_bar import StatusBar
 from ui.menus import MenuBar
 from ui.syntax_highlighter import GedcomHighlighter
 from ui.views.individual_view import IndividualView
@@ -161,6 +164,12 @@ class GedcomViewer:
 
         self.last_directory = os.path.expanduser("~")
         self.recent_files = self._load_recent_files()
+        self.file_manager = FileManager(
+            self.root,
+            self.translator,
+            last_directory=self.last_directory,
+            recent_files=self.recent_files,
+        )
         self.menu_bar = MenuBar(self.root, self)
         self.controller = AppController(translator=self.translator)
         self._initialize_state()
@@ -222,34 +231,11 @@ class GedcomViewer:
                 self.root.after(50, self._load_file_async, startup_file)
 
     def _build_app_header(self, root, tr):
-        self.app_header = tk.Frame(
-            root,
-            bg="#dfeaf5",
-            highlightthickness=1,
-            highlightbackground=COLORS["separator"],
-            highlightcolor=COLORS["separator"],
-            padx=18,
-            pady=10,
-        )
+        self.app_header = AppHeader(root, self.translator)
         self.app_header.pack(fill="x", padx=10, pady=(10, 0))
 
-        self.app_title = tk.Label(
-            self.app_header,
-            text=tr("app.title"),
-            font=("Segoe UI", 18, "bold"),
-            bg="#dfeaf5",
-            fg="#163a57",
-        )
-        self.app_title.pack(anchor="w")
-
-        self.app_subtitle = tk.Label(
-            self.app_header,
-            text=tr("app.subtitle"),
-            font=("Segoe UI", 9),
-            bg="#dfeaf5",
-            fg="#44627a",
-        )
-        self.app_subtitle.pack(anchor="w")
+        self.app_title = self.app_header.app_title
+        self.app_subtitle = self.app_header.app_subtitle
 
     def _build_layout(self, root):
         content_frame = ttk.Frame(root)
@@ -323,24 +309,9 @@ class GedcomViewer:
 
     def _build_status_bar(self):
         self.status_var = tk.StringVar(value=self.translator.get("ui.ready"))
-        self.log_status_frame = tk.LabelFrame(
-            self.right_frame,
-            text=self.translator.get("ui.log_status"),
-            padx=6,
-            pady=4,
-        )
+        self.log_status_frame = StatusBar(self.right_frame, self.translator, self.status_var)
         self.log_status_frame.grid(row=2, column=0, sticky="ew", pady=(4, 0))
-        self.status_label = tk.Entry(
-            self.log_status_frame,
-            textvariable=self.status_var,
-            font=("TkDefaultFont", 9),
-            state="readonly",
-            readonlybackground=self.log_status_frame.cget("background"),
-            relief="flat",
-            borderwidth=0,
-            highlightthickness=0,
-        )
-        self.status_label.pack(fill="x", expand=True)
+        self.status_label = self.log_status_frame.status_label
 
     def _build_content_panels(self):
         right_content = tk.PanedWindow(
@@ -470,6 +441,8 @@ class GedcomViewer:
         return recent_files
 
     def _save_recent_files(self):
+        self.file_manager.last_directory = self.last_directory
+        self.file_manager.recent_files = self.recent_files
         store = RecentFilesStore(self.SETTINGS_PATH, file_opener=open, log=logger)
         store.save(
             self.recent_files,
@@ -509,25 +482,17 @@ class GedcomViewer:
             self.menu_bar.refresh_recent_menu()
 
     def _remember_recent_file(self, filename):
-        normalized = os.path.abspath(filename)
-        if not normalized:
-            return
-
-        self.last_directory = os.path.dirname(normalized)
-        self.recent_files = [
-            path for path in self.recent_files if os.path.abspath(path) != normalized
-        ]
-        self.recent_files.insert(0, normalized)
-        self.recent_files = self.recent_files[:10]
+        self.file_manager.remember_recent_file(filename)
+        self.last_directory = self.file_manager.last_directory
+        self.recent_files = self.file_manager.recent_files
         self._save_recent_files()
         if hasattr(self, "menu_bar"):
             self.menu_bar.refresh_recent_menu()
 
     def _file_dialog_options(self):
-        initialdir = self.last_directory
-        if not initialdir or not os.path.isdir(initialdir):
-            initialdir = os.path.expanduser("~")
-        return {"initialdir": initialdir}
+        self.file_manager.last_directory = self.last_directory
+        self.file_manager.recent_files = self.recent_files
+        return self.file_manager.file_dialog_options()
 
     def _load_file_async(self, filename, strict=False):
         self.load_coordinator.start(filename, strict=strict)

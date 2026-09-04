@@ -6,8 +6,10 @@ import tkinter as tk
 import unittest
 from unittest.mock import Mock, patch, call
 
+from ui.app_header import AppHeader
 from ui.detail_panel import DetailPanel
 from ui.entity_type_panel import EntityTypePanel
+from ui.file_manager import FileManager
 from ui.main_window import GedcomViewer
 from ui.themes import COLORS
 from ui.views.link_utils import find_urls
@@ -116,6 +118,19 @@ class TestGedcomViewer(unittest.TestCase):
         panel.display_raw("0 @I1@ INDI")
 
         self.assertEqual(panel.text_area.get("1.0", tk.END).strip(), "0 @I1@ INDI")
+
+    def test_app_header_displays_title_and_subtitle(self):
+        header = AppHeader(self.root, self.viewer.translator)
+
+        self.assertEqual(header.app_title.cget("text"), self.viewer.translator.get("app.title"))
+        self.assertEqual(header.app_subtitle.cget("text"), self.viewer.translator.get("app.subtitle"))
+
+    def test_file_manager_remembers_last_directory_for_open_dialog(self):
+        manager = FileManager(self.root, self.viewer.translator, last_directory="/tmp")
+
+        options = manager.file_dialog_options()
+
+        self.assertEqual(options["initialdir"], "/tmp")
 
     def test_clear_search_clears_filter(self):
         self.viewer.controller.is_loaded.return_value = True

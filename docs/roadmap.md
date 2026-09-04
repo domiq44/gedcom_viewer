@@ -22,6 +22,20 @@ Terminée.
 
 ## Priorité 2 — améliorer la maintenabilité de l’interface
 
+### Statut
+
+En cours — refactor UI partiellement terminé.
+
+### Réalisations
+
+- isolation de la coordination du chargement dans `ui/load_coordinator.py` ;
+- extraction du panneau de recherche et de liste dans `ui/entity_list_panel.py` ;
+- extraction de la barre de navigation dans `ui/navigation_bar.py` ;
+- extraction du sélecteur de type d’entité dans `ui/entity_type_panel.py` ;
+- extraction du panneau de contenu et vues détaillées dans `ui/detail_panel.py` ;
+- mise en place d’un debounce de 100 ms sur la recherche côté interface ;
+- réduction de la logique UI dans `ui/main_window.py`.
+
 ### Objectif interface
 
 Rendre la fenêtre principale plus facile à maintenir et à faire évoluer.
