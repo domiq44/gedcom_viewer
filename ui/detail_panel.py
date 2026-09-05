@@ -12,8 +12,17 @@ class DetailPanel(tk.Frame):
         self._build()
 
     def _build(self):
-        self.gedcom_frame = tk.LabelFrame(
+        self.split_pane = tk.PanedWindow(
             self,
+            orient="horizontal",
+            sashrelief="raised",
+            sashwidth=6,
+            bg=COLORS["background"],
+        )
+        self.split_pane.pack(fill="both", expand=True)
+
+        self.gedcom_frame = tk.LabelFrame(
+            self.split_pane,
             text="GEDCOM",
             padx=8,
             pady=8,
@@ -23,7 +32,7 @@ class DetailPanel(tk.Frame):
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        self.gedcom_frame.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        self.split_pane.add(self.gedcom_frame, minsize=200, width=370, stretch="always")
 
         tk.Label(self.gedcom_frame, text=self.translator.get("ui.raw_content")).pack(
             anchor="w", pady=(0, 5)
@@ -44,7 +53,7 @@ class DetailPanel(tk.Frame):
         self.text_area.pack(fill="both", expand=True)
 
         self.entity_detail_frame = tk.LabelFrame(
-            self,
+            self.split_pane,
             text=self.translator.get("ui.entity_view"),
             padx=8,
             pady=8,
@@ -54,7 +63,9 @@ class DetailPanel(tk.Frame):
             highlightbackground=COLORS["separator"],
             highlightcolor=COLORS["separator"],
         )
-        self.entity_detail_frame.pack(side="right", fill="both", expand=True)
+        self.split_pane.add(
+            self.entity_detail_frame, minsize=300, width=370, stretch="always"
+        )
 
         self.entity_detail_container = tk.Frame(
             self.entity_detail_frame, bg=COLORS["surface"], bd=1, relief="solid"

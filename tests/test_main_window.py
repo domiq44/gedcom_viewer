@@ -606,6 +606,7 @@ class TestGedcomViewer(unittest.TestCase):
     def test_individual_view_pointer_click_calls_callback(self):
         callback = Mock()
         self.viewer.individual_view.on_pointer_click_callback = callback
+        self.viewer.controller.get_family.return_value = None
 
         class DummyIndividual:
             pointer = "@I1@"
@@ -631,6 +632,7 @@ class TestGedcomViewer(unittest.TestCase):
     def test_individual_view_famc_and_fams_click_callback(self):
         callback = Mock()
         self.viewer.individual_view.on_pointer_click_callback = callback
+        self.viewer.controller.get_family.return_value = None
 
         class DummyIndividual:
             pointer = "@I1@"
@@ -657,18 +659,42 @@ class TestGedcomViewer(unittest.TestCase):
         callback.assert_has_calls([call("@F0@"), call("@F2@")], any_order=True)
 
     def test_individual_view_family_links_include_names(self):
-        self.viewer.individual_view.set_family_name_resolver(
-            lambda pointer: {
-                "@F0@": type("DummyFamily", (), {"husband": "@I1@", "wife": "@I2@"})(),
-                "@F1@": type("DummyFamily", (), {"husband": "@I3@", "wife": "@I4@"})(),
-            }.get(pointer)
-        )
-        self.viewer.individual_view._family_member_resolver = lambda pointer: {
+        families = {
+            "@F0@": type(
+                "DummyFamily", (), {"pointer": "@F0@", "husband": "@I1@", "wife": "@I2@"}
+            )(),
+            "@F1@": type(
+                "DummyFamily", (), {"pointer": "@F1@", "husband": "@I3@", "wife": "@I4@"}
+            )(),
+        }
+        individuals = {
             "@I1@": type("DummyIndividual", (), {"name": "Jean"})(),
             "@I2@": type("DummyIndividual", (), {"name": "Claire"})(),
             "@I3@": type("DummyIndividual", (), {"name": "Paul"})(),
             "@I4@": type("DummyIndividual", (), {"name": "Anne"})(),
-        }.get(pointer)
+        }
+
+        def member_resolver(pointer):
+            return individuals.get(pointer)
+
+        def names_for(entity):
+            husband = member_resolver(getattr(entity, "husband", None))
+            wife = member_resolver(getattr(entity, "wife", None))
+            return " & ".join(p.name for p in (husband, wife) if p)
+
+        def label_resolver(entity, entity_type=None):
+            names = names_for(entity)
+            return f"{entity.pointer} – {names}" if names else entity.pointer
+
+        def display_name_resolver(entity, entity_type=None):
+            return names_for(entity) or entity.pointer
+
+        self.viewer.individual_view.set_family_name_resolver(families.get)
+        self.viewer.individual_view.set_family_member_resolver(member_resolver)
+        self.viewer.individual_view.set_family_label_resolver(label_resolver)
+        self.viewer.individual_view.set_family_display_name_resolver(
+            display_name_resolver
+        )
 
         class DummyIndividual:
             pointer = "@I9@"

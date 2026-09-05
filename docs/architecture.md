@@ -66,6 +66,15 @@ Le dossier `ui/` contient tout ce qui concerne l’interface utilisateur :
 
 L’UI est entièrement construite en `Tkinter` et reste centrée sur une fenêtre unique. La complexité de la vue est assez élevée, ce qui est le point de friction principal du projet.
 
+Les vues `IndividualView` et `FamilyView` exposent des résolveurs (`set_family_name_resolver`, `set_family_member_resolver`, `set_family_label_resolver`, `set_family_display_name_resolver`, `set_name_resolver`, `set_source_resolver`, etc.) branchés depuis `main_window.py`. Ces résolveurs sont des fonctions qui accèdent à `self.controller` au moment de l’appel (et non des méthodes liées figées à la construction), car `self.controller` est remplacé par une nouvelle instance après chaque chargement asynchrone de fichier : un branchement figé continuerait sinon de pointer vers l’ancien contrôleur, désormais vide.
+
+Le formulaire `IndividualView` affiche, en bas, deux onglets alimentés par ces résolveurs :
+
+- **Familles (parent)** : liste à deux colonnes (nom, identifiant) des familles où l’individu est conjoint (`FAMS`).
+- **Enfants** : liste des enfants de ces familles, déduits en résolvant chaque `FAMS` puis ses `CHIL`.
+
+Le `DetailPanel` sépare le bloc GEDCOM brut et le formulaire d’entité au moyen d’un `tk.PanedWindow` redimensionnable (au lieu d’un simple `pack` figé), afin de permettre d’élargir librement l’un ou l’autre panneau.
+
 ### 2. Couche orchestration : controllers/
 
 Les contrôleurs servent de façade entre l’UI et le service GEDCOM :

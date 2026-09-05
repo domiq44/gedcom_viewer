@@ -88,17 +88,27 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite de tests contient 124 tests et passe intégralement.
+- La suite de tests contient 130 tests et passe intégralement.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le chargement asynchrone construit un contrôleur local dans le thread de travail
   puis le publie dans le thread Tkinter après succès.
+- Les résolveurs de pointeurs des vues (`ui/views/*.py`) sont désormais branchés via
+  des fonctions qui lisent `self.controller` dynamiquement dans `main_window.py`,
+  et non plus via des méthodes liées figées à la construction. Un bug a été corrigé à
+  ce sujet : après un chargement asynchrone, `self.controller` est remplacé par une
+  nouvelle instance, ce qui rendait silencieusement inopérants tous les résolveurs
+  bindés à l'ancien contrôleur (aucune exception, résolution systématique à `None`).
 - La coordination du chargement est isolée dans `ui/load_coordinator.py`, tandis
   que `ui/main_window.py` conserve l’application du résultat à l’interface.
 - Le panneau de recherche et de liste est isolé dans `ui/entity_list_panel.py`,
   tandis que la fenêtre conserve le filtrage métier et la sélection courante.
 - La barre de navigation est isolée dans `ui/navigation_bar.py`, tandis que la
   fenêtre conserve la navigation métier et l'historique.
+- Le formulaire Individu propose deux onglets en bas (Familles (parent) à deux
+  colonnes nom/identifiant, et Enfants), alimentés par les mêmes résolveurs.
+- Le `DetailPanel` sépare désormais le bloc GEDCOM brut et le formulaire d’entité
+  via un `PanedWindow` redimensionnable.
 - L'historique de navigation conserve les contextes complets sans limite de taille.
 - La recherche renormalise les valeurs à chaque requête, ce qui peut devenir coûteux
   sur de gros volumes.
@@ -116,7 +126,7 @@ La commande de validation utilisée est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Résultat : `Ran 124 tests ... OK`.
+Résultat : `Ran 130 tests ... OK`.
 
 ## Recommandations prioritaires
 

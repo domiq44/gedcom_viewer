@@ -28,6 +28,10 @@ Le dépôt conserve une documentation minimale et ciblée :
 - Affichage des blocs `HEAD` et `TRLR`.
 - Gestion des fichiers récemment ouverts.
 - Vues détaillées pour les individus, familles, sources, dépôts, notes, médias et submitters.
+- Formulaire Individu avec onglets « Familles (parent) » (liste à deux colonnes
+  nom/identifiant) et « Enfants ».
+- Panneau de détail (bloc GEDCOM brut / formulaire d'entité) redimensionnable
+  via un séparateur déplaçable.
 - Prévisualisation des images locales dans l'onglet multimédia avec Pillow.
 - Chargement des fichiers en arrière-plan afin de maintenir l'interface réactive,
   avec publication atomique du contrôleur après succès.
@@ -152,7 +156,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 124 tests présents dans la suite.
+Dernière validation : 130 tests présents dans la suite.
 
 Vérifier la syntaxe Python :
 

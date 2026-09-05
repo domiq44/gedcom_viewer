@@ -66,6 +66,35 @@ l’orchestration de l’application et les transitions entre contrôleurs et vu
 - moins de couplage ;
 - ajout de fonctionnalités plus simple.
 
+## Priorité 2 bis — corriger les résolveurs figés et enrichir le formulaire Individu
+
+### Statut
+
+Terminée.
+
+### Réalisations
+
+- correction d’un bug où les résolveurs de pointeurs des vues restaient liés à
+  l’ancien `AppController` après un chargement asynchrone (remplacement de
+  `self.controller`), ce qui rendait silencieusement toutes les résolutions de
+  noms inopérantes sans erreur visible ; les résolveurs sont désormais des
+  fonctions qui accèdent à `self.controller` au moment de l’appel ;
+- ajout de deux onglets en bas du formulaire Individu : **Familles (parent)**
+  (liste à deux colonnes nom/identifiant, alimentée par
+  `format_entity_display_name`) et **Enfants** (déduits des `FAMS` de
+  l’individu) ;
+- réutilisation de l’API `format_entity_label` / `format_entity_display_name`
+  du `SearchController` plutôt qu’une logique de résolution dupliquée dans les
+  vues ;
+- `DetailPanel` sépare désormais le bloc GEDCOM brut et le formulaire d’entité
+  avec un `PanedWindow` redimensionnable au lieu d’un partage figé à 50/50.
+
+### Bénéfice
+
+- fiabilité des noms affichés après le premier chargement de fichier ;
+- ergonomie améliorée pour explorer les familles et enfants d’un individu ;
+- panneau de détail redimensionnable selon les besoins de lecture.
+
 ## Priorité 3 — gérer les gros GEDCOM plus proprement
 
 ### Statut
