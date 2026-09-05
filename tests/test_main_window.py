@@ -661,10 +661,14 @@ class TestGedcomViewer(unittest.TestCase):
     def test_individual_view_family_links_include_names(self):
         families = {
             "@F0@": type(
-                "DummyFamily", (), {"pointer": "@F0@", "husband": "@I1@", "wife": "@I2@"}
+                "DummyFamily",
+                (),
+                {"pointer": "@F0@", "husband": "@I1@", "wife": "@I2@"},
             )(),
             "@F1@": type(
-                "DummyFamily", (), {"pointer": "@F1@", "husband": "@I3@", "wife": "@I4@"}
+                "DummyFamily",
+                (),
+                {"pointer": "@F1@", "husband": "@I3@", "wife": "@I4@"},
             )(),
         }
         individuals = {

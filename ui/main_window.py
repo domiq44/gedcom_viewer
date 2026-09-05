@@ -355,10 +355,18 @@ class GedcomViewer:
                 IndividualView,
                 True,
                 {
-                    "set_family_name_resolver": lambda ptr: self.controller.get_family(ptr),
-                    "set_family_member_resolver": lambda ptr: self.controller.get_individual(ptr),
-                    "set_family_label_resolver": lambda entity, entity_type=None: self.controller.format_entity_label(entity, entity_type),
-                    "set_family_display_name_resolver": lambda entity, entity_type=None: self.controller.format_entity_display_name(entity, entity_type),
+                    "set_family_name_resolver": lambda ptr: self.controller.get_family(
+                        ptr
+                    ),
+                    "set_family_member_resolver": lambda ptr: self.controller.get_individual(
+                        ptr
+                    ),
+                    "set_family_label_resolver": lambda entity, entity_type=None: self.controller.format_entity_label(
+                        entity, entity_type
+                    ),
+                    "set_family_display_name_resolver": lambda entity, entity_type=None: self.controller.format_entity_display_name(
+                        entity, entity_type
+                    ),
                 },
             ),
             (
@@ -367,7 +375,9 @@ class GedcomViewer:
                 FamilyView,
                 True,
                 {
-                    "set_name_resolver": lambda ptr: self.controller.get_individual(ptr),
+                    "set_name_resolver": lambda ptr: self.controller.get_individual(
+                        ptr
+                    ),
                     "set_source_resolver": lambda ptr: self.controller.get_source(ptr),
                 },
             ),
@@ -376,14 +386,22 @@ class GedcomViewer:
                 "REPO",
                 RepositoryView,
                 True,
-                {"set_reference_resolver": lambda ptr: self.controller.get_repository(ptr)},
+                {
+                    "set_reference_resolver": lambda ptr: self.controller.get_repository(
+                        ptr
+                    )
+                },
             ),
             (
                 "source",
                 "SOUR",
                 SourceView,
                 True,
-                {"set_reference_resolver": lambda ptr: self.controller.get_repository(ptr)},
+                {
+                    "set_reference_resolver": lambda ptr: self.controller.get_repository(
+                        ptr
+                    )
+                },
             ),
             (
                 "note",
@@ -398,7 +416,11 @@ class GedcomViewer:
                 "SUBM",
                 SubmitterView,
                 True,
-                {"set_reference_resolver": lambda ptr: self.controller.get_submitter(ptr)},
+                {
+                    "set_reference_resolver": lambda ptr: self.controller.get_submitter(
+                        ptr
+                    )
+                },
             ),
         ]
 

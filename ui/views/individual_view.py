@@ -94,10 +94,14 @@ class IndividualView(ttk.Frame):
         fams_container.pack(fill="both", expand=True)
         fams_container.grid_columnconfigure(0, weight=1)
         ttk.Label(
-            fams_container, text=self.translator.get("view.family_name"), font=("Segoe UI", 10, "bold")
+            fams_container,
+            text=self.translator.get("view.family_name"),
+            font=("Segoe UI", 10, "bold"),
         ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 4))
         ttk.Label(
-            fams_container, text=self.translator.get("view.family_identifier"), font=("Segoe UI", 10, "bold")
+            fams_container,
+            text=self.translator.get("view.family_identifier"),
+            font=("Segoe UI", 10, "bold"),
         ).grid(row=0, column=1, sticky="w", pady=(0, 4))
         self.labels["fams"] = fams_container
 
@@ -248,7 +252,11 @@ class IndividualView(ttk.Frame):
                                 justify="left",
                             )
                             name_label.grid(
-                                row=row_index, column=0, sticky="w", padx=(0, 10), pady=2
+                                row=row_index,
+                                column=0,
+                                sticky="w",
+                                padx=(0, 10),
+                                pady=2,
                             )
                             name_label.bind(
                                 "<Button-1>",
@@ -262,7 +270,9 @@ class IndividualView(ttk.Frame):
                                 foreground="blue",
                                 cursor="hand2",
                             )
-                            pointer_label.grid(row=row_index, column=1, sticky="w", pady=2)
+                            pointer_label.grid(
+                                row=row_index, column=1, sticky="w", pady=2
+                            )
                             pointer_label.bind(
                                 "<Button-1>",
                                 lambda e, ptr=pointer: self.on_pointer_click(ptr),
