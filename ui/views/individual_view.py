@@ -25,6 +25,7 @@ class IndividualView(ttk.Frame):
         self.family_member_resolver = None
         self.family_label_resolver = None
         self.family_display_name_resolver = None
+        self.note_resolver = None
         self.configure(padding=10)
 
         # Titre
@@ -52,10 +53,6 @@ class IndividualView(ttk.Frame):
             ("view.age_at_death", "age_at_death"),
             ("view.marriage_count", "marriage_count"),
             ("view.child_family", "famc"),
-            ("view.occupations", "occupations"),
-            ("view.properties", "properties"),
-            ("view.texts", "texts"),
-            ("view.notes", "notes"),
         ]
 
         for i, (label_key, key) in enumerate(fields, start=1):
@@ -66,16 +63,9 @@ class IndividualView(ttk.Frame):
             )
             field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
 
-            if key in ("occupations", "properties", "texts", "notes"):
-                container = ttk.Frame(
-                    self, padding=(8, 4), relief="solid", borderwidth=1
-                )
-                container.grid(row=i, column=1, sticky="nw", padx=10, pady=2)
-                self.labels[key] = container
-            else:
-                value_label = ttk.Label(self, text="", font=FONTS["ui"])
-                value_label.grid(row=i, column=1, sticky="w", padx=10, pady=3)
-                self.labels[key] = value_label
+            value_label = ttk.Label(self, text="", font=FONTS["ui"])
+            value_label.grid(row=i, column=1, sticky="w", padx=10, pady=3)
+            self.labels[key] = value_label
 
         tabs_row = len(fields) + 1
         self.grid_columnconfigure(1, weight=1)
@@ -109,6 +99,45 @@ class IndividualView(ttk.Frame):
         self.tabs.add(children_tab, text=self.translator.get("view.children"))
         self.children_container = ttk.Frame(children_tab, padding=(8, 4))
         self.children_container.pack(fill="both", expand=True)
+        self.children_container.grid_columnconfigure(0, weight=1)
+        ttk.Label(
+            self.children_container,
+            text=self.translator.get("view.family_name"),
+            font=("Segoe UI", 10, "bold"),
+        ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 4))
+        ttk.Label(
+            self.children_container,
+            text=self.translator.get("view.family_identifier"),
+            font=("Segoe UI", 10, "bold"),
+        ).grid(row=0, column=1, sticky="w", pady=(0, 4))
+
+        for tab_title_key, key in (
+            ("view.texts", "texts"),
+            ("view.properties", "properties"),
+            ("view.occupations", "occupations"),
+        ):
+            tab = ttk.Frame(self.tabs)
+            self.tabs.add(tab, text=self.translator.get(tab_title_key))
+            container = ttk.Frame(tab, padding=(8, 4))
+            container.pack(fill="both", expand=True)
+            self.labels[key] = container
+
+        notes_tab = ttk.Frame(self.tabs)
+        self.tabs.add(notes_tab, text=self.translator.get("view.notes"))
+        notes_container = ttk.Frame(notes_tab, padding=(8, 4))
+        notes_container.pack(fill="both", expand=True)
+        notes_container.grid_columnconfigure(0, weight=1)
+        ttk.Label(
+            notes_container,
+            text=self.translator.get("view.family_name"),
+            font=("Segoe UI", 10, "bold"),
+        ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 4))
+        ttk.Label(
+            notes_container,
+            text=self.translator.get("view.family_identifier"),
+            font=("Segoe UI", 10, "bold"),
+        ).grid(row=0, column=1, sticky="w", pady=(0, 4))
+        self.labels["notes"] = notes_container
 
         # Espacement
         for i in range(25):
@@ -125,6 +154,32 @@ class IndividualView(ttk.Frame):
 
     def set_family_display_name_resolver(self, resolver):
         self.family_display_name_resolver = resolver
+
+    def set_note_resolver(self, resolver):
+        self.note_resolver = resolver
+
+    @staticmethod
+    def _is_note_pointer(value):
+        return (
+            isinstance(value, str)
+            and value.startswith("@")
+            and value.endswith("@")
+            and len(value) > 2
+        )
+
+    def _format_note_entry(self, entry):
+        if not self._is_note_pointer(entry):
+            return entry, None
+
+        if callable(self.note_resolver) and callable(self.family_display_name_resolver):
+            try:
+                resolved = self.note_resolver(entry)
+                if resolved is not None:
+                    return self.family_display_name_resolver(resolved, "NOTE"), entry
+            except Exception:
+                logger.exception("Échec de résolution de la note %s", entry)
+
+        return entry, entry
 
     def _format_family_name(self, pointer):
         if not pointer:
@@ -168,7 +223,7 @@ class IndividualView(ttk.Frame):
             self.title_label.config(text=self.translator.get("view.individual"))
             for key, widget in self.labels.items():
                 if isinstance(widget, ttk.Frame):
-                    if key == "fams":
+                    if key in ("fams", "notes"):
                         for row_widget in widget.grid_slaves():
                             if int(row_widget.grid_info().get("row", 0)) > 0:
                                 row_widget.destroy()
@@ -182,10 +237,12 @@ class IndividualView(ttk.Frame):
                     label.pack(side="left")
                 else:
                     configure_label(widget, "")
-            for child in self.children_container.winfo_children():
-                child.destroy()
-            label = ttk.Label(self.children_container, text="—", font=("Segoe UI", 10))
-            label.pack(side="left")
+            for row_widget in self.children_container.grid_slaves():
+                if int(row_widget.grid_info().get("row", 0)) > 0:
+                    row_widget.destroy()
+            ttk.Label(self.children_container, text="—", font=("Segoe UI", 10)).grid(
+                row=1, column=0, sticky="w"
+            )
             return
 
         self.title_label.config(
@@ -225,7 +282,7 @@ class IndividualView(ttk.Frame):
             value = getattr(individual, key, "")
 
             if isinstance(widget, ttk.Frame):
-                if key != "fams":
+                if key not in ("fams", "notes"):
                     clear_container(widget)
 
                 # Gestion des pointeurs cliquables (famc, fams)
@@ -353,20 +410,49 @@ class IndividualView(ttk.Frame):
                         label.pack(side="left")
 
                 elif key == "notes":
+                    for row_widget in widget.grid_slaves():
+                        if int(row_widget.grid_info().get("row", 0)) > 0:
+                            row_widget.destroy()
+
                     if value:
-                        for idx, note in enumerate(value):
-                            if idx > 0:
-                                sep = ttk.Label(widget, text="\n", font=("Segoe UI", 9))
-                                sep.pack(side="left")
-                            # Limiter la longueur des notes affichées
-                            note_text = note[:50] + "..." if len(note) > 50 else note
-                            label = ttk.Label(widget, font=("Segoe UI", 9))
-                            configure_label(label, f"• {note_text}")
-                            label.config(foreground="#555555")
-                            label.pack(side="left", anchor="w")
+                        for row_index, entry in enumerate(value, start=1):
+                            text, pointer = self._format_note_entry(entry)
+                            text_label = ttk.Label(
+                                widget,
+                                font=("Segoe UI", 10),
+                                justify="left",
+                            )
+                            configure_label(text_label, text)
+                            text_label.grid(
+                                row=row_index,
+                                column=0,
+                                sticky="w",
+                                padx=(0, 10),
+                                pady=2,
+                            )
+
+                            pointer_label = ttk.Label(
+                                widget,
+                                text=pointer or "—",
+                                font=("Segoe UI", 10),
+                            )
+                            pointer_label.grid(
+                                row=row_index, column=1, sticky="w", pady=2
+                            )
+
+                            if pointer:
+                                for label in (text_label, pointer_label):
+                                    label.config(foreground="blue", cursor="hand2")
+                                    label.bind(
+                                        "<Button-1>",
+                                        lambda e, ptr=pointer: self.on_pointer_click(
+                                            ptr
+                                        ),
+                                    )
                     else:
-                        label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
-                        label.pack(side="left")
+                        ttk.Label(widget, text="—", font=("Segoe UI", 10)).grid(
+                            row=1, column=0, sticky="w"
+                        )
 
             else:
                 # Champs texte simples
@@ -395,7 +481,9 @@ class IndividualView(ttk.Frame):
                 else:
                     configure_label(widget, value)
 
-        clear_container(self.children_container)
+        for row_widget in self.children_container.grid_slaves():
+            if int(row_widget.grid_info().get("row", 0)) > 0:
+                row_widget.destroy()
 
         children_pointers = []
         fams = getattr(individual, "fams", None) or []
@@ -407,35 +495,47 @@ class IndividualView(ttk.Frame):
                         children_pointers.append(child_pointer)
 
         if children_pointers:
-            for index, pointer in enumerate(children_pointers):
-                if index > 0:
-                    sep = ttk.Label(
-                        self.children_container, text=", ", font=("Segoe UI", 10)
-                    )
-                    sep.pack(side="left")
-                child_name = None
+            for row_index, pointer in enumerate(children_pointers, start=1):
+                child = None
                 if callable(self.family_member_resolver):
-                    resolved_child = self.family_member_resolver(pointer)
-                    child_name = (
-                        getattr(resolved_child, "name", None)
-                        if resolved_child
-                        else None
-                    )
-                display_text = f"{pointer} – {child_name}" if child_name else pointer
-                label = ttk.Label(
+                    child = self.family_member_resolver(pointer)
+                if child is not None and callable(self.family_display_name_resolver):
+                    name_text = self.family_display_name_resolver(child, "INDI")
+                elif child is not None:
+                    name_text = getattr(child, "name", None) or pointer
+                else:
+                    name_text = pointer
+
+                name_label = ttk.Label(
                     self.children_container,
-                    text=display_text,
+                    text=name_text,
+                    font=("Segoe UI", 10),
+                    foreground="blue",
+                    cursor="hand2",
+                    justify="left",
+                )
+                name_label.grid(
+                    row=row_index, column=0, sticky="w", padx=(0, 10), pady=2
+                )
+                name_label.bind(
+                    "<Button-1>", lambda e, ptr=pointer: self.on_pointer_click(ptr)
+                )
+
+                pointer_label = ttk.Label(
+                    self.children_container,
+                    text=pointer,
                     font=("Segoe UI", 10),
                     foreground="blue",
                     cursor="hand2",
                 )
-                label.bind(
+                pointer_label.grid(row=row_index, column=1, sticky="w", pady=2)
+                pointer_label.bind(
                     "<Button-1>", lambda e, ptr=pointer: self.on_pointer_click(ptr)
                 )
-                label.pack(side="left")
         else:
-            label = ttk.Label(self.children_container, text="—", font=("Segoe UI", 10))
-            label.pack(side="left")
+            ttk.Label(self.children_container, text="—", font=("Segoe UI", 10)).grid(
+                row=1, column=0, sticky="w"
+            )
 
     # ---------------------------------------------------------
     # Navigation par clic

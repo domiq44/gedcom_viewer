@@ -367,6 +367,7 @@ class GedcomViewer:
                     "set_family_display_name_resolver": lambda entity, entity_type=None: self.controller.format_entity_display_name(
                         entity, entity_type
                     ),
+                    "set_note_resolver": lambda ptr: self.controller.get_note(ptr),
                 },
             ),
             (
@@ -379,6 +380,10 @@ class GedcomViewer:
                         ptr
                     ),
                     "set_source_resolver": lambda ptr: self.controller.get_source(ptr),
+                    "set_note_resolver": lambda ptr: self.controller.get_note(ptr),
+                    "set_display_name_resolver": lambda entity, entity_type=None: self.controller.format_entity_display_name(
+                        entity, entity_type
+                    ),
                 },
             ),
             (
@@ -635,6 +640,8 @@ class GedcomViewer:
         entity_type = self.entity_type_var.get()
         self._update_entity_type_tab_state(entity_type)
         self._clear_entity_views(keep_type=entity_type)
+        if self.search_var.get():
+            self.search_var.set("")
         self.list_entities()
         if entity_type in self._entity_view_map:
             self._show_entity_view(entity_type, None)

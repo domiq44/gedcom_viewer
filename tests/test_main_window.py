@@ -794,6 +794,9 @@ class TestGedcomViewer(unittest.TestCase):
                 "@I4@": DummyIndividual("@I4@", "Cunégonde"),
             }.get(pointer)
         )
+        self.viewer.family_view.set_display_name_resolver(
+            lambda entity, entity_type=None: entity.name
+        )
 
         class DummyFamily:
             pointer = "@F1@"
@@ -832,19 +835,14 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.family_view.display(family)
 
         container = self.viewer.family_view.labels["children"]
-        self.assertEqual(len(container.winfo_children()), 2)
-        self.assertTrue(
-            any(
-                child.cget("text").startswith("@I3@")
-                for child in container.winfo_children()
-            )
-        )
-        self.assertTrue(
-            any(
-                child.cget("text").startswith("@I4@")
-                for child in container.winfo_children()
-            )
-        )
+        row_children = [
+            child
+            for child in container.winfo_children()
+            if int(child.grid_info().get("row", 0)) > 0
+        ]
+        self.assertEqual(len(row_children), 4)
+        self.assertTrue(any(child.cget("text") == "@I3@" for child in row_children))
+        self.assertTrue(any(child.cget("text") == "@I4@" for child in row_children))
 
     def test_family_view_displays_multiple_marriages(self):
         class DummyFamily:

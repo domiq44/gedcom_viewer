@@ -23,6 +23,8 @@ class FamilyView(ttk.Frame):
         self.translator = translator or Translator()
         self.name_resolver = None
         self.source_resolver = None
+        self.note_resolver = None
+        self.display_name_resolver = None
         self.configure(padding=10)
 
         self.title_label = ttk.Label(
@@ -35,7 +37,6 @@ class FamilyView(ttk.Frame):
         fields = [
             ("view.husband", "husband"),
             ("view.wife", "wife"),
-            ("view.children", "children"),
             ("view.children_count", "number_of_children"),
             ("view.marriage_date", "marriage_date"),
             ("view.marriage_place", "marriage_place"),
@@ -49,9 +50,6 @@ class FamilyView(ttk.Frame):
             ("view.divorce_place", "divorce_place"),
             ("view.divorce_final", "divorce_final"),
             ("view.annulment", "annulment"),
-            ("view.notes", "notes"),
-            ("view.sources", "sources"),
-            ("view.events", "events"),
             ("view.additional_fields", "additional_fields"),
         ]
 
@@ -63,10 +61,6 @@ class FamilyView(ttk.Frame):
             )
             field_label.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=3)
             if key in (
-                "children",
-                "notes",
-                "sources",
-                "events",
                 "marriages",
                 "additional_fields",
             ):
@@ -85,11 +79,56 @@ class FamilyView(ttk.Frame):
                 value_label.grid(row=i, column=1, sticky="w", padx=10, pady=3)
                 self.labels[key] = value_label
 
+        tabs_row = len(fields) + 1
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(tabs_row, weight=1)
+
+        self.tabs = ttk.Notebook(self)
+        self.tabs.grid(
+            row=tabs_row, column=0, columnspan=2, sticky="nsew", pady=(12, 0)
+        )
+
+        def build_two_column_tab(tab_title_key):
+            tab = tk.Frame(self.tabs, bg="#ffffff")
+            self.tabs.add(tab, text=self.translator.get(tab_title_key))
+            container = tk.Frame(tab, padx=8, pady=6, bg="#ffffff")
+            container.pack(fill="both", expand=True)
+            container.grid_columnconfigure(0, weight=1)
+            ttk.Label(
+                container,
+                text=self.translator.get("view.family_name"),
+                font=("Segoe UI", 10, "bold"),
+            ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(0, 4))
+            ttk.Label(
+                container,
+                text=self.translator.get("view.family_identifier"),
+                font=("Segoe UI", 10, "bold"),
+            ).grid(row=0, column=1, sticky="w", pady=(0, 4))
+            return container
+
+        def build_single_column_tab(tab_title_key):
+            tab = tk.Frame(self.tabs, bg="#ffffff")
+            self.tabs.add(tab, text=self.translator.get(tab_title_key))
+            container = tk.Frame(tab, padx=8, pady=6, bg="#ffffff")
+            container.pack(fill="both", expand=True)
+            return container
+
+        self.labels["children"] = build_two_column_tab("view.children")
+        self.labels["sources"] = build_two_column_tab("view.sources")
+        self.labels["events"] = build_single_column_tab("view.events")
+        self.labels["notes"] = build_two_column_tab("view.notes")
+
     def set_name_resolver(self, resolver):
         self.name_resolver = resolver
 
     def set_source_resolver(self, resolver):
         self.source_resolver = resolver
+
+    def set_note_resolver(self, resolver):
+        self.note_resolver = resolver
+
+    def set_display_name_resolver(self, resolver):
+        self.display_name_resolver = resolver
 
     def _format_pointer_with_name(self, pointer):
         if not pointer:
@@ -107,18 +146,69 @@ class FamilyView(ttk.Frame):
 
         return label
 
+    def _format_child_name(self, pointer):
+        if not pointer:
+            return "—"
+
+        if callable(self.name_resolver) and callable(self.display_name_resolver):
+            try:
+                resolved = self.name_resolver(pointer)
+                if resolved is not None:
+                    return self.display_name_resolver(resolved, "INDI")
+            except Exception:
+                logger.exception("Échec de résolution de l'individu %s", pointer)
+
+        return pointer
+
+    def _format_source_title(self, pointer):
+        if not pointer:
+            return "—"
+
+        if callable(self.source_resolver) and callable(self.display_name_resolver):
+            try:
+                resolved = self.source_resolver(pointer)
+                if resolved is not None:
+                    return self.display_name_resolver(resolved, "SOUR")
+            except Exception:
+                logger.exception("Échec de résolution de la source %s", pointer)
+
+        return pointer
+
+    @staticmethod
+    def _is_note_pointer(value):
+        return (
+            isinstance(value, str)
+            and value.startswith("@")
+            and value.endswith("@")
+            and len(value) > 2
+        )
+
+    def _format_note_entry(self, entry):
+        if not self._is_note_pointer(entry):
+            return entry, None
+
+        if callable(self.note_resolver) and callable(self.display_name_resolver):
+            try:
+                resolved = self.note_resolver(entry)
+                if resolved is not None:
+                    return self.display_name_resolver(resolved, "NOTE"), entry
+            except Exception:
+                logger.exception("Échec de résolution de la note %s", entry)
+
+        return entry, entry
+
     def display(self, family):
         if not family:
             self.title_label.config(text=self.translator.get("view.family"))
             for key, widget in self.labels.items():
-                if key in (
-                    "children",
-                    "notes",
-                    "sources",
-                    "events",
-                    "marriages",
-                    "additional_fields",
-                ):
+                if key in ("children", "sources", "notes"):
+                    for row_widget in widget.grid_slaves():
+                        if int(row_widget.grid_info().get("row", 0)) > 0:
+                            row_widget.destroy()
+                    ttk.Label(widget, text="—", font=("Segoe UI", 10)).grid(
+                        row=1, column=0, sticky="w"
+                    )
+                elif key in ("events", "marriages", "additional_fields"):
                     for child in widget.winfo_children():
                         child.destroy()
                     label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
@@ -140,32 +230,126 @@ class FamilyView(ttk.Frame):
             value = getattr(family, key, None)
 
             if key == "children":
-                for child in widget.winfo_children():
-                    child.destroy()
+                for row_widget in widget.grid_slaves():
+                    if int(row_widget.grid_info().get("row", 0)) > 0:
+                        row_widget.destroy()
 
                 if value:
-                    for pointer in value:
-                        child_label = ttk.Label(
+                    for row_index, pointer in enumerate(value, start=1):
+                        name_label = ttk.Label(
                             widget,
-                            text=self._format_pointer_with_name(pointer),
+                            text=self._format_child_name(pointer),
                             font=("Segoe UI", 10),
                             foreground="blue",
                             cursor="hand2",
                             justify="left",
                         )
-                        child_label.pack(fill="x", pady=2)
-                        child_label.bind(
+                        name_label.grid(
+                            row=row_index, column=0, sticky="w", padx=(0, 10), pady=2
+                        )
+                        name_label.bind(
+                            "<Button-1>",
+                            lambda e, ptr=pointer: self.on_pointer_click(ptr),
+                        )
+
+                        pointer_label = ttk.Label(
+                            widget,
+                            text=pointer,
+                            font=("Segoe UI", 10),
+                            foreground="blue",
+                            cursor="hand2",
+                        )
+                        pointer_label.grid(row=row_index, column=1, sticky="w", pady=2)
+                        pointer_label.bind(
                             "<Button-1>",
                             lambda e, ptr=pointer: self.on_pointer_click(ptr),
                         )
                 else:
-                    label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
-                    label.pack(fill="x")
+                    ttk.Label(widget, text="—", font=("Segoe UI", 10)).grid(
+                        row=1, column=0, sticky="w"
+                    )
+                continue
+
+            if key == "sources":
+                for row_widget in widget.grid_slaves():
+                    if int(row_widget.grid_info().get("row", 0)) > 0:
+                        row_widget.destroy()
+
+                if value:
+                    for row_index, pointer in enumerate(value, start=1):
+                        title_label = ttk.Label(
+                            widget,
+                            text=self._format_source_title(pointer),
+                            font=("Segoe UI", 10),
+                            foreground="blue",
+                            cursor="hand2",
+                            justify="left",
+                        )
+                        title_label.grid(
+                            row=row_index, column=0, sticky="w", padx=(0, 10), pady=2
+                        )
+                        title_label.bind(
+                            "<Button-1>",
+                            lambda e, ptr=pointer: self.on_pointer_click(ptr),
+                        )
+
+                        pointer_label = ttk.Label(
+                            widget,
+                            text=pointer,
+                            font=("Segoe UI", 10),
+                            foreground="blue",
+                            cursor="hand2",
+                        )
+                        pointer_label.grid(row=row_index, column=1, sticky="w", pady=2)
+                        pointer_label.bind(
+                            "<Button-1>",
+                            lambda e, ptr=pointer: self.on_pointer_click(ptr),
+                        )
+                else:
+                    ttk.Label(widget, text="—", font=("Segoe UI", 10)).grid(
+                        row=1, column=0, sticky="w"
+                    )
+                continue
+
+            if key == "notes":
+                for row_widget in widget.grid_slaves():
+                    if int(row_widget.grid_info().get("row", 0)) > 0:
+                        row_widget.destroy()
+
+                if value:
+                    for row_index, entry in enumerate(value, start=1):
+                        text, pointer = self._format_note_entry(entry)
+                        text_label = ttk.Label(
+                            widget,
+                            font=("Segoe UI", 10),
+                            justify="left",
+                        )
+                        configure_label(text_label, text)
+                        text_label.grid(
+                            row=row_index, column=0, sticky="w", padx=(0, 10), pady=2
+                        )
+
+                        pointer_label = ttk.Label(
+                            widget,
+                            text=pointer or "—",
+                            font=("Segoe UI", 10),
+                        )
+                        pointer_label.grid(row=row_index, column=1, sticky="w", pady=2)
+
+                        if pointer:
+                            for label in (text_label, pointer_label):
+                                label.config(foreground="blue", cursor="hand2")
+                                label.bind(
+                                    "<Button-1>",
+                                    lambda e, ptr=pointer: self.on_pointer_click(ptr),
+                                )
+                else:
+                    ttk.Label(widget, text="—", font=("Segoe UI", 10)).grid(
+                        row=1, column=0, sticky="w"
+                    )
                 continue
 
             if key in (
-                "notes",
-                "sources",
                 "events",
                 "marriages",
                 "additional_fields",
@@ -174,11 +358,7 @@ class FamilyView(ttk.Frame):
                     child.destroy()
 
                 if value:
-                    if key == "sources":
-                        entries = [self._format_source(source) for source in value]
-                    elif key == "notes":
-                        entries = value
-                    elif key == "events":
+                    if key == "events":
                         entries = [self._format_event(event) for event in value]
                     elif key == "marriages":
                         entries = [self._format_event(event) for event in value]
@@ -186,22 +366,14 @@ class FamilyView(ttk.Frame):
                         entries = [
                             self._format_additional_field(field) for field in value
                         ]
-                    for index, entry in enumerate(entries):
-                        pointer = value[index] if key == "sources" else None
+                    for entry in entries:
                         label = ttk.Label(
                             widget,
                             font=("Segoe UI", 10),
                             justify="left",
                         )
                         configure_label(label, entry)
-                        if pointer:
-                            label.config(foreground="blue", cursor="hand2")
                         label.pack(anchor="w", pady=1)
-                        if pointer:
-                            label.bind(
-                                "<Button-1>",
-                                lambda event, ptr=pointer: self.on_pointer_click(ptr),
-                            )
                 else:
                     label = ttk.Label(widget, text="—", font=("Segoe UI", 10))
                     label.pack(anchor="w")
@@ -223,19 +395,6 @@ class FamilyView(ttk.Frame):
     def on_pointer_click(self, pointer):
         if callable(self.on_pointer_click_callback):
             self.on_pointer_click_callback(pointer)
-
-    def _format_source(self, pointer):
-        if not pointer:
-            return "—"
-        if callable(self.source_resolver):
-            try:
-                source = self.source_resolver(pointer)
-                title = getattr(source, "title", None) if source else None
-                if isinstance(title, str) and title.strip():
-                    return f"{pointer} – {title}"
-            except Exception:
-                logger.exception("Échec de résolution de la source %s", pointer)
-        return pointer
 
     @staticmethod
     def _format_event(event):
