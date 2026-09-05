@@ -95,6 +95,31 @@ Terminée.
 - ergonomie améliorée pour explorer les familles et enfants d’un individu ;
 - panneau de détail redimensionnable selon les besoins de lecture.
 
+## Priorité 2 ter — généraliser les onglets à deux colonnes dans les formulaires
+
+### Statut
+
+Terminée.
+
+### Réalisations
+
+- ajout de quatre onglets en bas du formulaire Individu : **Notes** (liste à
+  deux colonnes avec résolution des pointeurs `@N..@` via `set_note_resolver`
+  et lien cliquable), **Textes**, **Propriétés**, **Occupations** ;
+- ajout de quatre onglets en bas du formulaire Famille : **Enfants**,
+  **Sources** et **Notes** en liste à deux colonnes (nom/titre, identifiant),
+  **Événements** en liste simple ;
+- réinitialisation automatique du champ de filtre de recherche lors du
+  changement de type d’entité, pour éviter un filtre resté affiché mais
+  incohérent avec la liste courante.
+
+### Bénéfice
+
+- présentation homogène (nom/titre + identifiant) pour toutes les listes de
+  références GEDCOM dans les deux formulaires principaux ;
+- navigation plus fiable vers les notes et sources référencées ;
+- expérience de recherche plus prévisible entre deux types d’entités.
+
 ## Priorité 3 — gérer les gros GEDCOM plus proprement
 
 ### Statut
