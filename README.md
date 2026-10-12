@@ -201,6 +201,7 @@ par `--other-entities`, par exemple :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --events-per-source 2 --repeats 1
 ```
+
 `--metadata-per-source` ajoute à chaque source une note continuée, une référence
 `SOUR` et une référence `REFN` pour mesurer ces listes différées.
 Le benchmark ventile la mémoire retenue par le parser et l’incrément des modèles,
@@ -213,6 +214,7 @@ chaque individu afin de mesurer les données textuelles différées :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --texts-per-individual 2 --repeats 1
 ```
+
 Les options `--occupations-per-individual` et `--properties-per-individual`
 ajoutent respectivement des événements `OCCU` datés et des tags `PROP` à chaque
 individu pour mesurer ces listes différées :
@@ -220,11 +222,13 @@ individu pour mesurer ces listes différées :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --occupations-per-individual 2 --properties-per-individual 1 --repeats 1
 ```
+
 `--notes-per-individual` ajoute des notes `NOTE` avec continuation, par exemple :
 
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --notes-per-individual 2 --repeats 1
 ```
+
 `--fams-per-individual` et `--obje-per-individual` ajoutent des références aux
 familles et médias synthétiques; ils nécessitent respectivement `--families` et
 `--other-entities` :
