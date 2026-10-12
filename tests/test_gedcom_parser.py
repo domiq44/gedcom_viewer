@@ -226,7 +226,7 @@ class TestGedcomParser(unittest.TestCase):
         self.assertEqual(parser.get_entity("@F1@").tag, "FAM")
         self.assertIn("0 HEAD", parser.extract_head())
 
-    def test_loaded_entities_reuse_parser_line_strings(self):
+    def test_loaded_entities_share_parser_line_store(self):
         content = "0 HEAD\n0 @I1@ INDI\n1 NAME John /Doe/\n0 TRLR"
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as temp_file:
             temp_file.write(content)
@@ -236,7 +236,8 @@ class TestGedcomParser(unittest.TestCase):
             parser.load(temp_file.name)
 
         entity = parser.get_entity("@I1@")
-        self.assertIs(entity.lines[0], parser.lines[1])
+        self.assertIs(entity._source_lines, parser.lines)
+        self.assertEqual(entity.lines[0], parser.lines[1])
         self.assertEqual(entity.raw_block(), "0 @I1@ INDI\n1 NAME John /Doe/\n")
 
     def test_entity_raw_block_omits_malformed_lines(self):

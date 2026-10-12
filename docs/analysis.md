@@ -177,10 +177,11 @@ et à 4,15 MiB celui des notes et références de 10 000 sources,
 et à 7,56 MiB celui de deux occupations datées et une propriété pour 10 000
 individus. Les références `FAMS` et `OBJE` ajoutent 3,52 MiB après accès pour
 10 000 individus en mesure synthétique. Un scénario combiné de 10 000 individus,
-5 000 familles et 1 000 enregistrements par autre type mesure 14,9 MiB dans le
-parser et 5,9 MiB supplémentaires pour les modèles (20,9 MiB retenus au total).
-La consultation des propriétés ajoute 35,1 MiB, listes vides matérialisées
-comprises. Ces mesures
+5 000 familles et 1 000 enregistrements par autre type mesure 9,1 MiB dans le
+parser (tampon brut et offsets) et 5,9 MiB supplémentaires pour les modèles
+(15,0 MiB retenus au total). La consultation des propriétés ajoute 35,1 MiB,
+listes vides matérialisées comprises. Le chargement tracé passe de 3,81 s avec
+la liste de lignes à 3,42 s avec le tampon compact sur ce scénario. Ces mesures
  synthétiques n’incluent pas l’empreinte totale du fichier GEDCOM : les lignes
  brutes restent toutes en mémoire. Cent mille objets `Event` sans détails
 passent de 15,3 à 6,1 MiB avec slots et détails paresseux. Cinquante mille

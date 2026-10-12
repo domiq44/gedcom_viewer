@@ -141,6 +141,7 @@ Réduire le coût mémoire et améliorer la scalabilité.
 ### Optimisations réalisées
 
 - partage des lignes brutes du parser avec les entités ;
+- stockage des lignes dans un tampon texte unique avec offsets compacts ;
 - arbres d’événements individuels et détails d’événement différés ;
 - données optionnelles des modèles extraites à la demande, notamment
   `Individual` (`NOTE`, `TEXT`, `OCCU`, `PROP`, `FAMS`, `OBJE`), `Family` et
@@ -170,9 +171,9 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - l’accès à deux références `FAMS` et deux références `OBJE` ajoute 3,52 MiB
   pour 10 000 modèles `Individual` dans une mesure synthétique isolée ;
 - scénario combiné de 10 000 individus, 5 000 familles et 1 000 enregistrements
-  de chaque type auxiliaire : 14,9 MiB dans le parser, 5,9 MiB dans les modèles,
-  puis 35,1 MiB supplémentaires après accès aux données optionnelles ; ce delta
-  comprend aussi les listes vides matérialisées ;
+  de chaque type auxiliaire : 9,1 MiB dans le parser, 5,9 MiB dans les modèles
+  (15,0 MiB retenus), puis 35,1 MiB supplémentaires après accès aux données
+  optionnelles ; chargement tracé de 3,42 s contre 3,81 s avant le tampon compact ;
 - ces mesures synthétiques illustrent les allocations différées et ne
   représentent pas la consommation totale d’un gros fichier réel ;
 - recherche de 100 000 individus : environ 298 ms avec la normalisation Unicode

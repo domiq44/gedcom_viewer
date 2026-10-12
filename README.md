@@ -191,7 +191,8 @@ python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --ev
 `SOUR` et une référence `REFN` pour mesurer ces listes différées.
 Le benchmark ventile la mémoire retenue par le parser et l’incrément des modèles,
 puis mesure l’allocation supplémentaire quand les données optionnelles sont
-toutes consultées.
+toutes consultées. Le parser stocke les lignes brutes dans un tampon texte unique
+avec offsets compacts.
 L’option `--texts-per-individual` ajoute des tags `TEXT` avec continuation à
 chaque individu afin de mesurer les données textuelles différées :
 

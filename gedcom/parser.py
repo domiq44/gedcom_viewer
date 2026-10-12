@@ -1,4 +1,6 @@
+from array import array
 import logging
+import operator
 import re
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,42 @@ POINTER_REQUIRED_TAGS = {
     "SUBM",
     "WIFE",
 }
+
+
+class _GedcomLineStore:
+    __slots__ = ("_text", "_offsets")
+
+    def __init__(self, text):
+        self._text = text
+        offsets = array("Q", [0])
+        line_end = text.find("\n")
+        while line_end >= 0:
+            offsets.append(line_end + 1)
+            line_end = text.find("\n", line_end + 1)
+        self._offsets = offsets
+
+    def __len__(self):
+        return len(self._offsets) - 1
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            return [self[line_index] for line_index in range(start, stop, step)]
+
+        line_index = operator.index(index)
+        if line_index < 0:
+            line_index += len(self)
+        if line_index < 0 or line_index >= len(self):
+            raise IndexError("GEDCOM line index out of range")
+
+        return self._text[self._offsets[line_index] : self._offsets[line_index + 1]]
+
+    def __iter__(self):
+        text = self._text
+        start = 0
+        for end in self._offsets[1:]:
+            yield text[start:end]
+            start = end
 
 
 def _parse_line(line):
@@ -89,14 +127,13 @@ class GedcomParser:
 
     def load(self, filename, strict=False):
         with open(filename, "r", encoding="utf-8-sig", errors="replace") as f:
-            self.lines = []
-            self.encoding_replacements = 0
-            for raw_line in f:
-                self.encoding_replacements += raw_line.count("\ufffd")
-                line = raw_line.replace("\xa0", " ")
-                if not line.endswith("\n"):
-                    line += "\n"
-                self.lines.append(line)
+            text = f.read()
+
+        self.encoding_replacements = text.count("\ufffd")
+        text = text.replace("\xa0", " ")
+        if text and not text.endswith("\n"):
+            text += "\n"
+        self.lines = _GedcomLineStore(text)
 
         if self.encoding_replacements:
             logger.warning(
