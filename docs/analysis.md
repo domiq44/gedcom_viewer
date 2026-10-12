@@ -152,6 +152,9 @@ Le benchmark reproductible est disponible dans
 Le chargement a pris 5,28 s; la recherche ASCII 42,7 ms, contre 337 ms avec la
 normalisation Unicode complète. La consultation des champs optionnels ajoute
 73,8 MiB, notamment parce que toutes les listes vides sont alors matérialisées.
+Un stress-test à 50 000 individus avec 25 000 familles et 10 000 enregistrements
+de chaque type auxiliaire retient 91,4 MiB avant consultation et ajoute 180,8 MiB
+après matérialisation complète des champs optionnels.
 Ces temps varient selon l’environnement. La validation évite
 également les collections temporaires proportionnelles aux enregistrements
 valides. Le benchmark reproduit maintenant les scénarios de familles,

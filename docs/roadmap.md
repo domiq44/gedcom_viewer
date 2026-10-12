@@ -185,6 +185,10 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - la consultation de tous les champs optionnels ajoute 73,8 MiB à ce scénario,
   principalement parce qu’elle matérialise aussi les listes vides des 100 000
   individus ;
+- stress-test synthétique de 50 000 individus, 25 000 familles et 10 000
+  enregistrements par type auxiliaire, avec une valeur dans chaque champ
+  optionnel : 55,2 MiB parser, 36,2 MiB modèles, 91,4 MiB retenus et 180,8 MiB
+  supplémentaires après matérialisation complète ; chargement tracé de 18,65 s ;
 - mesure synthétique séparée de 50 000 familles éparses : 19,6 MiB après slots et listes
   paresseuses, contre 41,0 MiB avant ;
 - mesure synthétique de 50 000 sources éparses : 16,5 MiB après slots et listes
