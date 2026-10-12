@@ -1,0 +1,205 @@
+# Analyse du projet
+
+## Résumé
+
+GEDCOM Viewer est un outil de lecture et d’exploration de fichiers GEDCOM. Le projet est fonctionnel, bien structuré pour une application desktop Python/Tkinter, et il est centré sur une expérience de consultation plutôt que sur une modification des données.
+
+Le point fort majeur est qu’il ne s’agit pas seulement d’un parser : il combine parsing, modélisation métier, recherche, navigation par pointeurs et interface utilisateur dans une architecture cohérente.
+
+## Ce qui fonctionne bien
+
+### 1. Séparation des responsabilités
+
+Le projet est divisé en couches relativement propres :
+
+- `ui/` pour l’interface
+- `controllers/` pour l’orchestration
+- `gedcom/` pour le parsing et les modèles
+- `tests/` pour la validation fonctionnelle
+
+Cette séparation rend le code plus facile à comprendre et à faire évoluer.
+
+### 2. Gestion GEDCOM solide
+
+Le parser sait :
+
+- lire des fichiers GEDCOM
+- identifier les enregistrements de niveau 0
+- indexer par type et par pointeur
+- signaler les lignes malformées
+- gérer les cas de chargement tolérant ou strict
+
+La gestion des références comme `HUSB`, `WIFE`, `CHIL`, `SOUR`, `REPO`, `NOTE` et `OBJE` est particulièrement utile pour l’interface.
+
+### 3. Expérience utilisateur satisfaisante
+
+Le projet propose :
+
+- recherche instantanée
+- filtre par type d’entité
+- tri numérique des identifiants
+- historique de navigation
+- affichage du bloc GEDCOM brut
+- vues détaillées selon le type
+- support multilingue
+
+Cela donne un produit qui a un vrai aspect d’application utilisable, pas seulement une preuve de concept.
+
+## Points faibles
+
+### 1. UI très dense
+
+La classe principale de l’interface dans `ui/main_window.py` est volumineuse. C’est le premier point limite du projet : elle mélange beaucoup de responsabilités.
+
+À long terme, cela rendra le projet plus coûteux à maintenir, surtout si on ajoute des fonctionnalités ou de nouvelles vues.
+
+### 2. Chargement entièrement en mémoire
+
+Le README le note explicitement : le projet charge les données en mémoire intégralement. Ce choix est simple et performant pour des fichiers moyens, mais il devient une limitation pour des GEDCOM très volumineux.
+
+C’est un point à surveiller si le projet doit gérer des bases familiales beaucoup plus importantes.
+
+### 3. Validation GEDCOM partielle
+
+Le mode strict est utile, mais il ne couvre pas toute la conformité GEDCOM. Le projet est fonctionnel et “fort” sur l’usage courant, mais pas encore une validation complète de standard.
+
+Cela est acceptable pour un outil de consultation, mais il faut le garder en tête comme limite fonctionnelle.
+
+### 4. Architecture encore orientée “application monolithique”
+
+L’application est cohérente, mais elle n’a pas encore complètement franchi le pas vers un modèle plus modulaire. La logique de l’interface est encore très proche du reste du système.
+
+## État actuel du projet
+
+### Points de qualité
+
+- bonne séparation des dossiers
+- architecture globale cohérente
+- logique métier lisible
+- tests présents et utiles
+- l’application est réellement exploitable
+
+### Points à surveiller
+
+- lourdeur de `ui/main_window.py`
+- mémoire pour les gros GEDCOM
+- validation GEDCOM standard complète
+- potentiel de couplage entre UI et logique métier
+
+### Constats vérifiés
+
+- La suite contient 166 tests; 111 tests non UI passent sous l’interpréteur local.
+- Les tests UI ciblés passent; le module UI complet n’a pas terminé dans le délai
+  local de 7 minutes, avec des attentes longues dans Tk.
+- La compilation syntaxique de tous les fichiers Python passe.
+- Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
+- Le parseur préserve désormais les espaces répétés dans les valeurs de ligne.
+- Le chargement asynchrone construit un contrôleur local dans le thread de travail
+  puis le publie dans le thread Tkinter après succès.
+- Les résolveurs de pointeurs des vues (`ui/views/*.py`) sont désormais branchés via
+  des fonctions qui lisent `self.controller` dynamiquement dans `main_window.py`,
+  et non plus via des méthodes liées figées à la construction. Un bug a été corrigé à
+  ce sujet : après un chargement asynchrone, `self.controller` est remplacé par une
+  nouvelle instance, ce qui rendait silencieusement inopérants tous les résolveurs
+  bindés à l'ancien contrôleur (aucune exception, résolution systématique à `None`).
+- La coordination du chargement est isolée dans `ui/load_coordinator.py`, tandis
+  que `ui/main_window.py` conserve l’application du résultat à l’interface.
+- `ui/entity_browser.py` possède le filtrage, le debounce, le tri et le remplissage
+  de la liste; `ui/entity_list_panel.py` construit les widgets correspondants.
+- La barre de navigation est isolée dans `ui/navigation_bar.py`, tandis que la
+  fenêtre conserve la navigation métier et l'historique.
+- Le formulaire Individu propose deux onglets en bas (Familles (parent) à deux
+  colonnes nom/identifiant, et Enfants), alimentés par les mêmes résolveurs.
+- Le `DetailPanel` sépare désormais le bloc GEDCOM brut et le formulaire d’entité
+  via un `PanedWindow` redimensionnable.
+- L'historique de navigation conserve au plus 100 contextes complets.
+- Les valeurs ASCII utilisent `casefold()` directement; les textes non ASCII
+  conservent la normalisation Unicode qui ignore les accents. Cette optimisation
+  accélère les recherches sans index de recherche persistant.
+- L'interface applique désormais un debounce de 100 ms avant de relancer la
+  recherche et annule ce callback lors de la fermeture.
+
+Le risque de concurrence initial a été traité : le parser du service actif n'est
+plus remplacé depuis le thread de travail. L'ancienne session reste cohérente
+pendant le chargement et est conservée en cas d'erreur. Les résultats tardifs sont
+ignorés lorsque la fenêtre est en cours de fermeture.
+
+La commande de validation complète reste :
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
+```
+
+Dernière validation partielle : les 111 tests non UI passent; la suite complète
+doit être confirmée dans l’environnement CI/Xvfb.
+
+## Recommandations prioritaires
+
+### Priorité 1 : protéger les données personnelles dans les journaux (traitée)
+
+Les lignes GEDCOM malformées, les chemins locaux et les messages d’exception
+peuvent révéler des données personnelles. Les logs du parser et de l’interface
+ne consignent que la nature de l’anomalie, les compteurs utiles et le type
+d’erreur, sans contenu GEDCOM ni chemin. Des tests de non-divulgation couvrent
+ces cas.
+
+### Priorité 2 : mesurer et maîtriser la mémoire
+
+Le benchmark reproductible est disponible dans
+`benchmarks/benchmark_search.py`. Sur un jeu synthétique de 100 000 individus,
+le dernier run a mesuré 67,3 MiB retenus et au pic, contre 99,3 MiB avant
+l’allocation paresseuse des listes optionnelles des individus. Le chargement a
+pris 5,9 s; la recherche ASCII 29 ms, contre 298 ms avec la normalisation
+Unicode complète. Ces temps varient selon l’environnement. La validation évite
+également les collections temporaires proportionnelles aux enregistrements
+valides. Le benchmark reproduit maintenant les scénarios de familles,
+d’événements et des autres types d’enregistrements via ses options CLI. Une
+mesure synthétique séparée de 50 000 familles avec seulement les
+références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les
+slots et les listes paresseuses. Le benchmark accepte désormais `--families`;
+100 000 individus avec 50 000 familles mesurent 103,4 MiB au pic. Le parser
+conserve toujours les lignes, index et modèles métier. Des mesures synthétiques
+séparées de 50 000 sources et 50 000 notes éparses passent respectivement de
+32,5 à 16,5 MiB et de 26,5 à 13,6 MiB avec slots et listes paresseuses. Le
+chargement différé reste à étudier. Cent mille objets `Event` sans détails
+passent de 15,3 à 6,1 MiB avec slots et détails paresseux. Cinquante mille
+objets multimédias passent de 15,7 à 13,8 MiB avec slots.
+Une mesure de 50 000 dépôts épars passe de 25,9 à 15,2 MiB avec slots et listes
+paresseuses. Cinquante mille submitters épars passent de 19,9 à 12,2 MiB avec
+slots et listes paresseuses.
+
+### Historique de navigation : limitation réalisée
+
+L'historique est limité à 100 entrées dans `controllers/navigation_history.py`.
+
+### Priorité 3 : poursuivre la modularisation de l'interface si nécessaire
+
+Les composants principaux (chargement, recherche et liste, navigation, détail,
+vues) sont déjà extraits. La fenêtre principale conserve l'orchestration; de
+nouvelles extractions peuvent suivre les besoins plutôt que constituer un chantier
+de refonte.
+
+### Priorité 4 : consolider la validation GEDCOM
+
+Le mode strict est une bonne base. L’étape suivante serait d’ajouter des règles de validation plus complètes, avec diagnostics plus explicites pour les fichiers GEDCOM réels.
+
+### Priorité 5 : automatiser la qualité du projet
+
+La CI est définie dans `.github/workflows/ci.yml`. Elle exécute les tests Tkinter
+sous Xvfb, la compilation syntaxique, le contrôle Black et le build PyInstaller.
+Les points restants sont de maintenir cette configuration à jour et de vérifier
+le workflow Xvfb sur GitHub Actions.
+
+## Ordre d'exécution recommandé
+
+1. Mesurer puis réduire l’empreinte mémoire des gros GEDCOM, en évaluant le
+  chargement paresseux.
+2. Définir et tester les prochaines règles de validation GEDCOM.
+3. Confirmer le premier passage CI sous Xvfb sur GitHub Actions.
+4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
+
+## Conclusion
+
+Le projet a une bonne base technique, une architecture pensée et une fonctionnalité utile. Il n’a pas besoin d’être totalement réécrit; les chantiers restants sont ciblés sur la mémoire des gros fichiers, la portée de la validation et la confirmation de l’automatisation CI.
+
+En l’état, c’est un projet sérieux, fonctionnel et bien orienté vers un besoin réel : lire et consulter des arbres généalogiques de manière claire et fiable.

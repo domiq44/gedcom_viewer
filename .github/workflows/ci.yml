@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Install Tkinter and virtual environment support
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y python3-tk python3-venv xauth xvfb
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements-dev.txt
+
+      - name: Run tests with a virtual display
+        run: xvfb-run --auto-servernum .venv/bin/python -m unittest discover -s tests
+
+      - name: Compile Python sources
+        run: make lint
+
+      - name: Check formatting
+        run: .venv/bin/python -m black --check main.py controllers gedcom ui tests benchmarks
+
+      - name: Build application
+        run: .venv/bin/python -m PyInstaller --clean gedcom_viewer.spec
