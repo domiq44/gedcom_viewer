@@ -43,6 +43,8 @@ def benchmark(
     notes_per_individual,
     occupations_per_individual,
     properties_per_individual,
+    fams_per_individual,
+    obje_per_individual,
     family_count,
     other_entity_count,
     events_per_family,
@@ -73,6 +75,12 @@ def benchmark(
                 )
             for property_index in range(properties_per_individual):
                 gedcom_file.write(f"1 PROP Synthetic property {property_index}\n")
+            for family_reference in range(fams_per_individual):
+                family_index = family_reference % family_count
+                gedcom_file.write(f"1 FAMS @F{family_index}@\n")
+            for object_reference in range(obje_per_individual):
+                object_index = object_reference % other_entity_count
+                gedcom_file.write(f"1 OBJE @O{object_index}@\n")
         for family_index in range(family_count):
             husband_index = (family_index * 2) % individual_count
             wife_index = (husband_index + 1) % individual_count
@@ -176,6 +184,18 @@ def main():
         help="Number of PROP tags to add to each individual.",
     )
     argument_parser.add_argument(
+        "--fams-per-individual",
+        type=int,
+        default=0,
+        help="Number of FAMS references to add to each individual.",
+    )
+    argument_parser.add_argument(
+        "--obje-per-individual",
+        type=int,
+        default=0,
+        help="Number of OBJE references to add to each individual.",
+    )
+    argument_parser.add_argument(
         "--families",
         type=int,
         default=0,
@@ -210,6 +230,8 @@ def main():
         or arguments.notes_per_individual < 0
         or arguments.occupations_per_individual < 0
         or arguments.properties_per_individual < 0
+        or arguments.fams_per_individual < 0
+        or arguments.obje_per_individual < 0
         or arguments.families < 0
         or arguments.events_per_family < 0
         or arguments.events_per_source < 0
@@ -219,10 +241,14 @@ def main():
         argument_parser.error(
             "sizes and repeats must be positive; optional record counts non-negative"
         )
+    if arguments.fams_per_individual and not arguments.families:
+        argument_parser.error("--families is required with --fams-per-individual")
+    if arguments.obje_per_individual and not arguments.other_entities:
+        argument_parser.error("--other-entities is required with --obje-per-individual")
 
     print(
         "Individuals | Texts/individual | Notes/individual | Occu/individual | "
-        "Props/individual | "
+        "Props/individual | FAMS/individual | OBJE/individual | "
         "Families | Events/family | Other each | "
         "Events/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
@@ -243,6 +269,8 @@ def main():
             arguments.notes_per_individual,
             arguments.occupations_per_individual,
             arguments.properties_per_individual,
+            arguments.fams_per_individual,
+            arguments.obje_per_individual,
             arguments.families,
             arguments.other_entities,
             arguments.events_per_family,
@@ -255,6 +283,8 @@ def main():
             f"{arguments.notes_per_individual:>15} | "
             f"{arguments.occupations_per_individual:>16} | "
             f"{arguments.properties_per_individual:>16} | "
+            f"{arguments.fams_per_individual:>15} | "
+            f"{arguments.obje_per_individual:>15} | "
             f"{arguments.families:>8} | "
             f"{arguments.events_per_family:>13} | "
             f"{arguments.other_entities:>11} | {arguments.events_per_source:>13} | "

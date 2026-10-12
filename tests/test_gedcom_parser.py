@@ -884,6 +884,33 @@ class TestGedcomParser(unittest.TestCase):
         )
         self.assertTrue(individual._notes_loaded)
 
+    def test_individual_family_and_object_references_are_loaded_lazily(self):
+        individual = Individual(
+            GedcomEntity(
+                "@I104@",
+                "INDI",
+                0,
+                [
+                    "0 @I104@ INDI",
+                    "1 FAMS @F1@",
+                    "1 FAMS @F2@",
+                    "1 OBJE @O1@",
+                    "1 OBJE *",
+                    "1 OBJE @O2@",
+                ],
+            )
+        )
+
+        self.assertFalse(individual._fams_loaded)
+        self.assertFalse(individual._obje_loaded)
+        self.assertIsNone(individual._fams)
+        self.assertIsNone(individual._obje)
+        self.assertEqual(individual.fams, ["@F1@", "@F2@"])
+        self.assertTrue(individual._fams_loaded)
+        self.assertFalse(individual._obje_loaded)
+        self.assertEqual(individual.obje, ["@O1@", "@O2@"])
+        self.assertTrue(individual._obje_loaded)
+
     def test_empty_individual_lists_are_lazy_and_mutable(self):
         class DummyEntity:
             pointer = "@I100@"

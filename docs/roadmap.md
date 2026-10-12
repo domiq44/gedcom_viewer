@@ -127,7 +127,8 @@ Terminée.
 ### État de la performance
 
 En cours — les arbres d’événements et plusieurs champs optionnels (`NOTE`,
-`TEXT`, `OCCU`, `PROP`, événements familiaux et événements `SOUR.DATA`) sont construits
+`TEXT`, `OCCU`, `PROP`, références `FAMS`/`OBJE`, événements familiaux et
+événements `SOUR.DATA`) sont construits
 à la demande. Les benchmarks mesurent maintenant ces familles de données.
 L’empreinte des lignes brutes, des index et des modèles principaux reste le
 chantier le plus important : le fichier GEDCOM est toujours chargé intégralement
@@ -142,11 +143,12 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - partage des lignes brutes du parser avec les entités ;
 - arbres d’événements individuels et détails d’événement différés ;
 - données optionnelles des modèles extraites à la demande, notamment
-  `Individual` (`NOTE`, `TEXT`, `OCCU`, `PROP`), `Family` et `Source` ;
+  `Individual` (`NOTE`, `TEXT`, `OCCU`, `PROP`, `FAMS`, `OBJE`), `Family` et
+  `Source` ;
 - slots sur les modèles volumineux et listes optionnelles paresseuses ;
 - benchmark synthétique étendu aux familles, aux événements source, aux notes,
-  textes, occupations et propriétés des individus, ainsi qu’aux autres types
-  d’entités.
+  textes, occupations, propriétés et références individuelles, ainsi qu’aux
+  autres types d’entités.
 
 ### Mesures synthétiques récentes
 
@@ -160,6 +162,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   mesures isolées ;
 - l’accès aux notes ajoute 2,59 MiB pour 10 000 modèles `Individual` dans une
   mesure synthétique isolée ;
+- l’accès à deux références `FAMS` et deux références `OBJE` ajoute 3,52 MiB
+  pour 10 000 modèles `Individual` dans une mesure synthétique isolée ;
 - ces mesures synthétiques illustrent les allocations différées et ne
   représentent pas la consommation totale d’un gros fichier réel ;
 - recherche de 100 000 individus : environ 298 ms avec la normalisation Unicode
@@ -247,7 +251,7 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
-La dernière suite locale vérifiée passe 174 tests et Black passe sur les chemins
+La dernière suite locale vérifiée passe 175 tests et Black passe sur les chemins
 CI. Une action GitHub a été rapportée verte après le correctif Black, mais
 l’exécution sur les commits les plus récents reste à confirmer.
 

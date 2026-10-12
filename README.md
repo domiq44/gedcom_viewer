@@ -161,7 +161,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : 174 tests passent dans la suite complète.
+Dernière validation locale : 175 tests passent dans la suite complète.
 
 Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
 
@@ -204,6 +204,13 @@ python3 benchmarks/benchmark_search.py --sizes 100000 --occupations-per-individu
 
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --notes-per-individual 2 --repeats 1
+```
+`--fams-per-individual` et `--obje-per-individual` ajoutent des références aux
+familles et médias synthétiques; ils nécessitent respectivement `--families` et
+`--other-entities` :
+
+```bash
+python3 benchmarks/benchmark_search.py --sizes 100000 --families 50000 --other-entities 50000 --fams-per-individual 1 --obje-per-individual 1 --repeats 1
 ```
 
 Vérifier la syntaxe Python :

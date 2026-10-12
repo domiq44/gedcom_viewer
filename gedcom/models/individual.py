@@ -4,8 +4,6 @@ from gedcom.models.lazy_list import _LazyList
 
 class Individual:
     texts = _LazyList()
-    obje = _LazyList()
-    fams = _LazyList()
 
     __slots__ = (
         "entity",
@@ -31,8 +29,10 @@ class Individual:
         "_properties_loaded",
         "_texts",
         "_obje",
+        "_obje_loaded",
         "famc",
         "_fams",
+        "_fams_loaded",
         "_events",
     )
 
@@ -61,9 +61,11 @@ class Individual:
         self._properties_loaded = False
         self._texts = None
         self._obje = None
+        self._obje_loaded = False
 
         self.famc = None
         self._fams = None
+        self._fams_loaded = False
         self._events = None
 
         self._parse_lines(entity.lines)
@@ -119,6 +121,50 @@ class Individual:
     def properties(self, value):
         self._properties = value if value else None
         self._properties_loaded = True
+
+    @property
+    def fams(self):
+        if not self._fams_loaded:
+            self._load_fams()
+        if self._fams is None:
+            self._fams = []
+        return self._fams
+
+    @fams.setter
+    def fams(self, value):
+        self._fams = value if value else None
+        self._fams_loaded = True
+
+    @property
+    def obje(self):
+        if not self._obje_loaded:
+            self._load_obje()
+        if self._obje is None:
+            self._obje = []
+        return self._obje
+
+    @obje.setter
+    def obje(self, value):
+        self._obje = value if value else None
+        self._obje_loaded = True
+
+    def _load_fams(self):
+        self._fams_loaded = True
+        self._fams = []
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level == 1 and tag == "FAMS":
+                self._fams.append(value)
+
+    def _load_obje(self):
+        self._obje_loaded = True
+        self._obje = []
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level == 1 and tag == "OBJE" and value and value.strip() != "*":
+                self._obje.append(value.strip())
 
     def _load_occupations(self):
         self._occupations_loaded = True
@@ -236,9 +282,6 @@ class Individual:
                 elif tag == "FAMC":
                     self.famc = value
 
-                elif tag == "FAMS":
-                    self.fams.append(value)
-
                 elif tag == "NICK":
                     self.nickname = value
 
@@ -247,10 +290,6 @@ class Individual:
                         self.marriage_count = int(value)
                     except (ValueError, TypeError):
                         pass
-
-                elif tag == "OBJE":
-                    if value and value.strip() and value.strip() != "*":
-                        self.obje.append(value.strip())
 
                 elif tag == "DEAT":
                     self.death_confirmed = (value or "").strip().upper() == "Y"
