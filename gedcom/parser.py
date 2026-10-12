@@ -168,6 +168,10 @@ class GedcomParser:
                     )
                 if tag in {"HEAD", "TRLR"} and pointer is not None:
                     errors.append(f"pointeur inattendu ligne {line_number}")
+                if tag in {"HEAD", "TRLR"} and value:
+                    errors.append(
+                        f"{tag} ne doit pas avoir de valeur ligne {line_number}"
+                    )
                 if tag == "HEAD":
                     head_count += 1
                 elif tag == "TRLR":

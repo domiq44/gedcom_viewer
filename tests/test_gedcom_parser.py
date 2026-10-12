@@ -688,6 +688,22 @@ class TestGedcomParser(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "ligne 2 malformée"):
                 parser.load(temp_file.name, strict=True)
 
+    def test_strict_load_rejects_values_on_head_and_trailer(self):
+        invalid_records = (
+            ("0 HEAD extra\n0 TRLR\n", "HEAD ne doit pas avoir de valeur ligne 1"),
+            ("0 HEAD\n0 TRLR value\n", "TRLR ne doit pas avoir de valeur ligne 2"),
+        )
+
+        for content, expected_error in invalid_records:
+            with self.subTest(expected_error=expected_error):
+                with tempfile.NamedTemporaryFile("w", encoding="utf-8") as temp_file:
+                    temp_file.write(content)
+                    temp_file.flush()
+                    parser = GedcomParser()
+
+                    with self.assertRaisesRegex(ValueError, expected_error):
+                        parser.load(temp_file.name, strict=True)
+
     def test_validate_reports_malformed_line(self):
         parser = GedcomParser()
         parser.lines = ["0 HEAD", "invalid GEDCOM line", "0 TRLR"]
