@@ -176,9 +176,13 @@ Réduire le coût mémoire et améliorer la scalabilité.
   optionnelles ; chargement tracé de 3,42 s contre 3,81 s avant le tampon compact ;
 - ces mesures synthétiques illustrent les allocations différées et ne
   représentent pas la consommation totale d’un gros fichier réel ;
-- recherche de 100 000 individus : environ 298 ms avec la normalisation Unicode
-  complète et 29 ms avec le fast path ASCII ; le dernier pic mémoire mesuré est
-  de 67,3 MiB, contre 99,3 MiB avant l’allocation paresseuse des listes ;
+- benchmark actuel à 100 000 individus : 29,8 MiB pour le parser, 34,3 MiB pour
+  les modèles, 64,1 MiB retenus au pic et 5,28 s de chargement ; la recherche
+  mesure 337 ms avec la normalisation Unicode complète et 42,7 ms avec le fast
+  path ASCII ;
+- la consultation de tous les champs optionnels ajoute 73,8 MiB à ce scénario,
+  principalement parce qu’elle matérialise aussi les listes vides des 100 000
+  individus ;
 - mesure synthétique séparée de 50 000 familles éparses : 19,6 MiB après slots et listes
   paresseuses, contre 41,0 MiB avant ;
 - mesure synthétique de 50 000 sources éparses : 16,5 MiB après slots et listes
@@ -262,8 +266,8 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
 La dernière suite locale vérifiée passe 176 tests et Black passe sur les chemins
-CI. Une action GitHub a été rapportée verte après le correctif Black, mais
-l’exécution sur les commits les plus récents reste à confirmer.
+CI. L’action GitHub CI #21 a réussi sur `b54e582`, y compris les tests sous
+Xvfb et le build PyInstaller.
 
 ### Objectif automatisation
 
@@ -277,15 +281,16 @@ Rendre les validations reproductibles pour les futures évolutions.
 
 ## Plan d’exécution recommandé
 
-1. Mesurer puis réduire le coût des lignes brutes et index pour les gros GEDCOM.
+1. Évaluer une lecture incrémentale ou mappée pour les très gros GEDCOM, en
+  comparant la mémoire maximale et le temps au benchmark compact actuel.
 2. Formaliser les prochaines règles de validation GEDCOM par version.
-3. Confirmer l’action GitHub sur les commits les plus récents.
+3. Garder le workflow CI vert sur les prochains changements.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
 
 ## Conclusion
 
-Le chargement asynchrone est stabilisé et couvert par les tests. Plusieurs
-structures métier optionnelles sont maintenant différées, mais les lignes brutes
-et les index maintiennent une empreinte mémoire proportionnelle au fichier. Les
-prochains travaux portent sur cette représentation, la validation GEDCOM par
-version et la confirmation de la CI sur les changements récents.
+Le chargement asynchrone est stabilisé et couvert par les tests. Les lignes
+brutes sont compactées et plusieurs structures optionnelles différées. Le fichier
+reste toutefois chargé intégralement; les prochains travaux portent sur la
+lecture incrémentale ou mappée, la validation GEDCOM par version et le maintien
+de la CI verte.

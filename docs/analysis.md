@@ -90,8 +90,8 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 - La suite complète contient 176 tests et passe localement.
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
-- Une exécution GitHub Actions a été rapportée verte après le correctif de
-  formatage; un nouveau résultat sur les commits récents reste à confirmer.
+- L’action GitHub CI #21 a réussi sur `b54e582`, y compris les tests sous Xvfb
+  et le build PyInstaller.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le parseur préserve désormais les espaces répétés dans les valeurs de ligne.
@@ -147,11 +147,12 @@ ces cas.
 ### Priorité 2 : mesurer et maîtriser la mémoire
 
 Le benchmark reproductible est disponible dans
-`benchmarks/benchmark_search.py`. Sur un jeu synthétique de 100 000 individus,
-le dernier run a mesuré 67,3 MiB retenus et au pic, contre 99,3 MiB avant
-l’allocation paresseuse des listes optionnelles des individus. Le chargement a
-pris 5,9 s; la recherche ASCII 29 ms, contre 298 ms avec la normalisation
-Unicode complète. Ces temps varient selon l’environnement. La validation évite
+`benchmarks/benchmark_search.py`. Sur 100 000 individus, le dernier run a mesuré
+29,8 MiB côté parser, 34,3 MiB pour les modèles et 64,1 MiB retenus au pic.
+Le chargement a pris 5,28 s; la recherche ASCII 42,7 ms, contre 337 ms avec la
+normalisation Unicode complète. La consultation des champs optionnels ajoute
+73,8 MiB, notamment parce que toutes les listes vides sont alors matérialisées.
+Ces temps varient selon l’environnement. La validation évite
 également les collections temporaires proportionnelles aux enregistrements
 valides. Le benchmark reproduit maintenant les scénarios de familles,
 d’événements, de sources et de champs optionnels individuels via ses options
@@ -209,19 +210,22 @@ Le mode strict est une bonne base. L’étape suivante serait d’ajouter des r�
 
 La CI est définie dans `.github/workflows/ci.yml`. Elle exécute les tests Tkinter
 sous Xvfb, la compilation syntaxique, le contrôle Black et le build PyInstaller.
-Les points restants sont de maintenir cette configuration à jour et de vérifier
-le workflow Xvfb sur GitHub Actions.
+L’action CI #21 a réussi sur `b54e582`; le travail restant est de maintenir ces
+gates vertes pour les changements suivants.
 
 ## Ordre d'exécution recommandé
 
-1. Mesurer puis réduire l’empreinte mémoire des gros GEDCOM, en évaluant le
-  chargement paresseux.
-2. Définir et tester les prochaines règles de validation GEDCOM.
-3. Confirmer le premier passage CI sous Xvfb sur GitHub Actions.
+1. Mesurer sur des GEDCOM réels et évaluer une lecture incrémentale ou mappée
+   pour les fichiers dont le tampon compact reste trop volumineux.
+2. Définir les versions GEDCOM ciblées et compléter les règles strictes.
+3. Garder les tests, Black et PyInstaller verts en CI.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
 
 ## Conclusion
 
-Le projet a une bonne base technique, une architecture pensée et une fonctionnalité utile. Il n’a pas besoin d’être totalement réécrit; les chantiers restants sont ciblés sur la mémoire des gros fichiers, la portée de la validation et la confirmation de l’automatisation CI.
+Le projet a une base technique cohérente et n’a pas besoin d’être réécrit. Les
+chantiers restants sont ciblés : confirmer les performances sur des données
+réelles, étudier le traitement incrémental des très gros fichiers et préciser la
+portée de la validation GEDCOM.
 
 En l’état, c’est un projet sérieux, fonctionnel et bien orienté vers un besoin réel : lire et consulter des arbres généalogiques de manière claire et fiable.
