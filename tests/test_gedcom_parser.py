@@ -900,10 +900,10 @@ class TestGedcomParser(unittest.TestCase):
                 [
                     "0 @S11@ SOUR",
                     "1 DATA",
-                    "2 AGNC Registry",
                     "2 EVEN Census",
-                    "2 DATE 1900",
-                    "2 AGNC Event agency",
+                    "3 DATE 1900",
+                    "3 PLAC Example place",
+                    "2 AGNC Registry",
                 ],
             )
         )
@@ -918,7 +918,10 @@ class TestGedcomParser(unittest.TestCase):
             [
                 {
                     "value": "Census",
-                    "details": [("DATE", "1900"), ("AGNC", "Event agency")],
+                    "details": [
+                        ("DATE", "1900"),
+                        ("PLAC", "Example place"),
+                    ],
                 }
             ],
         )

@@ -75,7 +75,7 @@ def benchmark(
                 gedcom_file.write(
                     "1 DATA\n"
                     f"2 EVEN Source event {event_index}\n"
-                    "2 DATE 1 JAN 1900\n"
+                    "3 DATE 1 JAN 1900\n"
                 )
             gedcom_file.write(f"0 @R{index}@ REPO\n1 NAME Archive {index}\n")
             gedcom_file.write(f"0 @U{index}@ SUBM\n1 NAME Submitter {index}\n")

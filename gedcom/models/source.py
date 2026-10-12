@@ -74,24 +74,29 @@ class Source:
 
         self._data_events_loaded = True
         current_section = None
+        current_event = None
 
         for raw in self.entity.lines:
             level, _pointer, tag, value = _parse_line(raw)
 
             if level == 1:
                 current_section = tag
-            elif level == 2 and current_section == "DATA":
-                if tag == "EVEN":
-                    if self._data_events is None:
-                        self._data_events = []
-                    self._data_events.append({"value": value, "details": []})
-                elif self._data_events:
-                    self._data_events[-1]["details"].append((tag, value))
+                current_event = None
+            elif current_section == "DATA":
+                if level == 2:
+                    if tag == "EVEN":
+                        if self._data_events is None:
+                            self._data_events = []
+                        current_event = {"value": value, "details": []}
+                        self._data_events.append(current_event)
+                    else:
+                        current_event = None
+                elif level == 3 and current_event is not None:
+                    current_event["details"].append((tag, value))
 
     def _parse_lines(self, lines):
         current_section = None
         current_additional = None
-        has_data_event = False
 
         for raw in lines:
             level, pointer, tag, value = _parse_line(raw)
@@ -186,14 +191,10 @@ class Source:
                             self.text = f"{self.text or ''}\n{value}"
 
                 elif current_section == "DATA":
-                    if tag == "EVEN":
-                        has_data_event = True
-                    elif tag == "AGNC":
-                        if not has_data_event:
-                            self.agency = value
+                    if tag == "AGNC":
+                        self.agency = value
                     elif tag == "NOTE":
-                        if not has_data_event:
-                            self.text = f"{self.text or ''}\n{value}"
+                        self.text = f"{self.text or ''}\n{value}"
 
                 # Sous REPO
                 elif current_section == "REPO":
