@@ -280,6 +280,25 @@ class TestGedcomParser(unittest.TestCase):
         self.assertIn("HEAD doit être le premier enregistrement", errors)
         self.assertIn("TRLR doit être le dernier enregistrement ligne 4", errors)
 
+    def test_validate_rejects_nested_head_and_trailer_tags(self):
+        invalid_contexts = [
+            ("1 HEAD", "HEAD doit être au niveau 0 ligne 3"),
+            ("1 TRLR", "TRLR doit être au niveau 0 ligne 3"),
+        ]
+
+        for nested_record, expected_error in invalid_contexts:
+            with self.subTest(nested_record=nested_record):
+                parser = GedcomParser()
+                parser.lines = [
+                    "0 HEAD",
+                    "0 @I1@ INDI",
+                    nested_record,
+                    "0 TRLR",
+                ]
+                parser._parse_entities()
+
+                self.assertIn(expected_error, parser.validate())
+
     def test_validate_requires_pointers_for_indexed_record_types(self):
         record_types = ("INDI", "FAM", "SOUR", "REPO", "SUBM", "OBJE")
         for record_type in record_types:
