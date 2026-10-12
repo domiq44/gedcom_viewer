@@ -157,7 +157,9 @@ valides. Le benchmark reproduit maintenant les scénarios de familles,
 d’événements, de sources et de champs optionnels individuels via ses options
 CLI (`--events-per-source`, `--texts-per-individual`, `--notes-per-individual`,
 `--occupations-per-individual`, `--properties-per-individual`,
-`--fams-per-individual`, `--obje-per-individual`). Une mesure
+`--fams-per-individual`, `--obje-per-individual`). Il rapporte la mémoire après
+chargement puis le delta conservé après consultation des propriétés différées.
+Une mesure
 synthétique séparée de 50 000 familles avec seulement les
  références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les
  slots et les listes paresseuses. Le benchmark accepte désormais `--families`;
@@ -172,7 +174,10 @@ isolées estiment à 5,34 MiB le coût d’événements pour 10 000 sources cons
 à 2,59 MiB celui des notes pour 10 000 individus, à 1,74 MiB celui des textes,
 et à 7,56 MiB celui de deux occupations datées et une propriété pour 10 000
 individus. Les références `FAMS` et `OBJE` ajoutent 3,52 MiB après accès pour
-10 000 individus en mesure synthétique. Ces mesures
+10 000 individus en mesure synthétique. Un scénario combiné de 10 000 individus,
+5 000 familles et 1 000 enregistrements par autre type mesure 20,6 MiB après
+chargement et 34,7 MiB supplémentaires après consultation des propriétés. Ce
+delta comprend aussi les listes vides matérialisées. Ces mesures
  synthétiques n’incluent pas l’empreinte totale du fichier GEDCOM : les lignes
  brutes restent toutes en mémoire. Cent mille objets `Event` sans détails
 passent de 15,3 à 6,1 MiB avec slots et détails paresseux. Cinquante mille

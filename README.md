@@ -187,6 +187,8 @@ par `--other-entities`, par exemple :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --events-per-source 2 --repeats 1
 ```
+Le benchmark mesure la mémoire conservée après le chargement, puis l’allocation
+supplémentaire quand les données optionnelles sont toutes consultées.
 L’option `--texts-per-individual` ajoute des tags `TEXT` avec continuation à
 chaque individu afin de mesurer les données textuelles différées :
 

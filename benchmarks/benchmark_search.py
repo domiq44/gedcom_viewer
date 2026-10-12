@@ -37,6 +37,25 @@ def search_with_normalizer(controller, query, normalize):
     ]
 
 
+def materialize_optional_data(controller):
+    for individual in controller.individuals.values():
+        individual.notes
+        individual.texts
+        individual.occupations
+        individual.properties
+        individual.fams
+        individual.obje
+        individual.events
+
+    for family in controller.families.values():
+        family.marriages
+        family.divorces
+        family.events
+
+    for source in controller.sources.values():
+        source.data_events
+
+
 def benchmark(
     individual_count,
     texts_per_individual,
@@ -118,6 +137,9 @@ def benchmark(
         controller = EntityController(parser)
         load_seconds = time.perf_counter() - load_started_at
         current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+        materialize_optional_data(controller)
+        materialized_bytes, _ = tracemalloc.get_traced_memory()
+        optional_data_bytes = materialized_bytes - current_bytes
         tracemalloc.stop()
 
         search_started_at = time.perf_counter()
@@ -138,6 +160,7 @@ def benchmark(
         fast_path_search_seconds,
         current_bytes,
         peak_bytes,
+        optional_data_bytes,
         len(baseline_results),
         len(fast_path_results),
     )
@@ -252,7 +275,7 @@ def main():
         "Families | Events/family | Other each | "
         "Events/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
-        "Retained (MiB) | Peak (MiB) | Matches"
+        "Retained (MiB) | Peak (MiB) | Accessed optional data (MiB) | Matches"
     )
     for individual_count in arguments.sizes:
         (
@@ -261,6 +284,7 @@ def main():
             fast_path_search_seconds,
             current_bytes,
             peak_bytes,
+            optional_data_bytes,
             baseline_matches,
             fast_path_matches,
         ) = benchmark(
@@ -293,6 +317,7 @@ def main():
             f"{fast_path_search_seconds * 1000:>19.2f} | "
             f"{current_bytes / 1024 / 1024:>14.1f} | "
             f"{peak_bytes / 1024 / 1024:>10.1f} | "
+            f"{optional_data_bytes / 1024 / 1024:>24.1f} | "
             f"{baseline_matches}/{fast_path_matches}"
         )
 
