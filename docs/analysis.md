@@ -90,8 +90,8 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 - La suite complète contient 176 tests et passe localement.
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
-- L’action GitHub CI #21 a réussi sur `b54e582`, y compris les tests sous Xvfb
-  et le build PyInstaller.
+- L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test
+  `--file`, les tests sous Xvfb et le build PyInstaller.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le parseur préserve désormais les espaces répétés dans les valeurs de ligne.
@@ -147,7 +147,9 @@ ces cas.
 ### Priorité 2 : mesurer et maîtriser la mémoire
 
 Le benchmark reproductible est disponible dans
-`benchmarks/benchmark_search.py`. Sur 100 000 individus, le dernier run a mesuré
+`benchmarks/benchmark_search.py`. Sur deux GEDCOM réels fournis, de 50 683 et
+51 303 lignes, le chargement prend environ 0,9–1,0 s et la mémoire retenue est
+de 5,3–5,7 MiB. Sur 100 000 individus synthétiques, le dernier run a mesuré
 29,8 MiB côté parser, 34,3 MiB pour les modèles et 64,1 MiB retenus au pic.
 Le chargement a pris 5,28 s; la recherche ASCII 42,7 ms, contre 337 ms avec la
 normalisation Unicode complète. La consultation des champs optionnels ajoute
@@ -212,14 +214,14 @@ Le mode strict est une bonne base. L’étape suivante serait d’ajouter des r�
 ### Priorité 5 : automatiser la qualité du projet
 
 La CI est définie dans `.github/workflows/ci.yml`. Elle exécute les tests Tkinter
-sous Xvfb, la compilation syntaxique, le contrôle Black et le build PyInstaller.
-L’action CI #21 a réussi sur `b54e582`; le travail restant est de maintenir ces
-gates vertes pour les changements suivants.
+sous Xvfb, un smoke test du benchmark en mode `--file`, la compilation
+syntaxique, le contrôle Black et le build PyInstaller. L’action CI #25 a réussi
+sur `b877376`; le travail restant est de maintenir ces gates vertes.
 
 ## Ordre d'exécution recommandé
 
-1. Mesurer sur des GEDCOM réels et évaluer une lecture incrémentale ou mappée
-   pour les fichiers dont le tampon compact reste trop volumineux.
+1. Mesurer des GEDCOM plus volumineux avec `--file` et définir une cible mémoire;
+  évaluer streaming/mmap si les nouvelles mesures le justifient.
 2. Définir les versions GEDCOM ciblées et compléter les règles strictes.
 3. Garder les tests, Black et PyInstaller verts en CI.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.

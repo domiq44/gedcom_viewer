@@ -152,8 +152,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   autres types d’entités ; il affiche la mémoire après chargement puis le delta
   après consultation de toutes les propriétés différées, avec ventilation entre
   parser et modèles. Le mode `--file` mesure un GEDCOM existant sans afficher
-  chemin ni valeurs. Le fixture livré est trop petit pour mesurer la scalabilité.
-  L’option
+  chemin ni valeurs. Deux GEDCOM réels d’environ 51 000 lignes ont été mesurés ;
+  l’option
   `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et `REFN`.
 
 ### Mesures synthétiques récentes
@@ -163,6 +163,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   d’événement familiaux ;
 - sur 10 000 modèles `Source`, l’accès aux événements ajoute 5,34 MiB dans une
   mesure isolée ;
+- sur les deux GEDCOM réels mesurés (50 683 et 51 303 lignes), le chargement
+  prend environ 0,9–1,0 s et retient 5,3–5,7 MiB ;
 - l’accès aux notes et références source ajoute 4,15 MiB pour 10 000 modèles
   `Source` dans une mesure synthétique isolée ;
 - sur 10 000 modèles `Individual`, l’accès aux textes ajoute 1,74 MiB, et
@@ -272,8 +274,8 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
 La dernière suite locale vérifiée passe 176 tests et Black passe sur les chemins
-CI. L’action GitHub CI #21 a réussi sur `b54e582`, y compris les tests sous
-Xvfb et le build PyInstaller.
+CI. L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test du
+benchmark GEDCOM réel, les tests sous Xvfb et le build PyInstaller.
 
 ### Objectif automatisation
 
@@ -287,16 +289,16 @@ Rendre les validations reproductibles pour les futures évolutions.
 
 ## Plan d’exécution recommandé
 
-1. Mesurer plusieurs GEDCOM réels avec `--file`, puis évaluer une lecture
-  incrémentale ou mappée si les mesures la justifient.
+1. Élargir les mesures `--file` à des GEDCOM nettement plus volumineux et définir
+  une cible mémoire; évaluer streaming/mmap seulement si nécessaire.
 2. Formaliser les prochaines règles de validation GEDCOM par version.
 3. Garder le workflow CI vert sur les prochains changements.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
 
 ## Conclusion
 
-Le chargement asynchrone est stabilisé et couvert par les tests. Les lignes
-brutes sont compactées et plusieurs structures optionnelles différées. Le fichier
-reste toutefois chargé intégralement; les prochains travaux portent sur la
-lecture incrémentale ou mappée, la validation GEDCOM par version et le maintien
-de la CI verte.
+Le chargement asynchrone est stabilisé et couvert par les tests. Les deux GEDCOM
+réels mesurés restent modestes après compaction des lignes. Le fichier demeure
+chargé intégralement; streaming ou mmap ne se justifieront qu’au-delà des tailles
+mesurées. Les autres chantiers sont la validation GEDCOM par version et le
+maintien de la CI verte.
