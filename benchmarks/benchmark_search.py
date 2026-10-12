@@ -39,6 +39,7 @@ def search_with_normalizer(controller, query, normalize):
 
 def benchmark(
     individual_count,
+    texts_per_individual,
     family_count,
     other_entity_count,
     events_per_family,
@@ -52,6 +53,11 @@ def benchmark(
             gedcom_file.write(
                 f"0 @I{index}@ INDI\n1 NAME Person{index} /Surname{index % 1000}/\n"
             )
+            for text_index in range(texts_per_individual):
+                gedcom_file.write(
+                    f"1 TEXT Synthetic text {text_index} for individual {index}\n"
+                    f"2 CONT Continued text for individual {index}\n"
+                )
         for family_index in range(family_count):
             husband_index = (family_index * 2) % individual_count
             wife_index = (husband_index + 1) % individual_count
@@ -131,6 +137,12 @@ def main():
         help="Search query; the default forces a full scan with no matches.",
     )
     argument_parser.add_argument(
+        "--texts-per-individual",
+        type=int,
+        default=0,
+        help="Number of TEXT tags with continuations to add to each individual.",
+    )
+    argument_parser.add_argument(
         "--families",
         type=int,
         default=0,
@@ -161,6 +173,7 @@ def main():
 
     if (
         arguments.repeats < 1
+        or arguments.texts_per_individual < 0
         or arguments.families < 0
         or arguments.events_per_family < 0
         or arguments.events_per_source < 0
@@ -172,7 +185,8 @@ def main():
         )
 
     print(
-        "Individuals | Families | Events/family | Other each | Events/source | Load (s) | "
+        "Individuals | Texts/individual | Families | Events/family | Other each | "
+        "Events/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
         "Retained (MiB) | Peak (MiB) | Matches"
     )
@@ -187,6 +201,7 @@ def main():
             fast_path_matches,
         ) = benchmark(
             individual_count,
+            arguments.texts_per_individual,
             arguments.families,
             arguments.other_entities,
             arguments.events_per_family,
@@ -195,7 +210,8 @@ def main():
             arguments.repeats,
         )
         print(
-            f"{individual_count:>11} | {arguments.families:>8} | "
+            f"{individual_count:>11} | {arguments.texts_per_individual:>16} | "
+            f"{arguments.families:>8} | "
             f"{arguments.events_per_family:>13} | "
             f"{arguments.other_entities:>11} | {arguments.events_per_source:>13} | "
             f"{load_seconds:>8.3f} | "
