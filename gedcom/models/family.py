@@ -8,6 +8,27 @@ class Family:
     Représente une famille GEDCOM (FAM) basée sur entity.lines.
     """
 
+    _KNOWN_LEVEL_ONE_TAGS = frozenset(
+        {
+            "HUSB",
+            "WIFE",
+            "CHIL",
+            "MARR",
+            "DIV",
+            "NCHI",
+            "ENGA",
+            "MARB",
+            "MARC",
+            "MARL",
+            "MARS",
+            "DIVF",
+            "ANUL",
+            "NOTE",
+            "SOUR",
+            "EVEN",
+        }
+    )
+
     children = _LazyList()
     notes = _LazyList()
     sources = _LazyList()
@@ -141,24 +162,6 @@ class Family:
     def _parse_lines(self, lines):
         current_section = None
         current_additional = None
-        known_level_one_tags = {
-            "HUSB",
-            "WIFE",
-            "CHIL",
-            "MARR",
-            "DIV",
-            "NCHI",
-            "ENGA",
-            "MARB",
-            "MARC",
-            "MARL",
-            "MARS",
-            "DIVF",
-            "ANUL",
-            "NOTE",
-            "SOUR",
-            "EVEN",
-        }
 
         for raw in lines:
             level, pointer, tag, value = _parse_line(raw)
@@ -210,7 +213,7 @@ class Family:
                 elif tag == "SOUR":
                     self.sources.append(value)
 
-                if tag not in known_level_one_tags:
+                if tag not in self._KNOWN_LEVEL_ONE_TAGS:
                     current_additional = {"tag": tag, "value": value, "details": []}
                     self.additional_fields.append(current_additional)
 
