@@ -948,7 +948,12 @@ class TestGedcomParser(unittest.TestCase):
 
         family = Family(parser.get_entity("@F10@"))
 
+        self.assertFalse(family._event_models_loaded)
+        self.assertIsNone(family._marriages)
+        self.assertIsNone(family._divorces)
+        self.assertIsNone(family._events)
         self.assertIsInstance(family.marriages[0], Event)
+        self.assertTrue(family._event_models_loaded)
         self.assertEqual(family.marriages[0].get("details"), [("DATE", "1 JAN 1900")])
         self.assertIsInstance(family.divorces[0], Event)
         self.assertIsInstance(family.events[0], Event)

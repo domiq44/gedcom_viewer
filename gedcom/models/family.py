@@ -11,10 +11,7 @@ class Family:
     children = _LazyList()
     notes = _LazyList()
     sources = _LazyList()
-    events = _LazyList()
     additional_fields = _LazyList()
-    marriages = _LazyList()
-    divorces = _LazyList()
 
     __slots__ = (
         "entity",
@@ -40,6 +37,7 @@ class Family:
         "_additional_fields",
         "_marriages",
         "_divorces",
+        "_event_models_loaded",
     )
 
     def __init__(self, entity):
@@ -68,13 +66,80 @@ class Family:
         self._additional_fields = None
         self._marriages = None
         self._divorces = None
+        self._event_models_loaded = False
 
         # Analyse des lignes brutes
         self._parse_lines(entity.lines)
 
+    @property
+    def marriages(self):
+        return self._get_event_list("_marriages")
+
+    @marriages.setter
+    def marriages(self, value):
+        self._set_event_list("_marriages", value)
+
+    @property
+    def divorces(self):
+        return self._get_event_list("_divorces")
+
+    @divorces.setter
+    def divorces(self, value):
+        self._set_event_list("_divorces", value)
+
+    @property
+    def events(self):
+        return self._get_event_list("_events")
+
+    @events.setter
+    def events(self, value):
+        self._set_event_list("_events", value)
+
+    def _get_event_list(self, attribute):
+        self._load_event_models()
+        values = getattr(self, attribute)
+        if values is None:
+            values = []
+            setattr(self, attribute, values)
+        return values
+
+    def _set_event_list(self, attribute, values):
+        self._load_event_models()
+        setattr(self, attribute, values if values else None)
+
+    def _load_event_models(self):
+        if self._event_models_loaded:
+            return
+
+        self._event_models_loaded = True
+        current_event = None
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+
+            if level == 1:
+                if tag == "MARR":
+                    current_event = Event("MARR", value)
+                    if self._marriages is None:
+                        self._marriages = []
+                    self._marriages.append(current_event)
+                elif tag == "DIV":
+                    current_event = Event("DIV", value)
+                    if self._divorces is None:
+                        self._divorces = []
+                    self._divorces.append(current_event)
+                elif tag == "EVEN":
+                    current_event = Event("EVEN", value)
+                    if self._events is None:
+                        self._events = []
+                    self._events.append(current_event)
+                else:
+                    current_event = None
+            elif level is not None and level >= 2 and current_event is not None:
+                current_event.add_detail(tag, value)
+
     def _parse_lines(self, lines):
         current_section = None
-        current_event = None
         current_additional = None
         known_level_one_tags = {
             "HUSB",
@@ -107,7 +172,6 @@ class Family:
             # --- Niveau 1 : sections principales ---
             if level == 1:
                 current_section = tag
-                current_event = None
                 current_additional = None
 
                 if tag == "HUSB":
@@ -146,27 +210,12 @@ class Family:
                 elif tag == "SOUR":
                     self.sources.append(value)
 
-                elif tag == "MARR":
-                    current_event = Event("MARR", value)
-                    self.marriages.append(current_event)
-
-                elif tag == "DIV":
-                    current_event = Event("DIV", value)
-                    self.divorces.append(current_event)
-
-                elif tag == "EVEN":
-                    current_event = Event("EVEN", value)
-                    self.events.append(current_event)
-
                 if tag not in known_level_one_tags:
                     current_additional = {"tag": tag, "value": value, "details": []}
                     self.additional_fields.append(current_additional)
 
             # --- Niveau 2 : sous-tags (DATE, PLAC…) ---
             elif level == 2:
-
-                if current_event is not None:
-                    current_event.add_detail(tag, value)
 
                 if current_section == "NOTE" and self.notes:
                     if tag == "CONT":
@@ -192,7 +241,5 @@ class Family:
                     current_additional["details"].append((tag, value))
 
             elif level >= 3:
-                if current_event is not None:
-                    current_event.add_detail(tag, value)
                 if current_additional is not None:
                     current_additional["details"].append((tag, value))
