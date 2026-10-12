@@ -128,11 +128,12 @@ class GedcomParser:
         trailer_line = None
 
         for idx, line in enumerate(self.lines):
+            line_number = idx + 1
             if not line.strip():
+                errors.append(f"ligne {line_number} malformée")
                 continue
 
             level, pointer, tag, value = _parse_line(line)
-            line_number = idx + 1
             if level is None or tag is None:
                 errors.append(f"ligne {line_number} malformée")
                 continue
