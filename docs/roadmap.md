@@ -229,7 +229,9 @@ Partiellement couverte : le mode strict détecte les anomalies structurelles,
 les références inconnues et certaines références incompatibles avec le type
 attendu. Il vérifie également l’ordre et l’unicité de `HEAD`/`TRLR`, leur niveau
 et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
-`TRLR`. La conformité GEDCOM complète reste hors périmètre actuel.
+`TRLR`. Dans `HEAD`, il vérifie le contexte des tags `GEDC`, `VERS` et `FORM`.
+Les deux GEDCOM réels disponibles déclarent GEDCOM 5.5.1 et passent ces contrôles
+stricts. La conformité complète au standard reste hors périmètre actuel.
 
 ### Objectif validation
 
@@ -237,7 +239,10 @@ Aller au-delà des anomalies structurelles de base.
 
 ### Actions validation
 
-- formaliser les règles de validation par version GEDCOM ;
+- formaliser et tester d’abord les règles de validation GEDCOM 5.5.1 sur des cas
+  conformes et non conformes ;
+- décider ensuite explicitement quelles versions supplémentaires sont prises en
+  charge ;
 - distinguer les erreurs de structure et les erreurs de sémantique ;
 - exposer des diagnostics plus explicites dans l’interface ;
 - étendre la couverture de tests sur les cas non conformes.
@@ -273,9 +278,10 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
-La dernière suite locale vérifiée passe 176 tests et Black passe sur les chemins
+La dernière suite locale vérifiée passe 177 tests et Black passe sur les chemins
 CI. L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test du
-benchmark GEDCOM réel, les tests sous Xvfb et le build PyInstaller.
+benchmark GEDCOM réel, les tests sous Xvfb et le build PyInstaller; les règles
+de contexte d’en-tête ajoutées depuis restent à valider sur GitHub.
 
 ### Objectif automatisation
 
@@ -291,7 +297,7 @@ Rendre les validations reproductibles pour les futures évolutions.
 
 1. Élargir les mesures `--file` à des GEDCOM nettement plus volumineux et définir
   une cible mémoire; évaluer streaming/mmap seulement si nécessaire.
-2. Formaliser les prochaines règles de validation GEDCOM par version.
+2. Formaliser la portée 5.5.1 puis compléter les règles strictes par version.
 3. Garder le workflow CI vert sur les prochains changements.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
 

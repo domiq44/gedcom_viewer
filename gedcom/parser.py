@@ -160,6 +160,7 @@ class GedcomParser:
         head_count = 0
         trailer_count = 0
         current_record_tag = None
+        current_header_section = None
         first_level_zero_tag = None
         last_level_zero_tag = None
         trailer_line = None
@@ -195,6 +196,7 @@ class GedcomParser:
 
             if level == 0:
                 current_record_tag = tag
+                current_header_section = None
                 if first_level_zero_tag is None:
                     first_level_zero_tag = tag
                 last_level_zero_tag = tag
@@ -230,6 +232,33 @@ class GedcomParser:
                         unindexed_pointers.add(pointer)
                     if not re.fullmatch(r"@[^@\s]+@", pointer):
                         errors.append(f"pointeur invalide ligne {line_number}")
+            elif level == 1 and current_record_tag == "HEAD":
+                current_header_section = tag
+
+            if tag == "GEDC" and not (level == 1 and current_record_tag == "HEAD"):
+                errors.append(f"GEDC doit être au niveau 1 de HEAD ligne {line_number}")
+            if (
+                current_record_tag == "HEAD"
+                and tag == "VERS"
+                and not (
+                    level == 2 and current_header_section in {"GEDC", "SOUR", "CHAR"}
+                )
+            ):
+                errors.append(
+                    f"VERS doit être au niveau 2 de HEAD.GEDC ou HEAD.SOUR "
+                    f"ligne {line_number}"
+                )
+            if (
+                current_record_tag == "HEAD"
+                and tag == "FORM"
+                and not (
+                    level == 2 and current_header_section in {"GEDC", "CHAR", "PLAC"}
+                )
+            ):
+                errors.append(
+                    f"FORM doit être au niveau 2 de HEAD.GEDC ou HEAD.CHAR "
+                    f"ligne {line_number}"
+                )
 
             if level > 0:
                 expected_source_tag = REFERENCE_SOURCE_TAGS.get(tag)

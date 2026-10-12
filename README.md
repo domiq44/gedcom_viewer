@@ -45,7 +45,8 @@ Le dépôt conserve une documentation minimale et ciblée :
   disponibles en mode strict via `load(..., strict=True)`, y compris le rejet des
   pointeurs mal formés ou manquants pour les tags qui exigent une référence et
   les contextes invalides pour les références GEDCOM reconnues, ainsi que les
-  pointeurs requis des enregistrements indexés.
+  pointeurs requis des enregistrements indexés; vérification du contexte de
+  `GEDC`, `VERS` et `FORM` dans `HEAD`.
 - Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
 - Interface disponible en anglais, français, espagnol, allemand, italien et portugais.
 - Le changement de langue est appliqué au redémarrage.
@@ -161,7 +162,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : 176 tests passent dans la suite complète.
+Dernière validation locale : 177 tests passent dans la suite complète.
 
 Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
 

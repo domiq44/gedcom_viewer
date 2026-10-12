@@ -300,6 +300,48 @@ class TestGedcomParser(unittest.TestCase):
 
                 self.assertIn(expected_error, parser.validate())
 
+    def test_validate_checks_gedc_header_contexts(self):
+        valid_parser = GedcomParser()
+        valid_parser.lines = [
+            "0 HEAD",
+            "1 SOUR Ancestris",
+            "2 VERS 1.0",
+            "1 GEDC",
+            "2 VERS 5.5.1",
+            "2 FORM LINEAGE-LINKED",
+            "1 CHAR UTF-8",
+            "2 VERS 1",
+            "2 FORM UTF-8",
+            "1 PLAC",
+            "2 FORM City, County, State, Country",
+            "0 TRLR",
+        ]
+        valid_parser._parse_entities()
+        self.assertEqual(valid_parser.validate(), [])
+
+        invalid_contexts = [
+            (
+                ["0 HEAD", "1 VERS 5.5.1", "0 TRLR"],
+                "VERS doit être au niveau 2 de HEAD.GEDC ou HEAD.SOUR ligne 2",
+            ),
+            (
+                ["0 HEAD", "1 FORM LINEAGE-LINKED", "0 TRLR"],
+                "FORM doit être au niveau 2 de HEAD.GEDC ou HEAD.CHAR ligne 2",
+            ),
+            (
+                ["0 @I1@ INDI", "1 GEDC", "0 HEAD", "0 TRLR"],
+                "GEDC doit être au niveau 1 de HEAD ligne 2",
+            ),
+        ]
+
+        for lines, expected_error in invalid_contexts:
+            with self.subTest(expected_error=expected_error):
+                parser = GedcomParser()
+                parser.lines = lines
+                parser._parse_entities()
+
+                self.assertIn(expected_error, parser.validate())
+
     def test_validate_requires_pointers_for_indexed_record_types(self):
         record_types = ("INDI", "FAM", "SOUR", "REPO", "SUBM", "OBJE")
         for record_type in record_types:

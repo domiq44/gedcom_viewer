@@ -88,10 +88,13 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite complète contient 176 tests et passe localement.
+- La suite complète contient 177 tests et passe localement.
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
 - L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test
-  `--file`, les tests sous Xvfb et le build PyInstaller.
+  `--file`, les tests sous Xvfb et le build PyInstaller; elle précède les règles
+  de contexte d’en-tête ajoutées depuis.
+- Les deux GEDCOM réels mesurés déclarent GEDCOM 5.5.1 et passent le mode strict
+  actuel; cela ne garantit pas une conformité complète au standard.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le parseur préserve désormais les espaces répétés dans les valeurs de ligne.
@@ -131,7 +134,7 @@ La commande de validation complète est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : les 176 tests passent; la CI utilise Xvfb pour les
+Dernière validation locale : les 177 tests passent; la CI utilise Xvfb pour les
 tests Tkinter.
 
 ## Recommandations prioritaires
