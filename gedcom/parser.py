@@ -148,8 +148,10 @@ class GedcomParser:
                     f"TRLR ne doit pas contenir de sous-lignes ligne {line_number}"
                 )
 
-            if level > 0 and tag in {"HEAD", "TRLR"} and not (
-                tag == "TRLR" and current_record_tag == "TRLR"
+            if (
+                level > 0
+                and tag in {"HEAD", "TRLR"}
+                and not (tag == "TRLR" and current_record_tag == "TRLR")
             ):
                 errors.append(f"{tag} doit être au niveau 0 ligne {line_number}")
 
