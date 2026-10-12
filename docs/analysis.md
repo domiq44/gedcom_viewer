@@ -158,9 +158,9 @@ valides. Le benchmark reproduit maintenant les scénarios de familles,
 d’événements, de sources et de champs optionnels individuels via ses options
 CLI (`--events-per-source`, `--texts-per-individual`, `--notes-per-individual`,
 `--occupations-per-individual`, `--properties-per-individual`,
-`--fams-per-individual`, `--obje-per-individual`, `--metadata-per-source`). Il
-rapporte la mémoire du parser, l’incrément des modèles et le delta après
-consultation des propriétés différées.
+`--fams-per-individual`, `--obje-per-individual`, `--metadata-per-source`); il
+peut aussi charger un GEDCOM réel avec `--file`. Il rapporte la mémoire du parser,
+l’incrément des modèles et le delta après consultation des propriétés différées.
 Une mesure
 synthétique séparée de 50 000 familles avec seulement les
  références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les

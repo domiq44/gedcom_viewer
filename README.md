@@ -169,6 +169,15 @@ Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétique
 python3 benchmarks/benchmark_search.py
 ```
 
+Mesurer un GEDCOM existant sans afficher son chemin ni ses valeurs :
+
+```bash
+python3 benchmarks/benchmark_search.py --file /path/to/family.ged --repeats 1
+```
+
+Le rapport indique les lignes et entités comptées, puis la mémoire du parser,
+des modèles et des données différées après consultation.
+
 Les tailles par défaut sont 10 000, 50 000 et 100 000 individus. Le benchmark
 compare la normalisation Unicode complète à chaque requête au fast path ASCII.
 L’option `--families` ajoute des familles liées aux individus pour mesurer aussi

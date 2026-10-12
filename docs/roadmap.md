@@ -151,7 +151,9 @@ Réduire le coût mémoire et améliorer la scalabilité.
   textes, occupations, propriétés et références individuelles, ainsi qu’aux
   autres types d’entités ; il affiche la mémoire après chargement puis le delta
   après consultation de toutes les propriétés différées, avec ventilation entre
-  parser et modèles. L’option
+  parser et modèles. Le mode `--file` mesure un GEDCOM existant sans afficher
+  chemin ni valeurs. Le fixture livré est trop petit pour mesurer la scalabilité.
+  L’option
   `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et `REFN`.
 
 ### Mesures synthétiques récentes
@@ -281,8 +283,8 @@ Rendre les validations reproductibles pour les futures évolutions.
 
 ## Plan d’exécution recommandé
 
-1. Évaluer une lecture incrémentale ou mappée pour les très gros GEDCOM, en
-  comparant la mémoire maximale et le temps au benchmark compact actuel.
+1. Mesurer plusieurs GEDCOM réels avec `--file`, puis évaluer une lecture
+  incrémentale ou mappée si les mesures la justifient.
 2. Formaliser les prochaines règles de validation GEDCOM par version.
 3. Garder le workflow CI vert sur les prochains changements.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.

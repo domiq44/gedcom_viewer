@@ -59,6 +59,56 @@ def materialize_optional_data(controller):
         source.data_events
 
 
+def benchmark_file(filename, query, repeats):
+    gc.collect()
+    tracemalloc.start()
+    load_started_at = time.perf_counter()
+    parser = GedcomParser()
+    parser.load(filename)
+    parser_bytes, _ = tracemalloc.get_traced_memory()
+    controller = EntityController(parser)
+    load_seconds = time.perf_counter() - load_started_at
+    current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+    model_bytes = current_bytes - parser_bytes
+    line_count = len(parser.lines)
+    record_count = sum(len(entities) for entities in parser.entities.values())
+
+    materialize_optional_data(controller)
+    materialized_bytes, _ = tracemalloc.get_traced_memory()
+    optional_data_bytes = materialized_bytes - current_bytes
+    tracemalloc.stop()
+
+    search_started_at = time.perf_counter()
+    for _ in range(repeats):
+        baseline_results = search_with_normalizer(
+            controller, query, normalize_search_text_baseline
+        )
+    baseline_search_seconds = (time.perf_counter() - search_started_at) / repeats
+
+    search_started_at = time.perf_counter()
+    for _ in range(repeats):
+        fast_path_results = controller.search_individuals(query)
+    fast_path_search_seconds = (time.perf_counter() - search_started_at) / repeats
+
+    return (
+        load_seconds,
+        baseline_search_seconds,
+        fast_path_search_seconds,
+        parser_bytes,
+        model_bytes,
+        current_bytes,
+        peak_bytes,
+        optional_data_bytes,
+        len(baseline_results),
+        len(fast_path_results),
+        line_count,
+        record_count,
+        len(controller.individuals),
+        len(controller.families),
+        len(controller.sources),
+    )
+
+
 def benchmark(
     individual_count,
     texts_per_individual,
@@ -140,46 +190,7 @@ def benchmark(
             )
         gedcom_file.write("0 TRLR\n")
         gedcom_file.flush()
-
-        gc.collect()
-        tracemalloc.start()
-        load_started_at = time.perf_counter()
-        parser = GedcomParser()
-        parser.load(gedcom_file.name)
-        parser_bytes, _ = tracemalloc.get_traced_memory()
-        controller = EntityController(parser)
-        load_seconds = time.perf_counter() - load_started_at
-        current_bytes, peak_bytes = tracemalloc.get_traced_memory()
-        model_bytes = current_bytes - parser_bytes
-        materialize_optional_data(controller)
-        materialized_bytes, _ = tracemalloc.get_traced_memory()
-        optional_data_bytes = materialized_bytes - current_bytes
-        tracemalloc.stop()
-
-        search_started_at = time.perf_counter()
-        for _ in range(repeats):
-            baseline_results = search_with_normalizer(
-                controller, query, normalize_search_text_baseline
-            )
-        baseline_search_seconds = (time.perf_counter() - search_started_at) / repeats
-
-        search_started_at = time.perf_counter()
-        for _ in range(repeats):
-            fast_path_results = controller.search_individuals(query)
-        fast_path_search_seconds = (time.perf_counter() - search_started_at) / repeats
-
-    return (
-        load_seconds,
-        baseline_search_seconds,
-        fast_path_search_seconds,
-        parser_bytes,
-        model_bytes,
-        current_bytes,
-        peak_bytes,
-        optional_data_bytes,
-        len(baseline_results),
-        len(fast_path_results),
-    )
+        return benchmark_file(gedcom_file.name, query, repeats)[:10]
 
 
 def main():
@@ -192,6 +203,10 @@ def main():
         nargs="+",
         default=(10_000, 50_000, 100_000),
         help="Number of synthetic individuals per run.",
+    )
+    argument_parser.add_argument(
+        "--file",
+        help="Measure an existing GEDCOM file; its path and record values are not printed.",
     )
     argument_parser.add_argument(
         "--query",
@@ -293,6 +308,63 @@ def main():
         argument_parser.error("--other-entities is required with --obje-per-individual")
     if arguments.metadata_per_source and not arguments.other_entities:
         argument_parser.error("--other-entities is required with --metadata-per-source")
+
+    if arguments.file:
+        synthetic_counts = (
+            arguments.texts_per_individual,
+            arguments.notes_per_individual,
+            arguments.occupations_per_individual,
+            arguments.properties_per_individual,
+            arguments.fams_per_individual,
+            arguments.obje_per_individual,
+            arguments.families,
+            arguments.events_per_family,
+            arguments.events_per_source,
+            arguments.metadata_per_source,
+            arguments.other_entities,
+        )
+        if any(synthetic_counts):
+            argument_parser.error(
+                "--file cannot be combined with synthetic data options"
+            )
+        if not Path(arguments.file).is_file():
+            argument_parser.error("--file must refer to an existing GEDCOM file")
+
+        (
+            load_seconds,
+            baseline_search_seconds,
+            fast_path_search_seconds,
+            parser_bytes,
+            model_bytes,
+            current_bytes,
+            peak_bytes,
+            optional_data_bytes,
+            baseline_matches,
+            fast_path_matches,
+            line_count,
+            record_count,
+            individual_count,
+            family_count,
+            source_count,
+        ) = benchmark_file(arguments.file, arguments.query, arguments.repeats)
+        print(
+            "Lines | Records | INDI | FAM | SOUR | Load (s) | Baseline (ms) | "
+            "ASCII fast path (ms) | Parser (MiB) | Models (+MiB) | "
+            "Retained (MiB) | Peak (MiB) | Accessed optional data (MiB) | Matches"
+        )
+        print(
+            f"{line_count:>7} | {record_count:>7} | {individual_count:>4} | "
+            f"{family_count:>3} | {source_count:>4} | {load_seconds:>8.3f} | "
+            f"{baseline_search_seconds * 1000:>12.2f} | "
+            f"{fast_path_search_seconds * 1000:>19.2f} | "
+            f"{parser_bytes / 1024 / 1024:>11.1f} | "
+            f"{model_bytes / 1024 / 1024:>13.1f} | "
+            f"{current_bytes / 1024 / 1024:>14.1f} | "
+            f"{peak_bytes / 1024 / 1024:>10.1f} | "
+            f"{optional_data_bytes / 1024 / 1024:>24.1f} | "
+            f"{baseline_matches}/{fast_path_matches}"
+        )
+        return
 
     print(
         "Individuals | Texts/individual | Notes/individual | Occu/individual | "
