@@ -149,7 +149,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - benchmark synthétique étendu aux familles, aux événements source, aux notes,
   textes, occupations, propriétés et références individuelles, ainsi qu’aux
   autres types d’entités ; il affiche la mémoire après chargement puis le delta
-  après consultation de toutes les propriétés différées.
+  après consultation de toutes les propriétés différées. L’option
+  `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et `REFN`.
 
 ### Mesures synthétiques récentes
 
@@ -158,6 +159,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   d’événement familiaux ;
 - sur 10 000 modèles `Source`, l’accès aux événements ajoute 5,34 MiB dans une
   mesure isolée ;
+- l’accès aux notes et références source ajoute 4,15 MiB pour 10 000 modèles
+  `Source` dans une mesure synthétique isolée ;
 - sur 10 000 modèles `Individual`, l’accès aux textes ajoute 1,74 MiB, et
   l’accès à deux occupations datées et une propriété ajoute 7,56 MiB dans des
   mesures isolées ;
@@ -256,7 +259,7 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
-La dernière suite locale vérifiée passe 175 tests et Black passe sur les chemins
+La dernière suite locale vérifiée passe 176 tests et Black passe sur les chemins
 CI. Une action GitHub a été rapportée verte après le correctif Black, mais
 l’exécution sur les commits les plus récents reste à confirmer.
 

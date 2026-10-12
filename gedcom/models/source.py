@@ -3,9 +3,6 @@ from gedcom.models.lazy_list import _LazyList
 
 
 class Source:
-    notes = _LazyList()
-    sources = _LazyList()
-    references = _LazyList()
     additional_fields = _LazyList()
 
     __slots__ = (
@@ -22,6 +19,7 @@ class Source:
         "publication",
         "abbreviation",
         "_notes",
+        "_reference_lists_loaded",
         "_sources",
         "_references",
         "record_id",
@@ -46,6 +44,7 @@ class Source:
         self.publication = None
         self.abbreviation = None
         self._notes = None
+        self._reference_lists_loaded = False
         self._sources = None
         self._references = None
         self.record_id = None
@@ -55,6 +54,71 @@ class Source:
         self._additional_fields = None
 
         self._parse_lines(entity.lines)
+
+    @property
+    def notes(self):
+        self._load_reference_lists()
+        if self._notes is None:
+            self._notes = []
+        return self._notes
+
+    @notes.setter
+    def notes(self, value):
+        self._load_reference_lists()
+        self._notes = value if value else None
+
+    @property
+    def sources(self):
+        self._load_reference_lists()
+        if self._sources is None:
+            self._sources = []
+        return self._sources
+
+    @sources.setter
+    def sources(self, value):
+        self._load_reference_lists()
+        self._sources = value if value else None
+
+    @property
+    def references(self):
+        self._load_reference_lists()
+        if self._references is None:
+            self._references = []
+        return self._references
+
+    @references.setter
+    def references(self, value):
+        self._load_reference_lists()
+        self._references = value if value else None
+
+    def _load_reference_lists(self):
+        if self._reference_lists_loaded:
+            return
+
+        self._reference_lists_loaded = True
+        self._notes = []
+        self._sources = []
+        self._references = []
+        current_section = None
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level is None:
+                continue
+
+            if level == 1:
+                current_section = tag
+                if tag == "NOTE":
+                    self._notes.append(value)
+                elif tag == "SOUR":
+                    self._sources.append(value)
+                elif tag == "REFN":
+                    self._references.append(value)
+            elif level == 2 and current_section == "NOTE":
+                if tag == "CONC" and self._notes:
+                    self._notes[-1] = f"{self._notes[-1] or ''}{value or ''}"
+                elif tag == "CONT" and self._notes:
+                    self._notes[-1] = f"{self._notes[-1] or ''}\n{value or ''}"
 
     @property
     def data_events(self):
@@ -124,9 +188,6 @@ class Source:
                 elif tag == "TEXT":
                     self.text = value
 
-                elif tag == "NOTE":
-                    self.notes.append(value)
-
                 elif tag == "REPO":
                     self.repository = value
 
@@ -135,12 +196,6 @@ class Source:
 
                 elif tag == "ABBR":
                     self.abbreviation = value
-
-                elif tag == "SOUR":
-                    self.sources.append(value)
-
-                elif tag == "REFN":
-                    self.references.append(value)
 
                 elif tag == "RIN":
                     self.record_id = value
@@ -178,17 +233,11 @@ class Source:
                         self.author = value
 
                 # Sous TEXT / NOTE
-                elif current_section in ("TEXT", "NOTE"):
+                elif current_section == "TEXT":
                     if tag == "CONC":
-                        if current_section == "NOTE" and self.notes:
-                            self.notes[-1] = f"{self.notes[-1] or ''}{value}"
-                        else:
-                            self.text = f"{self.text or ''}{value}"
+                        self.text = f"{self.text or ''}{value}"
                     elif tag == "CONT":
-                        if current_section == "NOTE" and self.notes:
-                            self.notes[-1] = f"{self.notes[-1] or ''}\n{value}"
-                        else:
-                            self.text = f"{self.text or ''}\n{value}"
+                        self.text = f"{self.text or ''}\n{value}"
 
                 elif current_section == "DATA":
                     if tag == "AGNC":

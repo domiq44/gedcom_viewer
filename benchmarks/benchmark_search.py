@@ -53,6 +53,9 @@ def materialize_optional_data(controller):
         family.events
 
     for source in controller.sources.values():
+        source.notes
+        source.sources
+        source.references
         source.data_events
 
 
@@ -68,6 +71,7 @@ def benchmark(
     other_entity_count,
     events_per_family,
     events_per_source,
+    metadata_per_source,
     query,
     repeats,
 ):
@@ -118,6 +122,14 @@ def benchmark(
                     "1 DATA\n"
                     f"2 EVEN Source event {event_index}\n"
                     "3 DATE 1 JAN 1900\n"
+                )
+            for metadata_index in range(metadata_per_source):
+                linked_source_index = (index + metadata_index + 1) % other_entity_count
+                gedcom_file.write(
+                    f"1 NOTE Synthetic source note {metadata_index}\n"
+                    "2 CONT Continued source note\n"
+                    f"1 SOUR @S{linked_source_index}@\n"
+                    f"1 REFN Shelf {metadata_index}\n"
                 )
             gedcom_file.write(f"0 @R{index}@ REPO\n1 NAME Archive {index}\n")
             gedcom_file.write(f"0 @U{index}@ SUBM\n1 NAME Submitter {index}\n")
@@ -237,6 +249,12 @@ def main():
         help="Number of DATA/EVEN events to add to each synthetic source.",
     )
     argument_parser.add_argument(
+        "--metadata-per-source",
+        type=int,
+        default=0,
+        help="Number of NOTE, SOUR, and REFN entries to add to each source.",
+    )
+    argument_parser.add_argument(
         "--other-entities",
         type=int,
         default=0,
@@ -258,6 +276,7 @@ def main():
         or arguments.families < 0
         or arguments.events_per_family < 0
         or arguments.events_per_source < 0
+        or arguments.metadata_per_source < 0
         or arguments.other_entities < 0
         or any(size < 1 for size in arguments.sizes)
     ):
@@ -268,12 +287,14 @@ def main():
         argument_parser.error("--families is required with --fams-per-individual")
     if arguments.obje_per_individual and not arguments.other_entities:
         argument_parser.error("--other-entities is required with --obje-per-individual")
+    if arguments.metadata_per_source and not arguments.other_entities:
+        argument_parser.error("--other-entities is required with --metadata-per-source")
 
     print(
         "Individuals | Texts/individual | Notes/individual | Occu/individual | "
         "Props/individual | FAMS/individual | OBJE/individual | "
         "Families | Events/family | Other each | "
-        "Events/source | Load (s) | "
+        "Events/source | Metadata/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
         "Retained (MiB) | Peak (MiB) | Accessed optional data (MiB) | Matches"
     )
@@ -299,6 +320,7 @@ def main():
             arguments.other_entities,
             arguments.events_per_family,
             arguments.events_per_source,
+            arguments.metadata_per_source,
             arguments.query,
             arguments.repeats,
         )
@@ -312,6 +334,7 @@ def main():
             f"{arguments.families:>8} | "
             f"{arguments.events_per_family:>13} | "
             f"{arguments.other_entities:>11} | {arguments.events_per_source:>13} | "
+            f"{arguments.metadata_per_source:>15} | "
             f"{load_seconds:>8.3f} | "
             f"{baseline_search_seconds * 1000:>12.2f} | "
             f"{fast_path_search_seconds * 1000:>19.2f} | "

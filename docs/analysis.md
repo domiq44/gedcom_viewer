@@ -88,7 +88,7 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite complète contient 175 tests et passe localement.
+- La suite complète contient 176 tests et passe localement.
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
 - Une exécution GitHub Actions a été rapportée verte après le correctif de
   formatage; un nouveau résultat sur les commits récents reste à confirmer.
@@ -131,7 +131,7 @@ La commande de validation complète est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : les 175 tests passent; la CI utilise Xvfb pour les
+Dernière validation locale : les 176 tests passent; la CI utilise Xvfb pour les
 tests Tkinter.
 
 ## Recommandations prioritaires
@@ -157,7 +157,8 @@ valides. Le benchmark reproduit maintenant les scénarios de familles,
 d’événements, de sources et de champs optionnels individuels via ses options
 CLI (`--events-per-source`, `--texts-per-individual`, `--notes-per-individual`,
 `--occupations-per-individual`, `--properties-per-individual`,
-`--fams-per-individual`, `--obje-per-individual`). Il rapporte la mémoire après
+`--fams-per-individual`, `--obje-per-individual`, `--metadata-per-source`). Il
+rapporte la mémoire après
 chargement puis le delta conservé après consultation des propriétés différées.
 Une mesure
 synthétique séparée de 50 000 familles avec seulement les
@@ -171,6 +172,7 @@ Plusieurs données optionnelles sont désormais différées : événements famil
 et source, références `FAMS` et `OBJE`, notes, textes, occupations et propriétés
 individuels. Des mesures
 isolées estiment à 5,34 MiB le coût d’événements pour 10 000 sources consultées,
+et à 4,15 MiB celui des notes et références de 10 000 sources,
 à 2,59 MiB celui des notes pour 10 000 individus, à 1,74 MiB celui des textes,
 et à 7,56 MiB celui de deux occupations datées et une propriété pour 10 000
 individus. Les références `FAMS` et `OBJE` ajoutent 3,52 MiB après accès pour

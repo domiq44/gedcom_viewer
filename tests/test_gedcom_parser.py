@@ -980,6 +980,34 @@ class TestGedcomParser(unittest.TestCase):
         self.assertIsNone(source.text)
         self.assertEqual(source.notes, ["Première ligne\nseconde ligne, suite"])
 
+    def test_source_reference_lists_are_loaded_lazily(self):
+        source = Source(
+            GedcomEntity(
+                "@S12@",
+                "SOUR",
+                0,
+                [
+                    "0 @S12@ SOUR",
+                    "1 NOTE First note",
+                    "2 CONT continued",
+                    "2 CONC , more",
+                    "1 SOUR @S1@",
+                    "1 REFN Archive 12",
+                    "1 SOUR @S2@",
+                    "1 REFN Shelf 4",
+                ],
+            )
+        )
+
+        self.assertFalse(source._reference_lists_loaded)
+        self.assertIsNone(source._notes)
+        self.assertIsNone(source._sources)
+        self.assertIsNone(source._references)
+        self.assertEqual(source.notes, ["First note\ncontinued, more"])
+        self.assertTrue(source._reference_lists_loaded)
+        self.assertEqual(source.sources, ["@S1@", "@S2@"])
+        self.assertEqual(source.references, ["Archive 12", "Shelf 4"])
+
     def test_source_data_events_are_loaded_lazily(self):
         source = Source(
             GedcomEntity(

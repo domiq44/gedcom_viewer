@@ -161,7 +161,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : 175 tests passent dans la suite complète.
+Dernière validation locale : 176 tests passent dans la suite complète.
 
 Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
 
@@ -187,6 +187,8 @@ par `--other-entities`, par exemple :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --events-per-source 2 --repeats 1
 ```
+`--metadata-per-source` ajoute à chaque source une note continuée, une référence
+`SOUR` et une référence `REFN` pour mesurer ces listes différées.
 Le benchmark mesure la mémoire conservée après le chargement, puis l’allocation
 supplémentaire quand les données optionnelles sont toutes consultées.
 L’option `--texts-per-individual` ajoute des tags `TEXT` avec continuation à
