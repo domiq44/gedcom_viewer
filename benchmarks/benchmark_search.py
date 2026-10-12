@@ -42,6 +42,7 @@ def benchmark(
     family_count,
     other_entity_count,
     events_per_family,
+    events_per_source,
     query,
     repeats,
 ):
@@ -64,6 +65,12 @@ def benchmark(
         for index in range(other_entity_count):
             gedcom_file.write(f"0 @N{index}@ NOTE Synthetic note {index}\n")
             gedcom_file.write(f"0 @S{index}@ SOUR\n1 TITL Synthetic source {index}\n")
+            for event_index in range(events_per_source):
+                gedcom_file.write(
+                    "1 DATA\n"
+                    f"2 EVEN Source event {event_index}\n"
+                    "2 DATE 1 JAN 1900\n"
+                )
             gedcom_file.write(f"0 @R{index}@ REPO\n1 NAME Archive {index}\n")
             gedcom_file.write(f"0 @U{index}@ SUBM\n1 NAME Submitter {index}\n")
             gedcom_file.write(
@@ -136,6 +143,12 @@ def main():
         help="Number of empty MARR events to add to each synthetic family.",
     )
     argument_parser.add_argument(
+        "--events-per-source",
+        type=int,
+        default=0,
+        help="Number of DATA/EVEN events to add to each synthetic source.",
+    )
+    argument_parser.add_argument(
         "--other-entities",
         type=int,
         default=0,
@@ -150,6 +163,7 @@ def main():
         arguments.repeats < 1
         or arguments.families < 0
         or arguments.events_per_family < 0
+        or arguments.events_per_source < 0
         or arguments.other_entities < 0
         or any(size < 1 for size in arguments.sizes)
     ):
@@ -158,7 +172,7 @@ def main():
         )
 
     print(
-        "Individuals | Families | Events/family | Other each | Load (s) | "
+        "Individuals | Families | Events/family | Other each | Events/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
         "Retained (MiB) | Peak (MiB) | Matches"
     )
@@ -176,13 +190,14 @@ def main():
             arguments.families,
             arguments.other_entities,
             arguments.events_per_family,
+            arguments.events_per_source,
             arguments.query,
             arguments.repeats,
         )
         print(
             f"{individual_count:>11} | {arguments.families:>8} | "
             f"{arguments.events_per_family:>13} | "
-            f"{arguments.other_entities:>11} | "
+            f"{arguments.other_entities:>11} | {arguments.events_per_source:>13} | "
             f"{load_seconds:>8.3f} | "
             f"{baseline_search_seconds * 1000:>12.2f} | "
             f"{fast_path_search_seconds * 1000:>19.2f} | "

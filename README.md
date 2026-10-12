@@ -180,7 +180,13 @@ python3 benchmarks/benchmark_search.py --sizes 100000 --families 50000 --repeats
 
 L’option `--other-entities` ajoute ce nombre d’enregistrements pour chacun des
 types `NOTE`, `SOUR`, `REPO`, `SUBM` et `OBJE`; `--events-per-family` ajoute des
-événements `MARR` sans sous-tags à chaque famille.
+événements `MARR` sans sous-tags à chaque famille. L’option
+`--events-per-source` ajoute des événements `DATA/EVEN` à chaque source créée
+par `--other-entities`, par exemple :
+
+```bash
+python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --events-per-source 2 --repeats 1
+```
 
 Vérifier la syntaxe Python :
 
