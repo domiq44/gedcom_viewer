@@ -152,9 +152,9 @@ Réduire le coût mémoire et améliorer la scalabilité.
   autres types d’entités ; il affiche la mémoire après chargement puis le delta
   après consultation de toutes les propriétés différées, avec ventilation entre
   parser et modèles. Le mode `--file` mesure un GEDCOM existant sans afficher
-  chemin ni valeurs. Deux GEDCOM réels d’environ 51 000 lignes ont été mesurés ;
-  l’option
-  `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et `REFN`.
+  chemin ni valeurs. Deux GEDCOM réels d’environ 51 000 lignes ont été
+  mesurés ; l’option `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et
+  `REFN`.
 
 ### Mesures synthétiques récentes
 
@@ -177,7 +177,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - scénario combiné de 10 000 individus, 5 000 familles et 1 000 enregistrements
   de chaque type auxiliaire : 9,1 MiB dans le parser, 5,9 MiB dans les modèles
   (15,0 MiB retenus), puis 35,1 MiB supplémentaires après accès aux données
-  optionnelles ; chargement tracé de 3,42 s contre 3,81 s avant le tampon compact ;
+  optionnelles ; chargement tracé de 3,42 s contre 3,81 s avant le tampon
+  compact ;
 - ces mesures synthétiques illustrent les allocations différées et ne
   représentent pas la consommation totale d’un gros fichier réel ;
 - benchmark actuel à 100 000 individus : 29,8 MiB pour le parser, 34,3 MiB pour
@@ -191,8 +192,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   enregistrements par type auxiliaire, avec une valeur dans chaque champ
   optionnel : 55,2 MiB parser, 36,2 MiB modèles, 91,4 MiB retenus et 180,8 MiB
   supplémentaires après matérialisation complète ; chargement tracé de 18,65 s ;
-- mesure synthétique séparée de 50 000 familles éparses : 19,6 MiB après slots et listes
-  paresseuses, contre 41,0 MiB avant ;
+- mesure synthétique séparée de 50 000 familles éparses : 19,6 MiB après slots
+  et listes paresseuses, contre 41,0 MiB avant ;
 - mesure synthétique de 50 000 sources éparses : 16,5 MiB après slots et listes
   paresseuses, contre 32,5 MiB avant ;
 - mesure synthétique de 50 000 dépôts épars : 15,2 MiB après slots et listes
@@ -205,7 +206,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
   détails paresseux, contre 15,3 MiB avant ;
 - mesure synthétique de 50 000 objets multimédias : 13,8 MiB après slots, contre
   15,7 MiB avant ;
-- mesure combinée reproductible avec 100 000 individus et 50 000 familles : 103,4 MiB ;
+- mesure combinée reproductible avec 100 000 individus et 50 000 familles :
+  103,4 MiB ;
 - étudier la réduction des allocations des lignes brutes et index, ou une
   représentation partielle/mappée, sans perdre l’accès aux blocs GEDCOM bruts ;
 - conserver une API stable pour les contrôleurs existants.
@@ -232,7 +234,7 @@ et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
 `TRLR`. Dans `HEAD`, il vérifie le contexte des tags `GEDC`, `VERS` et `FORM`.
 Tout bloc `HEAD.GEDC` doit contenir des valeurs non vides et uniques `VERS` et
 `FORM`; le bloc `GEDC` lui-même doit être unique dans l’en-tête. Les deux GEDCOM
-réels disponibles déclarent GEDCOM 5.5.1; `HEAD.SOUR` et `HEAD.CHAR` doivent
+réels disponibles déclarent GEDCOM 5.5.1 ; `HEAD.SOUR` et `HEAD.CHAR` doivent
 aussi être présents, uniques et non vides, et un unique `HEAD.SUBM` doit
 référencer un submitter valide. Les contrôles précédents ont été passés par les
 deux fichiers; les règles d’unicité ajoutées depuis restent à confirmer sur ces
@@ -284,7 +286,7 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
 La dernière suite locale vérifiée passe 177 tests et Black passe sur les chemins
-CI. L’action GitHub CI #30 a réussi sur `e969c5e`; les règles d’en-tête GEDCOM
+CI. L’action GitHub CI #30 a réussi sur `e969c5e` ; les règles d’en-tête GEDCOM
 5.5.1 ajoutées depuis, notamment `HEAD.SUBM`, restent à valider sur GitHub.
 
 ### Objectif automatisation

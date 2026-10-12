@@ -2,22 +2,27 @@
 
 ![Interface de GEDCOM Viewer](docs/screenshots/gedcom-viewer-overview.png)
 
-GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et explorer des fichiers GEDCOM.
+GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et
+explorer des fichiers GEDCOM.
 
 ## Documentation
 
 Le dépôt conserve une documentation minimale et ciblée :
 
-- [README.md](README.md) : vue d’ensemble, installation, lancement, tests et utilisation quotidienne.
-- [docs/architecture.md](docs/architecture.md) : description technique de l’architecture, des flux et des composants.
-- [docs/analysis.md](docs/analysis.md) : analyse du projet, limites connues, points de vigilance et recommandations.
+- [README.md](README.md) : vue d’ensemble, installation, lancement, tests et
+  utilisation quotidienne.
+- [docs/architecture.md](docs/architecture.md) : description technique de
+  l’architecture, des flux et des composants.
+- [docs/analysis.md](docs/analysis.md) : analyse du projet, limites connues,
+  points de vigilance et recommandations.
 - [docs/roadmap.md](docs/roadmap.md) : priorités d’évolution et plan de refonte / consolidation.
 
 ## Fonctionnalités
 
 - Ouverture de fichiers GEDCOM `.ged`.
 - Deux modes d'ouverture : tolérant ou strict avec validation structurelle.
-- Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et `SUBM`.
+- Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et
+  `SUBM`.
 - Recherche réactive dans les entités avec debounce pour limiter les recalculs.
 - Bouton d'effacement rapide du filtre de recherche.
 - Bouton d'effacement intégré à la palette visuelle de l'application.
@@ -27,7 +32,8 @@ Le dépôt conserve une documentation minimale et ciblée :
 - Affichage du bloc GEDCOM brut avec coloration syntaxique.
 - Affichage des blocs `HEAD` et `TRLR`.
 - Gestion des fichiers récemment ouverts.
-- Vues détaillées pour les individus, familles, sources, dépôts, notes, médias et submitters.
+- Vues détaillées pour les individus, familles, sources, dépôts, notes, médias
+  et submitters.
 - Formulaire Individu avec onglets « Familles (parent) » (liste à deux colonnes
   nom/identifiant) et « Enfants ».
 - Panneau de détail (bloc GEDCOM brut / formulaire d'entité) redimensionnable
@@ -39,7 +45,8 @@ Le dépôt conserve une documentation minimale et ciblée :
   la fermeture de la fenêtre.
 - Journalisation dans `~/.gedcom_viewer.log`.
 - Affichage du temps de chargement dans la barre de statut.
-- Signalement dans le journal des lignes malformées et des caractères remplacés lors de la lecture.
+- Signalement dans le journal des lignes malformées et des caractères remplacés
+  lors de la lecture.
 - Préservation des espaces répétés à l’intérieur des valeurs GEDCOM.
 - Validation structurelle et cohérence des types de références GEDCOM reconnues
   disponibles en mode strict via `load(..., strict=True)`, y compris le rejet des
@@ -52,7 +59,8 @@ Le dépôt conserve une documentation minimale et ciblée :
   `HEAD.CHAR` sont obligatoires, non vides et uniques, et `HEAD.SUBM` doit être
   unique et référencer un submitter valide.
 - Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
-- Interface disponible en anglais, français, espagnol, allemand, italien et portugais.
+- Interface disponible en anglais, français, espagnol, allemand, italien et
+  portugais.
 - Le changement de langue est appliqué au redémarrage.
 
 L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
@@ -108,7 +116,8 @@ sudo apt install python3-tk
 
 ## Installation
 
-Le `Makefile` crée automatiquement `.venv` si nécessaire et installe les outils requis :
+Le `Makefile` crée automatiquement `.venv` si nécessaire et installe les outils
+requis :
 
 ```bash
 make install
@@ -145,7 +154,8 @@ Avec l'environnement virtuel du projet :
 .venv/bin/python main.py
 ```
 
-Au démarrage, l'application tente de recharger le dernier fichier GEDCOM récent lorsqu'il existe encore.
+Au démarrage, l'application tente de recharger le dernier fichier GEDCOM récent
+lorsqu'il existe encore.
 
 Dans le menu `Fichier`, `Ouvrir un fichier GEDCOM` conserve le mode tolérant.
 `Ouvrir et valider un fichier GEDCOM` utilise le mode strict et refuse les
@@ -288,11 +298,27 @@ récents sont enregistrés dans :
 
 ## Limites connues
 
-- Les gros fichiers sont toujours chargés entièrement en mémoire. Sur le jeu synthétique de 100 000 individus du benchmark, les arbres d’événements et les listes optionnelles des individus sont construits à la demande; `Individual` utilise des slots. Le pic mesuré est de 67,3 MiB, contre 99,3 MiB auparavant. Des mesures synthétiques séparées de 50 000 familles, sources, notes, dépôts et submitters épars donnent respectivement 19,6 MiB (contre 41,0), 16,5 MiB (contre 32,5), 13,6 MiB (contre 26,5), 15,2 MiB (contre 25,9) et 12,2 MiB (contre 19,9) après slots et listes paresseuses. Cent mille objets `Event` sans détails passent de 15,3 à 6,1 MiB avec slots et détails paresseux; 50 000 objets multimédias passent de 15,7 à 13,8 MiB avec slots. Avec `--families 50000`, le jeu combiné de 100 000 individus et 50 000 familles mesure 103,4 MiB. Ces mesures dépendent de l’environnement; les lignes brutes restent chargées intégralement.
-- Les événements familiaux sont représentés par le modèle `Event`, mais leur structure reste volontairement simple : un tag, une valeur et une liste de sous-tags.
-- Les événements de mariage multiples sont affichés dans la vue famille, mais ne disposent pas encore d'une présentation détaillée dédiée.
+- Les gros fichiers sont toujours chargés entièrement en mémoire. Sur le jeu
+  synthétique de 100 000 individus du benchmark, les arbres d’événements et les
+  listes optionnelles des individus sont construits à la demande; `Individual`
+  utilise des slots. Le pic mesuré est de 67,3 MiB, contre 99,3 MiB auparavant.
+  Des mesures synthétiques séparées de 50 000 familles, sources, notes, dépôts
+  et submitters épars donnent respectivement 19,6 MiB (contre 41,0), 16,5 MiB
+  (contre 32,5), 13,6 MiB (contre 26,5), 15,2 MiB (contre 25,9) et 12,2 MiB
+  (contre 19,9) après slots et listes paresseuses. Cent mille objets `Event`
+  sans détails passent de 15,3 à 6,1 MiB avec slots et détails paresseux;
+  50 000 objets multimédias passent de 15,7 à 13,8 MiB avec slots. Avec
+  `--families 50000`, le jeu combiné de 100 000 individus et 50 000 familles
+  mesure 103,4 MiB. Ces mesures dépendent de l’environnement; les lignes brutes
+  restent chargées intégralement.
+- Les événements familiaux sont représentés par le modèle `Event`, mais leur
+  structure reste volontairement simple : un tag, une valeur et une liste de
+  sous-tags.
+- Les événements de mariage multiples sont affichés dans la vue famille, mais
+  ne disposent pas encore d'une présentation détaillée dédiée.
 - Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
-- L'ouverture standard reste tolérante ; le mode strict est également accessible dans le menu `Fichier` et via l'API Python.
+- L'ouverture standard reste tolérante ; le mode strict est également accessible
+  dans le menu `Fichier` et via l'API Python.
 
 ## Structure du projet
 
@@ -312,4 +338,6 @@ récents sont enregistrés dans :
 
 ## Licence et contributions
 
-Aucun fichier de licence n'est fourni dans le dépôt. Les contributions peuvent être proposées via une branche dédiée et une pull request, accompagnées de tests pour les changements de comportement.
+Aucun fichier de licence n'est fourni dans le dépôt. Les contributions peuvent
+être proposées via une branche dédiée et une pull request, accompagnées de tests
+pour les changements de comportement.
