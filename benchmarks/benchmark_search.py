@@ -146,9 +146,11 @@ def benchmark(
         load_started_at = time.perf_counter()
         parser = GedcomParser()
         parser.load(gedcom_file.name)
+        parser_bytes, _ = tracemalloc.get_traced_memory()
         controller = EntityController(parser)
         load_seconds = time.perf_counter() - load_started_at
         current_bytes, peak_bytes = tracemalloc.get_traced_memory()
+        model_bytes = current_bytes - parser_bytes
         materialize_optional_data(controller)
         materialized_bytes, _ = tracemalloc.get_traced_memory()
         optional_data_bytes = materialized_bytes - current_bytes
@@ -170,6 +172,8 @@ def benchmark(
         load_seconds,
         baseline_search_seconds,
         fast_path_search_seconds,
+        parser_bytes,
+        model_bytes,
         current_bytes,
         peak_bytes,
         optional_data_bytes,
@@ -296,13 +300,16 @@ def main():
         "Families | Events/family | Other each | "
         "Events/source | Metadata/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
-        "Retained (MiB) | Peak (MiB) | Accessed optional data (MiB) | Matches"
+        "Parser (MiB) | Models (+MiB) | Retained (MiB) | Peak (MiB) | "
+        "Accessed optional data (MiB) | Matches"
     )
     for individual_count in arguments.sizes:
         (
             load_seconds,
             baseline_search_seconds,
             fast_path_search_seconds,
+            parser_bytes,
+            model_bytes,
             current_bytes,
             peak_bytes,
             optional_data_bytes,
@@ -338,6 +345,8 @@ def main():
             f"{load_seconds:>8.3f} | "
             f"{baseline_search_seconds * 1000:>12.2f} | "
             f"{fast_path_search_seconds * 1000:>19.2f} | "
+            f"{parser_bytes / 1024 / 1024:>11.1f} | "
+            f"{model_bytes / 1024 / 1024:>13.1f} | "
             f"{current_bytes / 1024 / 1024:>14.1f} | "
             f"{peak_bytes / 1024 / 1024:>10.1f} | "
             f"{optional_data_bytes / 1024 / 1024:>24.1f} | "

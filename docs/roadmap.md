@@ -149,7 +149,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - benchmark synthétique étendu aux familles, aux événements source, aux notes,
   textes, occupations, propriétés et références individuelles, ainsi qu’aux
   autres types d’entités ; il affiche la mémoire après chargement puis le delta
-  après consultation de toutes les propriétés différées. L’option
+  après consultation de toutes les propriétés différées, avec ventilation entre
+  parser et modèles. L’option
   `--metadata-per-source` couvre les listes `NOTE`, `SOUR` et `REFN`.
 
 ### Mesures synthétiques récentes
@@ -169,9 +170,9 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - l’accès à deux références `FAMS` et deux références `OBJE` ajoute 3,52 MiB
   pour 10 000 modèles `Individual` dans une mesure synthétique isolée ;
 - scénario combiné de 10 000 individus, 5 000 familles et 1 000 enregistrements
-  de chaque autre type : 20,6 MiB après chargement, puis 34,7 MiB supplémentaires
-  après accès aux données optionnelles ; ce delta comprend aussi les listes vides
-  matérialisées et varie selon les données générées ;
+  de chaque type auxiliaire : 14,9 MiB dans le parser, 5,9 MiB dans les modèles,
+  puis 35,1 MiB supplémentaires après accès aux données optionnelles ; ce delta
+  comprend aussi les listes vides matérialisées ;
 - ces mesures synthétiques illustrent les allocations différées et ne
   représentent pas la consommation totale d’un gros fichier réel ;
 - recherche de 100 000 individus : environ 298 ms avec la normalisation Unicode

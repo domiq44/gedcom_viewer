@@ -189,8 +189,9 @@ python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --ev
 ```
 `--metadata-per-source` ajoute à chaque source une note continuée, une référence
 `SOUR` et une référence `REFN` pour mesurer ces listes différées.
-Le benchmark mesure la mémoire conservée après le chargement, puis l’allocation
-supplémentaire quand les données optionnelles sont toutes consultées.
+Le benchmark ventile la mémoire retenue par le parser et l’incrément des modèles,
+puis mesure l’allocation supplémentaire quand les données optionnelles sont
+toutes consultées.
 L’option `--texts-per-individual` ajoute des tags `TEXT` avec continuation à
 chaque individu afin de mesurer les données textuelles différées :
 
