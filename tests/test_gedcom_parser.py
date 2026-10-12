@@ -802,6 +802,26 @@ class TestGedcomParser(unittest.TestCase):
             ["This is the first line\ncontinued on next line and still same paragraph"],
         )
 
+    def test_individual_text_tags_are_loaded_lazily(self):
+        individual = Individual(
+            GedcomEntity(
+                "@I101@",
+                "INDI",
+                0,
+                [
+                    "0 @I101@ INDI",
+                    "1 TEXT First line",
+                    "2 CONT second line",
+                    "2 CONC , continued",
+                ],
+            )
+        )
+
+        self.assertFalse(individual._text_tags_loaded)
+        self.assertIsNone(individual._texts)
+        self.assertEqual(individual.texts, ["First line\nsecond line, continued"])
+        self.assertTrue(individual._text_tags_loaded)
+
     def test_empty_individual_lists_are_lazy_and_mutable(self):
         class DummyEntity:
             pointer = "@I100@"

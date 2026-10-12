@@ -24,6 +24,7 @@ class Individual:
         "nickname",
         "_occupations",
         "_notes",
+        "_text_tags_loaded",
         "baptism_date",
         "baptism_place",
         "marriage_count",
@@ -50,6 +51,7 @@ class Individual:
         self.nickname = None  # NICK tag
         self._occupations = None
         self._notes = None
+        self._text_tags_loaded = False
         self.baptism_date = None  # CHR/DATE
         self.baptism_place = None  # CHR/PLAC
         self.marriage_count = None  # NMR (nombre de mariages)
@@ -62,7 +64,19 @@ class Individual:
         self._events = None
 
         self._parse_lines(entity.lines)
-        self._load_text_tags()  # Load TEXT tags with continuation support
+
+    @property
+    def texts(self):
+        if not self._text_tags_loaded:
+            self._load_text_tags()
+        if self._texts is None:
+            self._texts = []
+        return self._texts
+
+    @texts.setter
+    def texts(self, value):
+        self._texts = value if value else None
+        self._text_tags_loaded = True
 
     @property
     def events(self):
