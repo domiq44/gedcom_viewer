@@ -29,6 +29,9 @@ jobs:
       - name: Run tests with a virtual display
         run: xvfb-run --auto-servernum .venv/bin/python -m unittest discover -s tests
 
+      - name: Smoke-test real GEDCOM benchmark
+        run: .venv/bin/python benchmarks/benchmark_search.py --file gedcom-test.ged --repeats 1
+
       - name: Compile Python sources
         run: make lint
 
