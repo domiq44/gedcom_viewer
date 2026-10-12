@@ -161,7 +161,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation : 166 tests présents dans la suite.
+Dernière validation locale : 173 tests passent dans la suite complète.
 
 Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
 

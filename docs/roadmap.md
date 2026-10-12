@@ -126,31 +126,39 @@ Terminée.
 
 ### État de la performance
 
-En cours — la recherche est optimisée et mesurée, l’historique est borné à 100
-entrées et les listes optionnelles des individus sont allouées à la demande.
-L’empreinte durable des lignes brutes, index et modèles reste à réduire.
+En cours — les arbres d’événements et plusieurs champs optionnels (`TEXT`,
+`OCCU`, `PROP`, événements familiaux et événements `SOUR.DATA`) sont construits
+à la demande. Les benchmarks mesurent maintenant ces familles de données.
+L’empreinte des lignes brutes, des index et des modèles principaux reste le
+chantier le plus important : le fichier GEDCOM est toujours chargé intégralement
+en mémoire.
 
 ### Objectif performance
 
 Réduire le coût mémoire et améliorer la scalabilité.
 
-### Actions performance
+### Optimisations réalisées
 
-- identifier les points de chargement en mémoire complète ;
-- partager les chaînes des lignes brutes entre le parser et les entités ;
-- construire les arbres d’événements individuels à la demande ;
-- allouer à la demande les listes optionnelles de `Individual` ;
-- utiliser des slots sur les objets `Individual` pour réduire leur surcharge ;
-- allouer à la demande les listes optionnelles de `Family` et utiliser des slots ;
-- allouer à la demande les listes optionnelles de `Source` et utiliser des slots ;
-- allouer à la demande les listes optionnelles de `Repository` et utiliser des slots ;
-- allouer à la demande les listes optionnelles de `Submitter` et utiliser des slots ;
-- allouer à la demande les listes optionnelles de `Note` et utiliser des slots ;
-- utiliser des slots et allouer les détails d’`Event` à la demande ;
-- utiliser des slots sur les objets `MultimediaObject` ;
-- maintenir le benchmark synthétique dans `benchmarks/benchmark_search.py`, avec
-  des options pour familles, événements, notes, sources, dépôts, submitters et
-  médias ;
+- partage des lignes brutes du parser avec les entités ;
+- arbres d’événements individuels et détails d’événement différés ;
+- données optionnelles des modèles extraites à la demande, notamment
+  `Individual` (`TEXT`, `OCCU`, `PROP`), `Family` et `Source` ;
+- slots sur les modèles volumineux et listes optionnelles paresseuses ;
+- benchmark synthétique étendu aux familles, aux événements source, aux textes,
+  occupations et propriétés des individus, ainsi qu’aux autres types d’entités.
+
+### Mesures synthétiques récentes
+
+- sur 10 000 individus et 10 000 familles contenant 20 000 événements, la
+  mémoire mesurée est passée de 16,5 à 14,7 MiB après différé des objets
+  d’événement familiaux ;
+- sur 10 000 modèles `Source`, l’accès aux événements ajoute 5,34 MiB dans une
+  mesure isolée ;
+- sur 10 000 modèles `Individual`, l’accès aux textes ajoute 1,74 MiB, et
+  l’accès à deux occupations datées et une propriété ajoute 7,56 MiB dans des
+  mesures isolées ;
+- ces mesures synthétiques illustrent les allocations différées et ne
+  représentent pas la consommation totale d’un gros fichier réel ;
 - recherche de 100 000 individus : environ 298 ms avec la normalisation Unicode
   complète et 29 ms avec le fast path ASCII ; le dernier pic mémoire mesuré est
   de 67,3 MiB, contre 99,3 MiB avant l’allocation paresseuse des listes ;
@@ -169,7 +177,8 @@ Réduire le coût mémoire et améliorer la scalabilité.
 - mesure synthétique de 50 000 objets multimédias : 13,8 MiB après slots, contre
   15,7 MiB avant ;
 - mesure combinée reproductible avec 100 000 individus et 50 000 familles : 103,4 MiB ;
-- étudier un chargement partiel ou paresseux pour les gros fichiers ;
+- étudier la réduction des allocations des lignes brutes et index, ou une
+  représentation partielle/mappée, sans perdre l’accès aux blocs GEDCOM bruts ;
 - conserver une API stable pour les contrôleurs existants.
 
 ### Historique de navigation
@@ -189,7 +198,9 @@ sont évincées au-delà de cette limite.
 
 Partiellement couverte : le mode strict détecte les anomalies structurelles,
 les références inconnues et certaines références incompatibles avec le type
-attendu. La conformité GEDCOM complète reste hors périmètre actuel.
+attendu. Il vérifie également l’ordre et l’unicité de `HEAD`/`TRLR`, leur niveau
+et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
+`TRLR`. La conformité GEDCOM complète reste hors périmètre actuel.
 
 ### Objectif validation
 
@@ -197,7 +208,7 @@ Aller au-delà des anomalies structurelles de base.
 
 ### Actions validation
 
-- formaliser les règles de validation GEDCOM ;
+- formaliser les règles de validation par version GEDCOM ;
 - distinguer les erreurs de structure et les erreurs de sémantique ;
 - exposer des diagnostics plus explicites dans l’interface ;
 - étendre la couverture de tests sur les cas non conformes.
@@ -233,7 +244,9 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
-Le premier résultat d’exécution sur GitHub Actions reste à confirmer.
+La dernière suite locale vérifiée passe 173 tests et Black passe sur les chemins
+CI. Une action GitHub a été rapportée verte après le correctif Black, mais
+l’exécution sur les commits les plus récents reste à confirmer.
 
 ### Objectif automatisation
 
@@ -247,14 +260,15 @@ Rendre les validations reproductibles pour les futures évolutions.
 
 ## Plan d’exécution recommandé
 
-1. Mesurer puis réduire l’empreinte mémoire des gros GEDCOM, en évaluant le
-  chargement paresseux.
-2. Définir et tester les prochaines règles de validation GEDCOM.
-3. Confirmer le premier passage CI sous Xvfb sur GitHub Actions.
+1. Mesurer puis réduire le coût des lignes brutes et index pour les gros GEDCOM.
+2. Formaliser les prochaines règles de validation GEDCOM par version.
+3. Confirmer l’action GitHub sur les commits les plus récents.
 4. Extraire d’autres responsabilités de `ui/main_window.py` selon les besoins.
 
 ## Conclusion
 
-Le chargement asynchrone est stabilisé et couvert par les tests. La recherche est
-plus rapide sans index mémoire persistant. Les prochains travaux portent sur la
-mémoire des gros fichiers, la validation GEDCOM et la confirmation du workflow CI.
+Le chargement asynchrone est stabilisé et couvert par les tests. Plusieurs
+structures métier optionnelles sont maintenant différées, mais les lignes brutes
+et les index maintiennent une empreinte mémoire proportionnelle au fichier. Les
+prochains travaux portent sur cette représentation, la validation GEDCOM par
+version et la confirmation de la CI sur les changements récents.

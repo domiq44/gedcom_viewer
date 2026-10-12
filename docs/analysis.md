@@ -88,9 +88,10 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite contient 166 tests; 111 tests non UI passent sous l’interpréteur local.
-- Les tests UI ciblés passent; le module UI complet n’a pas terminé dans le délai
-  local de 7 minutes, avec des attentes longues dans Tk.
+- La suite complète contient 173 tests et passe localement.
+- Le contrôle Black passe sur les 55 fichiers couverts par la CI.
+- Une exécution GitHub Actions a été rapportée verte après le correctif de
+  formatage; un nouveau résultat sur les commits récents reste à confirmer.
 - La compilation syntaxique de tous les fichiers Python passe.
 - Le parser charge les fichiers en mémoire complète dans `gedcom/parser.py`.
 - Le parseur préserve désormais les espaces répétés dans les valeurs de ligne.
@@ -124,14 +125,14 @@ plus remplacé depuis le thread de travail. L'ancienne session reste cohérente
 pendant le chargement et est conservée en cas d'erreur. Les résultats tardifs sont
 ignorés lorsque la fenêtre est en cours de fermeture.
 
-La commande de validation complète reste :
+La commande de validation complète est :
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation partielle : les 111 tests non UI passent; la suite complète
-doit être confirmée dans l’environnement CI/Xvfb.
+Dernière validation locale : les 173 tests passent; la CI utilise Xvfb pour les
+tests Tkinter.
 
 ## Recommandations prioritaires
 
@@ -153,15 +154,23 @@ pris 5,9 s; la recherche ASCII 29 ms, contre 298 ms avec la normalisation
 Unicode complète. Ces temps varient selon l’environnement. La validation évite
 également les collections temporaires proportionnelles aux enregistrements
 valides. Le benchmark reproduit maintenant les scénarios de familles,
-d’événements et des autres types d’enregistrements via ses options CLI. Une
-mesure synthétique séparée de 50 000 familles avec seulement les
-références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les
-slots et les listes paresseuses. Le benchmark accepte désormais `--families`;
-100 000 individus avec 50 000 familles mesurent 103,4 MiB au pic. Le parser
-conserve toujours les lignes, index et modèles métier. Des mesures synthétiques
-séparées de 50 000 sources et 50 000 notes éparses passent respectivement de
-32,5 à 16,5 MiB et de 26,5 à 13,6 MiB avec slots et listes paresseuses. Le
-chargement différé reste à étudier. Cent mille objets `Event` sans détails
+ d’événements, de sources et de champs optionnels individuels via ses options
+ CLI (`--events-per-source`, `--texts-per-individual`,
+ `--occupations-per-individual`, `--properties-per-individual`). Une
+ mesure synthétique séparée de 50 000 familles avec seulement les
+ références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les
+ slots et les listes paresseuses. Le benchmark accepte désormais `--families`;
+ 100 000 individus avec 50 000 familles mesurent 103,4 MiB au pic. Le parser
+ conserve toujours les lignes, index et modèles métier. Des mesures synthétiques
+ séparées de 50 000 sources et 50 000 notes éparses passent respectivement de
+ 32,5 à 16,5 MiB et de 26,5 à 13,6 MiB avec slots et listes paresseuses. Plusieurs
+ données optionnelles sont désormais différées : événements familiaux
+ et source, textes, occupations et propriétés individuels. Des mesures isolées
+ estiment à 5,34 MiB le coût d’événements pour 10 000 sources consultées, à
+ 1,74 MiB celui des textes pour 10 000 individus, et à 7,56 MiB celui de deux
+ occupations datées et une propriété pour 10 000 individus. Ces mesures
+ synthétiques n’incluent pas l’empreinte totale du fichier GEDCOM : les lignes
+ brutes restent toutes en mémoire. Cent mille objets `Event` sans détails
 passent de 15,3 à 6,1 MiB avec slots et détails paresseux. Cinquante mille
 objets multimédias passent de 15,7 à 13,8 MiB avec slots.
 Une mesure de 50 000 dépôts épars passe de 25,9 à 15,2 MiB avec slots et listes
