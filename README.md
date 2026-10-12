@@ -193,6 +193,13 @@ chaque individu afin de mesurer les données textuelles différées :
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --texts-per-individual 2 --repeats 1
 ```
+Les options `--occupations-per-individual` et `--properties-per-individual`
+ajoutent respectivement des événements `OCCU` datés et des tags `PROP` à chaque
+individu pour mesurer ces listes différées :
+
+```bash
+python3 benchmarks/benchmark_search.py --sizes 100000 --occupations-per-individual 2 --properties-per-individual 1 --repeats 1
+```
 
 Vérifier la syntaxe Python :
 
