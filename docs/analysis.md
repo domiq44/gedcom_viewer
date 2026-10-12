@@ -93,6 +93,8 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 - L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test
   `--file`, les tests sous Xvfb et le build PyInstaller; elle précède les règles
   de contexte d’en-tête ajoutées depuis.
+- Le mode strict exige maintenant `HEAD.GEDC.VERS` et `HEAD.GEDC.FORM` dès qu’un
+  bloc `HEAD.GEDC` est présent; les deux GEDCOM réels 5.5.1 passent toujours.
 - Les deux GEDCOM réels mesurés déclarent GEDCOM 5.5.1 et passent le mode strict
   actuel; cela ne garantit pas une conformité complète au standard.
 - La compilation syntaxique de tous les fichiers Python passe.
@@ -219,7 +221,8 @@ Le mode strict est une bonne base. L’étape suivante serait d’ajouter des r�
 La CI est définie dans `.github/workflows/ci.yml`. Elle exécute les tests Tkinter
 sous Xvfb, un smoke test du benchmark en mode `--file`, la compilation
 syntaxique, le contrôle Black et le build PyInstaller. L’action CI #25 a réussi
-sur `b877376`; le travail restant est de maintenir ces gates vertes.
+sur `b877376`. Le run #27 a réussi sur `b4230f5`, avant la dernière règle
+`HEAD.GEDC.VERS/FORM`; celle-ci reste à confirmer en CI.
 
 ## Ordre d'exécution recommandé
 
