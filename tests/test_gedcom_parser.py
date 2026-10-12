@@ -329,6 +329,30 @@ class TestGedcomParser(unittest.TestCase):
                 "HEAD.GEDC.FORM ne doit pas être vide ligne 4",
             ),
             (
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "2 VERS 5.5.1",
+                    "0 TRLR",
+                ],
+                "HEAD.GEDC.VERS multiple",
+            ),
+            (
+                [
+                    "0 HEAD",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "0 TRLR",
+                ],
+                "HEAD.GEDC multiple",
+            ),
+            (
                 ["0 HEAD", "1 GEDC", "2 FORM LINEAGE-LINKED", "0 TRLR"],
                 "HEAD.GEDC.VERS manquant ligne 2",
             ),

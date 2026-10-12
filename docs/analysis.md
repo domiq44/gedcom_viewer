@@ -92,10 +92,10 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
 - L’action GitHub CI #25 a réussi sur `b877376`, y compris le smoke test
   `--file`, les tests sous Xvfb et le build PyInstaller; elle précède les règles
-  de contexte d’en-tête ajoutées depuis.
+  de contexte et d’unicité d’en-tête ajoutées depuis.
 - Le mode strict exige maintenant `HEAD.GEDC.VERS` et `HEAD.GEDC.FORM` dès qu’un
-  bloc `HEAD.GEDC` est présent et rejette leurs valeurs vides; les deux GEDCOM
-  réels 5.5.1 passent toujours.
+  bloc `HEAD.GEDC` est présent, rejette leurs valeurs vides et les doublons; les
+  deux GEDCOM réels 5.5.1 passent toujours.
 - Les deux GEDCOM réels mesurés déclarent GEDCOM 5.5.1 et passent le mode strict
   actuel; cela ne garantit pas une conformité complète au standard.
 - La compilation syntaxique de tous les fichiers Python passe.

@@ -162,6 +162,7 @@ class GedcomParser:
         current_record_tag = None
         current_header_section = None
         head_gedc_line = None
+        head_gedc_count = 0
         head_gedc_version_count = 0
         head_gedc_form_count = 0
         first_level_zero_tag = None
@@ -237,8 +238,10 @@ class GedcomParser:
                         errors.append(f"pointeur invalide ligne {line_number}")
             elif level == 1 and current_record_tag == "HEAD":
                 current_header_section = tag
-                if tag == "GEDC" and head_gedc_line is None:
-                    head_gedc_line = line_number
+                if tag == "GEDC":
+                    head_gedc_count += 1
+                    if head_gedc_line is None:
+                        head_gedc_line = line_number
 
             if current_record_tag == "HEAD" and current_header_section == "GEDC":
                 if level == 2 and tag == "VERS":
@@ -328,10 +331,16 @@ class GedcomParser:
                 f"TRLR doit être le dernier enregistrement ligne {trailer_line}"
             )
         if head_gedc_line is not None:
+            if head_gedc_count > 1:
+                errors.append("HEAD.GEDC multiple")
             if head_gedc_version_count == 0:
                 errors.append(f"HEAD.GEDC.VERS manquant ligne {head_gedc_line}")
+            elif head_gedc_version_count > 1:
+                errors.append("HEAD.GEDC.VERS multiple")
             if head_gedc_form_count == 0:
                 errors.append(f"HEAD.GEDC.FORM manquant ligne {head_gedc_line}")
+            elif head_gedc_form_count > 1:
+                errors.append("HEAD.GEDC.FORM multiple")
         return errors
 
     def _parse_entities(self):
