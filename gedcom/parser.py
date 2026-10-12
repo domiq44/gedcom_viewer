@@ -359,6 +359,11 @@ class GedcomParser:
                                 f"HEAD.{required_tag} ne doit pas être vide "
                                 f"ligne {line_number}"
                             )
+            head_submitters = head_level_one_values.get("SUBM", [])
+            if not head_submitters:
+                errors.append("HEAD.SUBM manquant pour GEDCOM 5.5.1")
+            elif len(head_submitters) > 1:
+                errors.append("HEAD.SUBM multiple pour GEDCOM 5.5.1")
         return errors
 
     def _parse_entities(self):

@@ -306,6 +306,7 @@ class TestGedcomParser(unittest.TestCase):
             "0 HEAD",
             "1 SOUR Ancestris",
             "2 VERS 1.0",
+            "1 SUBM @S1@",
             "1 GEDC",
             "2 VERS 5.5.1",
             "2 FORM LINEAGE-LINKED",
@@ -314,6 +315,7 @@ class TestGedcomParser(unittest.TestCase):
             "2 FORM UTF-8",
             "1 PLAC",
             "2 FORM City, County, State, Country",
+            "0 @S1@ SUBM",
             "0 TRLR",
         ]
         valid_parser._parse_entities()
@@ -397,6 +399,34 @@ class TestGedcomParser(unittest.TestCase):
                     "0 TRLR",
                 ],
                 "HEAD.CHAR ne doit pas être vide ligne 3",
+            ),
+            (
+                [
+                    "0 HEAD",
+                    "1 SOUR App",
+                    "1 CHAR UTF-8",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "0 TRLR",
+                ],
+                "HEAD.SUBM manquant pour GEDCOM 5.5.1",
+            ),
+            (
+                [
+                    "0 HEAD",
+                    "1 SOUR App",
+                    "1 SUBM @S1@",
+                    "1 SUBM @S2@",
+                    "1 CHAR UTF-8",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "0 @S1@ SUBM",
+                    "0 @S2@ SUBM",
+                    "0 TRLR",
+                ],
+                "HEAD.SUBM multiple pour GEDCOM 5.5.1",
             ),
             (
                 ["0 HEAD", "1 GEDC", "2 FORM LINEAGE-LINKED", "0 TRLR"],

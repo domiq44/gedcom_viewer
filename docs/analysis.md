@@ -94,8 +94,10 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
   `--file`, les tests sous Xvfb et le build PyInstaller; elle précède les règles
   d’en-tête 5.5.1 les plus récentes.
 - Le mode strict valide les contextes et l’unicité de `GEDC`, `VERS` et `FORM`;
-  en 5.5.1, il exige aussi des valeurs non vides pour `HEAD.SOUR` et `HEAD.CHAR`.
-  Les deux GEDCOM réels passent toujours.
+  en 5.5.1, il exige aussi des valeurs non vides pour `HEAD.SOUR` et `HEAD.CHAR`,
+  ainsi qu’un unique `HEAD.SUBM` pointant vers un submitter valide. Les tests
+  couvrent les cas d’en-tête valides et invalides; les deux GEDCOM réels avaient
+  passé la validation stricte avant l’ajout de cette dernière règle.
 - Les deux GEDCOM réels mesurés déclarent GEDCOM 5.5.1 et passent le mode strict
   actuel; cela ne garantit pas une conformité complète au standard.
 - La compilation syntaxique de tous les fichiers Python passe.
@@ -221,10 +223,9 @@ Le mode strict est une bonne base. L’étape suivante serait d’ajouter des r�
 
 La CI est définie dans `.github/workflows/ci.yml`. Elle exécute les tests Tkinter
 sous Xvfb, un smoke test du benchmark en mode `--file`, la compilation
-syntaxique, le contrôle Black et le build PyInstaller. L’action CI #25 a réussi
-sur `b877376`. Le run CI #30 a réussi sur `e969c5e`, avant l’obligation de
-`HEAD.SOUR` et `HEAD.CHAR` non vides pour GEDCOM 5.5.1; cette règle reste à
-confirmer en CI.
+syntaxique, le contrôle Black et le build PyInstaller. Le run CI #30 a réussi
+sur `e969c5e`; les règles d’en-tête GEDCOM 5.5.1 ajoutées depuis, notamment
+`HEAD.SUBM`, restent à confirmer en CI.
 
 ## Ordre d'exécution recommandé
 

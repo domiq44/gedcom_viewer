@@ -233,8 +233,10 @@ et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
 Tout bloc `HEAD.GEDC` doit contenir des valeurs non vides et uniques `VERS` et
 `FORM`; le bloc `GEDC` lui-même doit être unique dans l’en-tête. Les deux GEDCOM
 réels disponibles déclarent GEDCOM 5.5.1; `HEAD.SOUR` et `HEAD.CHAR` doivent
-aussi être présents et non vides. Les deux fichiers passent ces contrôles
-stricts. La conformité complète au standard reste hors périmètre actuel.
+aussi être présents et non vides, et un unique `HEAD.SUBM` doit référencer un
+submitter valide. Les contrôles précédents ont été passés par les deux fichiers;
+la règle `HEAD.SUBM` reste à confirmer sur ces fichiers. La conformité complète
+au standard reste hors périmètre actuel.
 
 ### Objectif validation
 
@@ -282,9 +284,8 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
 La dernière suite locale vérifiée passe 177 tests et Black passe sur les chemins
-CI. L’action GitHub CI #30 a réussi sur `e969c5e`, avant l’obligation de
-`HEAD.SOUR` et `HEAD.CHAR` non vides en 5.5.1; cette règle reste à valider sur
-GitHub.
+CI. L’action GitHub CI #30 a réussi sur `e969c5e`; les règles d’en-tête GEDCOM
+5.5.1 ajoutées depuis, notamment `HEAD.SUBM`, restent à valider sur GitHub.
 
 ### Objectif automatisation
 
