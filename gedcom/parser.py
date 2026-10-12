@@ -243,8 +243,16 @@ class GedcomParser:
             if current_record_tag == "HEAD" and current_header_section == "GEDC":
                 if level == 2 and tag == "VERS":
                     head_gedc_version_count += 1
+                    if not value.strip():
+                        errors.append(
+                            f"HEAD.GEDC.VERS ne doit pas être vide ligne {line_number}"
+                        )
                 elif level == 2 and tag == "FORM":
                     head_gedc_form_count += 1
+                    if not value.strip():
+                        errors.append(
+                            f"HEAD.GEDC.FORM ne doit pas être vide ligne {line_number}"
+                        )
 
             if tag == "GEDC" and not (level == 1 and current_record_tag == "HEAD"):
                 errors.append(f"GEDC doit être au niveau 1 de HEAD ligne {line_number}")

@@ -47,7 +47,7 @@ Le dépôt conserve une documentation minimale et ciblée :
   les contextes invalides pour les références GEDCOM reconnues, ainsi que les
   pointeurs requis des enregistrements indexés; vérification du contexte de
   `GEDC`, `VERS` et `FORM` dans `HEAD`, avec `VERS` et `FORM` obligatoires dans
-  tout bloc `HEAD.GEDC` déclaré.
+  tout bloc `HEAD.GEDC` déclaré et rejet des valeurs vides.
 - Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
 - Interface disponible en anglais, français, espagnol, allemand, italien et portugais.
 - Le changement de langue est appliqué au redémarrage.

@@ -230,8 +230,8 @@ les références inconnues et certaines références incompatibles avec le type
 attendu. Il vérifie également l’ordre et l’unicité de `HEAD`/`TRLR`, leur niveau
 et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
 `TRLR`. Dans `HEAD`, il vérifie le contexte des tags `GEDC`, `VERS` et `FORM`.
-Tout bloc `HEAD.GEDC` doit également contenir `VERS` et `FORM`. Les deux GEDCOM
-réels disponibles déclarent GEDCOM 5.5.1 et passent ces contrôles stricts. La
+Tout bloc `HEAD.GEDC` doit contenir des valeurs non vides `VERS` et `FORM`. Les
+deux GEDCOM réels disponibles déclarent GEDCOM 5.5.1 et passent ces contrôles stricts. La
 conformité complète au standard reste hors périmètre actuel.
 
 ### Objectif validation

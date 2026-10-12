@@ -321,6 +321,14 @@ class TestGedcomParser(unittest.TestCase):
 
         invalid_contexts = [
             (
+                ["0 HEAD", "1 GEDC", "2 VERS", "2 FORM X", "0 TRLR"],
+                "HEAD.GEDC.VERS ne doit pas être vide ligne 3",
+            ),
+            (
+                ["0 HEAD", "1 GEDC", "2 VERS 5.5.1", "2 FORM", "0 TRLR"],
+                "HEAD.GEDC.FORM ne doit pas être vide ligne 4",
+            ),
+            (
                 ["0 HEAD", "1 GEDC", "2 FORM LINEAGE-LINKED", "0 TRLR"],
                 "HEAD.GEDC.VERS manquant ligne 2",
             ),
