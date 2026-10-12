@@ -3,9 +3,7 @@ from gedcom.models.lazy_list import _LazyList
 
 
 class Individual:
-    occupations = _LazyList()
     notes = _LazyList()
-    properties = _LazyList()
     texts = _LazyList()
     obje = _LazyList()
     fams = _LazyList()
@@ -23,12 +21,14 @@ class Individual:
         "age_at_death",
         "nickname",
         "_occupations",
+        "_occupations_loaded",
         "_notes",
         "_text_tags_loaded",
         "baptism_date",
         "baptism_place",
         "marriage_count",
         "_properties",
+        "_properties_loaded",
         "_texts",
         "_obje",
         "famc",
@@ -50,12 +50,14 @@ class Individual:
         self.age_at_death = None  # AGE tag
         self.nickname = None  # NICK tag
         self._occupations = None
+        self._occupations_loaded = False
         self._notes = None
         self._text_tags_loaded = False
         self.baptism_date = None  # CHR/DATE
         self.baptism_place = None  # CHR/PLAC
         self.marriage_count = None  # NMR (nombre de mariages)
         self._properties = None
+        self._properties_loaded = False
         self._texts = None
         self._obje = None
 
@@ -77,6 +79,56 @@ class Individual:
     def texts(self, value):
         self._texts = value if value else None
         self._text_tags_loaded = True
+
+    @property
+    def occupations(self):
+        if not self._occupations_loaded:
+            self._load_occupations()
+        if self._occupations is None:
+            self._occupations = []
+        return self._occupations
+
+    @occupations.setter
+    def occupations(self, value):
+        self._occupations = value if value else None
+        self._occupations_loaded = True
+
+    @property
+    def properties(self):
+        if not self._properties_loaded:
+            self._load_properties()
+        if self._properties is None:
+            self._properties = []
+        return self._properties
+
+    @properties.setter
+    def properties(self, value):
+        self._properties = value if value else None
+        self._properties_loaded = True
+
+    def _load_occupations(self):
+        self._occupations_loaded = True
+        self._occupations = []
+        current_occupation = None
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level == 1:
+                current_occupation = None
+                if tag == "OCCU":
+                    current_occupation = {"occupation": value, "date": None}
+                    self._occupations.append(current_occupation)
+            elif level == 2 and current_occupation is not None and tag == "DATE":
+                current_occupation["date"] = value
+
+    def _load_properties(self):
+        self._properties_loaded = True
+        self._properties = []
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level == 1 and tag == "PROP":
+                self._properties.append(value)
 
     @property
     def events(self):
@@ -161,12 +213,6 @@ class Individual:
                 elif tag == "NOTE":
                     self.notes.append(value)
 
-                elif tag == "OCCU":
-                    self.occupations.append({"occupation": value, "date": None})
-
-                elif tag == "PROP":
-                    self.properties.append(value)
-
                 elif tag == "OBJE":
                     if value and value.strip() and value.strip() != "*":
                         self.obje.append(value.strip())
@@ -214,11 +260,6 @@ class Individual:
                         self.baptism_place = value
                     elif tag == "NOTE":
                         self.notes.append(value)
-
-                # Sous OCCU
-                elif current_section == "OCCU" and self.occupations:
-                    if tag == "DATE":
-                        self.occupations[-1]["date"] = value
 
                 # Sous NOTE (continuations)
                 elif current_section == "NOTE":

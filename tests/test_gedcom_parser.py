@@ -822,6 +822,36 @@ class TestGedcomParser(unittest.TestCase):
         self.assertEqual(individual.texts, ["First line\nsecond line, continued"])
         self.assertTrue(individual._text_tags_loaded)
 
+    def test_individual_occupations_and_properties_are_loaded_lazily(self):
+        individual = Individual(
+            GedcomEntity(
+                "@I102@",
+                "INDI",
+                0,
+                [
+                    "0 @I102@ INDI",
+                    "1 OCCU Baker",
+                    "2 DATE 1900",
+                    "1 OCCU Teacher",
+                    "2 DATE 1910",
+                    "1 PROP Nationality",
+                ],
+            )
+        )
+
+        self.assertFalse(individual._occupations_loaded)
+        self.assertFalse(individual._properties_loaded)
+        self.assertIsNone(individual._occupations)
+        self.assertIsNone(individual._properties)
+        self.assertEqual(
+            individual.occupations,
+            [
+                {"occupation": "Baker", "date": "1900"},
+                {"occupation": "Teacher", "date": "1910"},
+            ],
+        )
+        self.assertEqual(individual.properties, ["Nationality"])
+
     def test_empty_individual_lists_are_lazy_and_mutable(self):
         class DummyEntity:
             pointer = "@I100@"
