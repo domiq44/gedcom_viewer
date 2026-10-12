@@ -871,6 +871,39 @@ class TestGedcomParser(unittest.TestCase):
         self.assertIsNone(source.text)
         self.assertEqual(source.notes, ["Première ligne\nseconde ligne, suite"])
 
+    def test_source_data_events_are_loaded_lazily(self):
+        source = Source(
+            GedcomEntity(
+                "@S11@",
+                "SOUR",
+                0,
+                [
+                    "0 @S11@ SOUR",
+                    "1 DATA",
+                    "2 AGNC Registry",
+                    "2 EVEN Census",
+                    "2 DATE 1900",
+                    "2 AGNC Event agency",
+                ],
+            )
+        )
+
+        self.assertFalse(source._data_events_loaded)
+        self.assertIsNone(source._data_events)
+        self.assertEqual(source.agency, "Registry")
+        self.assertEqual(source.text, None)
+
+        self.assertEqual(
+            source.data_events,
+            [
+                {
+                    "value": "Census",
+                    "details": [("DATE", "1900"), ("AGNC", "Event agency")],
+                }
+            ],
+        )
+        self.assertTrue(source._data_events_loaded)
+
     def test_empty_repository_lists_are_lazy_and_mutable(self):
         repository = Repository(
             GedcomEntity(

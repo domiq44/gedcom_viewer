@@ -6,7 +6,6 @@ class Source:
     notes = _LazyList()
     sources = _LazyList()
     references = _LazyList()
-    data_events = _LazyList()
     additional_fields = _LazyList()
 
     __slots__ = (
@@ -27,6 +26,7 @@ class Source:
         "_references",
         "record_id",
         "_data_events",
+        "_data_events_loaded",
         "agency",
         "_additional_fields",
     )
@@ -50,14 +50,48 @@ class Source:
         self._references = None
         self.record_id = None
         self._data_events = None
+        self._data_events_loaded = False
         self.agency = None
         self._additional_fields = None
 
         self._parse_lines(entity.lines)
 
+    @property
+    def data_events(self):
+        self._load_data_events()
+        if self._data_events is None:
+            self._data_events = []
+        return self._data_events
+
+    @data_events.setter
+    def data_events(self, value):
+        self._load_data_events()
+        self._data_events = value if value else None
+
+    def _load_data_events(self):
+        if self._data_events_loaded:
+            return
+
+        self._data_events_loaded = True
+        current_section = None
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+
+            if level == 1:
+                current_section = tag
+            elif level == 2 and current_section == "DATA":
+                if tag == "EVEN":
+                    if self._data_events is None:
+                        self._data_events = []
+                    self._data_events.append({"value": value, "details": []})
+                elif self._data_events:
+                    self._data_events[-1]["details"].append((tag, value))
+
     def _parse_lines(self, lines):
         current_section = None
         current_additional = None
+        has_data_event = False
 
         for raw in lines:
             level, pointer, tag, value = _parse_line(raw)
@@ -153,13 +187,13 @@ class Source:
 
                 elif current_section == "DATA":
                     if tag == "EVEN":
-                        self.data_events.append({"value": value, "details": []})
-                    elif self.data_events:
-                        self.data_events[-1]["details"].append((tag, value))
+                        has_data_event = True
                     elif tag == "AGNC":
-                        self.agency = value
+                        if not has_data_event:
+                            self.agency = value
                     elif tag == "NOTE":
-                        self.text = f"{self.text or ''}\n{value}"
+                        if not has_data_event:
+                            self.text = f"{self.text or ''}\n{value}"
 
                 # Sous REPO
                 elif current_section == "REPO":
