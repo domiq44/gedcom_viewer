@@ -40,6 +40,7 @@ def search_with_normalizer(controller, query, normalize):
 def benchmark(
     individual_count,
     texts_per_individual,
+    notes_per_individual,
     occupations_per_individual,
     properties_per_individual,
     family_count,
@@ -59,6 +60,11 @@ def benchmark(
                 gedcom_file.write(
                     f"1 TEXT Synthetic text {text_index} for individual {index}\n"
                     f"2 CONT Continued text for individual {index}\n"
+                )
+            for note_index in range(notes_per_individual):
+                gedcom_file.write(
+                    f"1 NOTE Synthetic note {note_index} for individual {index}\n"
+                    f"2 CONT Continued note for individual {index}\n"
                 )
             for occupation_index in range(occupations_per_individual):
                 gedcom_file.write(
@@ -158,6 +164,12 @@ def main():
         help="Number of dated OCCU tags to add to each individual.",
     )
     argument_parser.add_argument(
+        "--notes-per-individual",
+        type=int,
+        default=0,
+        help="Number of NOTE tags with continuations to add to each individual.",
+    )
+    argument_parser.add_argument(
         "--properties-per-individual",
         type=int,
         default=0,
@@ -195,6 +207,7 @@ def main():
     if (
         arguments.repeats < 1
         or arguments.texts_per_individual < 0
+        or arguments.notes_per_individual < 0
         or arguments.occupations_per_individual < 0
         or arguments.properties_per_individual < 0
         or arguments.families < 0
@@ -208,7 +221,8 @@ def main():
         )
 
     print(
-        "Individuals | Texts/individual | Occu/individual | Props/individual | "
+        "Individuals | Texts/individual | Notes/individual | Occu/individual | "
+        "Props/individual | "
         "Families | Events/family | Other each | "
         "Events/source | Load (s) | "
         "Baseline (ms) | ASCII fast path (ms) | "
@@ -226,6 +240,7 @@ def main():
         ) = benchmark(
             individual_count,
             arguments.texts_per_individual,
+            arguments.notes_per_individual,
             arguments.occupations_per_individual,
             arguments.properties_per_individual,
             arguments.families,
@@ -237,6 +252,7 @@ def main():
         )
         print(
             f"{individual_count:>11} | {arguments.texts_per_individual:>16} | "
+            f"{arguments.notes_per_individual:>15} | "
             f"{arguments.occupations_per_individual:>16} | "
             f"{arguments.properties_per_individual:>16} | "
             f"{arguments.families:>8} | "

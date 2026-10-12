@@ -161,7 +161,7 @@ Ou directement :
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : 173 tests passent dans la suite complète.
+Dernière validation locale : 174 tests passent dans la suite complète.
 
 Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
 
@@ -199,6 +199,11 @@ individu pour mesurer ces listes différées :
 
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --occupations-per-individual 2 --properties-per-individual 1 --repeats 1
+```
+`--notes-per-individual` ajoute des notes `NOTE` avec continuation, par exemple :
+
+```bash
+python3 benchmarks/benchmark_search.py --sizes 100000 --notes-per-individual 2 --repeats 1
 ```
 
 Vérifier la syntaxe Python :

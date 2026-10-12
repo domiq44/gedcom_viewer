@@ -3,7 +3,6 @@ from gedcom.models.lazy_list import _LazyList
 
 
 class Individual:
-    notes = _LazyList()
     texts = _LazyList()
     obje = _LazyList()
     fams = _LazyList()
@@ -23,6 +22,7 @@ class Individual:
         "_occupations",
         "_occupations_loaded",
         "_notes",
+        "_notes_loaded",
         "_text_tags_loaded",
         "baptism_date",
         "baptism_place",
@@ -52,6 +52,7 @@ class Individual:
         self._occupations = None
         self._occupations_loaded = False
         self._notes = None
+        self._notes_loaded = False
         self._text_tags_loaded = False
         self.baptism_date = None  # CHR/DATE
         self.baptism_place = None  # CHR/PLAC
@@ -66,6 +67,19 @@ class Individual:
         self._events = None
 
         self._parse_lines(entity.lines)
+
+    @property
+    def notes(self):
+        if not self._notes_loaded:
+            self._load_notes()
+        if self._notes is None:
+            self._notes = []
+        return self._notes
+
+    @notes.setter
+    def notes(self, value):
+        self._notes = value if value else None
+        self._notes_loaded = True
 
     @property
     def texts(self):
@@ -129,6 +143,30 @@ class Individual:
             level, _pointer, tag, value = _parse_line(raw)
             if level == 1 and tag == "PROP":
                 self._properties.append(value)
+
+    def _load_notes(self):
+        self._notes_loaded = True
+        self._notes = []
+        current_section = None
+
+        for raw in self.entity.lines:
+            level, _pointer, tag, value = _parse_line(raw)
+            if level is None:
+                continue
+
+            if level == 1:
+                current_section = tag
+                if tag == "NOTE":
+                    self._notes.append(value)
+            elif level == 2 and current_section in {"BIRT", "DEAT", "CHR"}:
+                if tag == "NOTE":
+                    self._notes.append(value)
+            elif level == 2 and current_section == "NOTE" and tag == "CONT":
+                if value and self._notes:
+                    self._notes[-1] = f"{self._notes[-1] or ''}\n{value}"
+            elif level >= 3 and current_section in {"DEAT", "BIRT"}:
+                if tag == "NOTE":
+                    self._notes.append(value)
 
     @property
     def events(self):
@@ -210,9 +248,6 @@ class Individual:
                     except (ValueError, TypeError):
                         pass
 
-                elif tag == "NOTE":
-                    self.notes.append(value)
-
                 elif tag == "OBJE":
                     if value and value.strip() and value.strip() != "*":
                         self.obje.append(value.strip())
@@ -236,8 +271,6 @@ class Individual:
                         self.birth_date = value
                     elif tag == "PLAC":
                         self.birth_place = value
-                    elif tag == "NOTE":
-                        self.notes.append(value)
 
                 # Sous DEAT
                 elif current_section == "DEAT":
@@ -249,8 +282,6 @@ class Individual:
                         self.death_confirmed = True
                     elif tag == "AGE":
                         self.age_at_death = value
-                    elif tag == "NOTE":
-                        self.notes.append(value)
 
                 # Sous CHR (baptism)
                 elif current_section == "CHR":
@@ -258,21 +289,6 @@ class Individual:
                         self.baptism_date = value
                     elif tag == "PLAC":
                         self.baptism_place = value
-                    elif tag == "NOTE":
-                        self.notes.append(value)
-
-                # Sous NOTE (continuations)
-                elif current_section == "NOTE":
-                    if tag == "CONT" and value:
-                        self.notes[-1] = f"{self.notes[-1] or ''}\n{value}"
-
-            # --- Niveau 3+ : continuations ---
-            elif level >= 3:
-                # Gestion des continuations de notes et autres
-                if current_section == "DEAT" and tag == "NOTE":
-                    self.notes.append(value)
-                elif current_section == "BIRT" and tag == "NOTE":
-                    self.notes.append(value)
 
     def _load_text_tags(self):
         """Load TEXT tags with CONT/CONC continuation support.

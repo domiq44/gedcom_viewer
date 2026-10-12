@@ -88,7 +88,7 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
 
 ### Constats vérifiés
 
-- La suite complète contient 173 tests et passe localement.
+- La suite complète contient 174 tests et passe localement.
 - Le contrôle Black passe sur les 55 fichiers couverts par la CI.
 - Une exécution GitHub Actions a été rapportée verte après le correctif de
   formatage; un nouveau résultat sur les commits récents reste à confirmer.
@@ -131,7 +131,7 @@ La commande de validation complète est :
 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : les 173 tests passent; la CI utilise Xvfb pour les
+Dernière validation locale : les 174 tests passent; la CI utilise Xvfb pour les
 tests Tkinter.
 
 ## Recommandations prioritaires
@@ -154,21 +154,22 @@ pris 5,9 s; la recherche ASCII 29 ms, contre 298 ms avec la normalisation
 Unicode complète. Ces temps varient selon l’environnement. La validation évite
 également les collections temporaires proportionnelles aux enregistrements
 valides. Le benchmark reproduit maintenant les scénarios de familles,
- d’événements, de sources et de champs optionnels individuels via ses options
- CLI (`--events-per-source`, `--texts-per-individual`,
- `--occupations-per-individual`, `--properties-per-individual`). Une
- mesure synthétique séparée de 50 000 familles avec seulement les
+d’événements, de sources et de champs optionnels individuels via ses options
+CLI (`--events-per-source`, `--texts-per-individual`, `--notes-per-individual`,
+`--occupations-per-individual`, `--properties-per-individual`). Une mesure
+synthétique séparée de 50 000 familles avec seulement les
  références des conjoints donne 19,6 MiB pour `Family`, contre 41,0 MiB avant les
  slots et les listes paresseuses. Le benchmark accepte désormais `--families`;
  100 000 individus avec 50 000 familles mesurent 103,4 MiB au pic. Le parser
  conserve toujours les lignes, index et modèles métier. Des mesures synthétiques
- séparées de 50 000 sources et 50 000 notes éparses passent respectivement de
- 32,5 à 16,5 MiB et de 26,5 à 13,6 MiB avec slots et listes paresseuses. Plusieurs
- données optionnelles sont désormais différées : événements familiaux
- et source, textes, occupations et propriétés individuels. Des mesures isolées
- estiment à 5,34 MiB le coût d’événements pour 10 000 sources consultées, à
- 1,74 MiB celui des textes pour 10 000 individus, et à 7,56 MiB celui de deux
- occupations datées et une propriété pour 10 000 individus. Ces mesures
+séparées de 50 000 sources et 50 000 notes éparses passent respectivement de
+32,5 à 16,5 MiB et de 26,5 à 13,6 MiB avec slots et listes paresseuses.
+Plusieurs données optionnelles sont désormais différées : événements familiaux
+et source, notes, textes, occupations et propriétés individuels. Des mesures
+isolées estiment à 5,34 MiB le coût d’événements pour 10 000 sources consultées,
+à 2,59 MiB celui des notes pour 10 000 individus, à 1,74 MiB celui des textes,
+et à 7,56 MiB celui de deux occupations datées et une propriété pour 10 000
+individus. Ces mesures
  synthétiques n’incluent pas l’empreinte totale du fichier GEDCOM : les lignes
  brutes restent toutes en mémoire. Cent mille objets `Event` sans détails
 passent de 15,3 à 6,1 MiB avec slots et détails paresseux. Cinquante mille
