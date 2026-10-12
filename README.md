@@ -48,7 +48,8 @@ Le dépôt conserve une documentation minimale et ciblée :
   pointeurs requis des enregistrements indexés; vérification du contexte de
   `GEDC`, `VERS` et `FORM` dans `HEAD`, avec `VERS` et `FORM` obligatoires dans
   tout bloc `HEAD.GEDC` déclaré, rejet des valeurs vides et détection des tags
-  `GEDC`, `VERS` et `FORM` dupliqués.
+  `GEDC`, `VERS` et `FORM` dupliqués; pour GEDCOM 5.5.1, `HEAD.SOUR` et
+  `HEAD.CHAR` sont aussi obligatoires.
 - Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
 - Interface disponible en anglais, français, espagnol, allemand, italien et portugais.
 - Le changement de langue est appliqué au redémarrage.

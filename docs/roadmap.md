@@ -232,8 +232,9 @@ et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
 `TRLR`. Dans `HEAD`, il vérifie le contexte des tags `GEDC`, `VERS` et `FORM`.
 Tout bloc `HEAD.GEDC` doit contenir des valeurs non vides et uniques `VERS` et
 `FORM`; le bloc `GEDC` lui-même doit être unique dans l’en-tête. Les deux GEDCOM
-réels disponibles déclarent GEDCOM 5.5.1 et passent ces contrôles stricts. La
-conformité complète au standard reste hors périmètre actuel.
+réels disponibles déclarent GEDCOM 5.5.1, satisfont aussi les exigences `HEAD.SOUR`
+et `HEAD.CHAR`, et passent ces contrôles stricts. La conformité complète au
+standard reste hors périmètre actuel.
 
 ### Objectif validation
 
@@ -281,8 +282,8 @@ Rendre l’application plus stable face aux données incomplètes ou mal formée
 Workflow configuré dans `.github/workflows/ci.yml` : tests Tkinter sous Xvfb,
 compilation syntaxique, contrôle Black et build PyInstaller sur Ubuntu 24.04.
 La dernière suite locale vérifiée passe 177 tests et Black passe sur les chemins
-CI. L’action GitHub CI #27 a réussi sur `b4230f5`, avant les dernières règles
-`HEAD.GEDC.VERS/FORM` et d’unicité; elles restent à valider sur GitHub.
+CI. L’action GitHub CI #27 a réussi sur `b4230f5`, avant les dernières exigences
+versionnées `HEAD.SOUR`/`HEAD.CHAR`; elles restent à valider sur GitHub.
 
 ### Objectif automatisation
 

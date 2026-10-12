@@ -161,10 +161,12 @@ class GedcomParser:
         trailer_count = 0
         current_record_tag = None
         current_header_section = None
+        head_level_one_tags = set()
         head_gedc_line = None
         head_gedc_count = 0
         head_gedc_version_count = 0
         head_gedc_form_count = 0
+        head_gedc_version = None
         first_level_zero_tag = None
         last_level_zero_tag = None
         trailer_line = None
@@ -238,6 +240,7 @@ class GedcomParser:
                         errors.append(f"pointeur invalide ligne {line_number}")
             elif level == 1 and current_record_tag == "HEAD":
                 current_header_section = tag
+                head_level_one_tags.add(tag)
                 if tag == "GEDC":
                     head_gedc_count += 1
                     if head_gedc_line is None:
@@ -246,6 +249,8 @@ class GedcomParser:
             if current_record_tag == "HEAD" and current_header_section == "GEDC":
                 if level == 2 and tag == "VERS":
                     head_gedc_version_count += 1
+                    if head_gedc_version is None:
+                        head_gedc_version = value.strip()
                     if not value.strip():
                         errors.append(
                             f"HEAD.GEDC.VERS ne doit pas être vide ligne {line_number}"
@@ -341,6 +346,10 @@ class GedcomParser:
                 errors.append(f"HEAD.GEDC.FORM manquant ligne {head_gedc_line}")
             elif head_gedc_form_count > 1:
                 errors.append("HEAD.GEDC.FORM multiple")
+        if head_gedc_version == "5.5.1":
+            for required_tag in ("SOUR", "CHAR"):
+                if required_tag not in head_level_one_tags:
+                    errors.append(f"HEAD.{required_tag} manquant pour GEDCOM 5.5.1")
         return errors
 
     def _parse_entities(self):
