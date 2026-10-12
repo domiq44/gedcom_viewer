@@ -353,6 +353,8 @@ class GedcomParser:
                 if required_tag not in head_level_one_tags:
                     errors.append(f"HEAD.{required_tag} manquant pour GEDCOM 5.5.1")
                 else:
+                    if len(head_level_one_values[required_tag]) > 1:
+                        errors.append(f"HEAD.{required_tag} multiple pour GEDCOM 5.5.1")
                     for line_number, value in head_level_one_values[required_tag]:
                         if not value.strip():
                             errors.append(

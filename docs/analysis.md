@@ -94,10 +94,10 @@ L’application est cohérente, mais elle n’a pas encore complètement franchi
   `--file`, les tests sous Xvfb et le build PyInstaller; elle précède les règles
   d’en-tête 5.5.1 les plus récentes.
 - Le mode strict valide les contextes et l’unicité de `GEDC`, `VERS` et `FORM`;
-  en 5.5.1, il exige aussi des valeurs non vides pour `HEAD.SOUR` et `HEAD.CHAR`,
+  en 5.5.1, il exige aussi un `HEAD.SOUR` et un `HEAD.CHAR` uniques et non vides,
   ainsi qu’un unique `HEAD.SUBM` pointant vers un submitter valide. Les tests
   couvrent les cas d’en-tête valides et invalides; les deux GEDCOM réels avaient
-  passé la validation stricte avant l’ajout de cette dernière règle.
+  passé la validation stricte avant les dernières règles d’en-tête.
 - Les deux GEDCOM réels mesurés déclarent GEDCOM 5.5.1 et passent le mode strict
   actuel; cela ne garantit pas une conformité complète au standard.
 - La compilation syntaxique de tous les fichiers Python passe.

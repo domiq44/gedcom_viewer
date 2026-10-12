@@ -233,10 +233,10 @@ et l’absence de pointeur ou de valeur, les lignes vides et les sous-lignes de
 Tout bloc `HEAD.GEDC` doit contenir des valeurs non vides et uniques `VERS` et
 `FORM`; le bloc `GEDC` lui-même doit être unique dans l’en-tête. Les deux GEDCOM
 réels disponibles déclarent GEDCOM 5.5.1; `HEAD.SOUR` et `HEAD.CHAR` doivent
-aussi être présents et non vides, et un unique `HEAD.SUBM` doit référencer un
-submitter valide. Les contrôles précédents ont été passés par les deux fichiers;
-la règle `HEAD.SUBM` reste à confirmer sur ces fichiers. La conformité complète
-au standard reste hors périmètre actuel.
+aussi être présents, uniques et non vides, et un unique `HEAD.SUBM` doit
+référencer un submitter valide. Les contrôles précédents ont été passés par les
+deux fichiers; les règles d’unicité ajoutées depuis restent à confirmer sur ces
+fichiers. La conformité complète au standard reste hors périmètre actuel.
 
 ### Objectif validation
 
