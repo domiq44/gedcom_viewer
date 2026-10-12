@@ -162,6 +162,7 @@ class GedcomParser:
         current_record_tag = None
         current_header_section = None
         head_level_one_tags = set()
+        head_level_one_values = {}
         head_gedc_line = None
         head_gedc_count = 0
         head_gedc_version_count = 0
@@ -241,6 +242,7 @@ class GedcomParser:
             elif level == 1 and current_record_tag == "HEAD":
                 current_header_section = tag
                 head_level_one_tags.add(tag)
+                head_level_one_values.setdefault(tag, []).append((line_number, value))
                 if tag == "GEDC":
                     head_gedc_count += 1
                     if head_gedc_line is None:
@@ -350,6 +352,13 @@ class GedcomParser:
             for required_tag in ("SOUR", "CHAR"):
                 if required_tag not in head_level_one_tags:
                     errors.append(f"HEAD.{required_tag} manquant pour GEDCOM 5.5.1")
+                else:
+                    for line_number, value in head_level_one_values[required_tag]:
+                        if not value.strip():
+                            errors.append(
+                                f"HEAD.{required_tag} ne doit pas être vide "
+                                f"ligne {line_number}"
+                            )
         return errors
 
     def _parse_entities(self):

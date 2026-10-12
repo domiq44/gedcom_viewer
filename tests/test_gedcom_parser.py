@@ -375,6 +375,30 @@ class TestGedcomParser(unittest.TestCase):
                 "HEAD.CHAR manquant pour GEDCOM 5.5.1",
             ),
             (
+                [
+                    "0 HEAD",
+                    "1 SOUR",
+                    "1 CHAR UTF-8",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "0 TRLR",
+                ],
+                "HEAD.SOUR ne doit pas être vide ligne 2",
+            ),
+            (
+                [
+                    "0 HEAD",
+                    "1 SOUR App",
+                    "1 CHAR",
+                    "1 GEDC",
+                    "2 VERS 5.5.1",
+                    "2 FORM LINEAGE-LINKED",
+                    "0 TRLR",
+                ],
+                "HEAD.CHAR ne doit pas être vide ligne 3",
+            ),
+            (
                 ["0 HEAD", "1 GEDC", "2 FORM LINEAGE-LINKED", "0 TRLR"],
                 "HEAD.GEDC.VERS manquant ligne 2",
             ),
