@@ -117,6 +117,12 @@ l'installation des dépendances. Après installation, l'application peut aussi
 .venv/bin/python main.py
 ```
 
+Sur Fedora avec `XMODIFIERS=@im=ibus`, les lanceurs retirent cette variable pour
+éviter le ralentissement XIM de Tk. Ce réglage s'applique aussi au binaire
+PyInstaller exécuté directement. Pour conserver IBus/XIM, définis
+`GEDCOM_VIEWER_KEEP_XIM=1` avant de lancer `make run`, `make test`, `./run.sh`,
+`python main.py` ou `./dist/gedcom_viewer`.
+
 Au démarrage, le dernier fichier récent est rouvert s'il existe toujours.
 
 ## Utilisation

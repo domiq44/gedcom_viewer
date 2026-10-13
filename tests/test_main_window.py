@@ -17,6 +17,31 @@ from ui.main_window import GedcomViewer
 from ui.menus import MenuBar
 from ui.themes import COLORS
 from ui.views.link_utils import find_urls
+from main import _disable_slow_ibus_xim
+
+
+class TestStartupXimPolicy(unittest.TestCase):
+    def test_disables_only_ibus_xim_by_default(self):
+        with patch.dict(os.environ, {"XMODIFIERS": "@im=ibus"}):
+            os.environ.pop("GEDCOM_VIEWER_KEEP_XIM", None)
+
+            _disable_slow_ibus_xim(logging.getLogger("test.startup"))
+
+            self.assertNotIn("XMODIFIERS", os.environ)
+
+        with patch.dict(os.environ, {"XMODIFIERS": "@im=other"}):
+            _disable_slow_ibus_xim(logging.getLogger("test.startup"))
+
+            self.assertEqual(os.environ["XMODIFIERS"], "@im=other")
+
+    def test_can_keep_ibus_xim_explicitly(self):
+        with patch.dict(
+            os.environ,
+            {"XMODIFIERS": "@im=ibus", "GEDCOM_VIEWER_KEEP_XIM": "1"},
+        ):
+            _disable_slow_ibus_xim(logging.getLogger("test.startup"))
+
+            self.assertEqual(os.environ["XMODIFIERS"], "@im=ibus")
 
 
 class TestGedcomViewer(unittest.TestCase):

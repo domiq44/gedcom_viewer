@@ -62,12 +62,16 @@ install: venv check_pip check_tk
 # --- Exécution et Test ---
 
 run: venv install
-	echo "--- Running application ---"
-	$(PYTHON_ACTUAL) main.py
+	@echo "--- Running application ---"
+	./run.sh
 
 test: venv install
-	echo "--- Running tests ---"
-	$(PYTHON_ACTUAL) -m unittest discover -s tests
+	@echo "--- Running tests ---"
+	@if [ "$${XMODIFIERS:-}" = "@im=ibus" ] && [ "$${GEDCOM_VIEWER_KEEP_XIM:-0}" != "1" ]; then \
+		env -u XMODIFIERS $(PYTHON_ACTUAL) -m unittest discover -s tests; \
+	else \
+		$(PYTHON_ACTUAL) -m unittest discover -s tests; \
+	fi
 
 # --- Formatage et Linting ---
 

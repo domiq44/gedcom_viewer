@@ -23,5 +23,10 @@ else
     exit 1
 fi
 
+# Tk startup can stall with Fedora's IBus XIM; preserve an explicit opt-in.
+if [[ "${XMODIFIERS:-}" == "@im=ibus" && "${GEDCOM_VIEWER_KEEP_XIM:-0}" != "1" ]]; then
+    unset XMODIFIERS
+fi
+
 # Lancer l'application
 exec "$PYTHON" main.py

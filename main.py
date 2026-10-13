@@ -5,6 +5,16 @@ import time
 
 _startup_started_at = time.perf_counter()
 
+
+def _disable_slow_ibus_xim(logger):
+    if (
+        os.environ.get("XMODIFIERS") == "@im=ibus"
+        and os.environ.get("GEDCOM_VIEWER_KEEP_XIM") != "1"
+    ):
+        os.environ.pop("XMODIFIERS", None)
+        logger.info("XIM IBus désactivé pour ce lancement")
+
+
 if __name__ == "__main__":
     log_path = os.path.expanduser("~/.gedcom_viewer.log")
     logging.basicConfig(
@@ -13,6 +23,7 @@ if __name__ == "__main__":
         handlers=[logging.FileHandler(log_path, encoding="utf-8")],
     )
     logger = logging.getLogger(__name__)
+    _disable_slow_ibus_xim(logger)
     startup_log_handler = next(
         handler
         for handler in logging.getLogger().handlers
