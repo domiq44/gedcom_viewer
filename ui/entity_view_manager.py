@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.startup_diagnostics import measure_startup_callback
 from ui.views.family_view import FamilyView
 from ui.views.individual_view import IndividualView
 from ui.views.multimedia_view import MultimediaView
@@ -28,8 +29,18 @@ class _ScrollableFrame(ttk.Frame):
         self.window_id = self.canvas.create_window(
             (0, 0), window=self.content, anchor="nw"
         )
-        self.content.bind("<Configure>", self._update_scrollregion)
-        self.canvas.bind("<Configure>", self._sync_content_width)
+        self.content.bind(
+            "<Configure>",
+            measure_startup_callback(
+                self, "ScrollableFrame.content_configure", self._update_scrollregion
+            ),
+        )
+        self.canvas.bind(
+            "<Configure>",
+            measure_startup_callback(
+                self, "ScrollableFrame.canvas_configure", self._sync_content_width
+            ),
+        )
         self.canvas.bind("<Enter>", self._bind_mousewheel)
         self.canvas.bind("<Leave>", self._unbind_mousewheel)
 

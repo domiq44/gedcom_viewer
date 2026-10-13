@@ -5,6 +5,7 @@ from tkinter import ttk
 
 from ui.views.link_utils import configure_label, configure_text_widget
 from ui.i18n import Translator
+from ui.startup_diagnostics import measure_startup_callback
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,18 @@ class MultimediaView(ttk.Frame):
         self.canvas_window = self.canvas.create_window(
             (0, 0), window=self.content_frame, anchor="nw"
         )
-        self.content_frame.bind("<Configure>", self._update_scrollregion)
-        self.canvas.bind("<Configure>", self._sync_canvas_width)
+        self.content_frame.bind(
+            "<Configure>",
+            measure_startup_callback(
+                self, "MultimediaView.content_configure", self._update_scrollregion
+            ),
+        )
+        self.canvas.bind(
+            "<Configure>",
+            measure_startup_callback(
+                self, "MultimediaView.canvas_configure", self._sync_canvas_width
+            ),
+        )
 
         self.title_label = ttk.Label(
             self.content_frame,

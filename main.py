@@ -30,6 +30,8 @@ if __name__ == "__main__":
     logger.info("Fenêtre Tk créée en %.3f s", time.perf_counter() - tk_started_at)
 
     startup_state = {"configure_events": 0, "mapped": False, "idle": False}
+    root._startup_diagnostics_enabled = True
+    root._startup_callback_metrics = {}
 
     def count_configure_events(event):
         startup_state["configure_events"] += 1
@@ -40,14 +42,26 @@ if __name__ == "__main__":
         if startup_state["mapped"] and startup_state["idle"]:
             root.unbind_all("<Configure>")
 
+    def log_layout_callback_metrics():
+        for callback_name, metrics in sorted(root._startup_callback_metrics.items()):
+            logger.info(
+                "Tk layout callback %s: count=%d total=%.3f s max=%.3f s",
+                callback_name,
+                metrics[0],
+                metrics[1],
+                metrics[2],
+            )
+
     def log_window_mapped(event):
         if event.widget is root:
             startup_state["mapped"] = True
+            root._startup_diagnostics_enabled = False
             logger.info(
                 "Fenêtre affichée après %.3f s (%d événements Configure)",
                 time.perf_counter() - _startup_started_at,
                 startup_state["configure_events"],
             )
+            log_layout_callback_metrics()
             root.unbind("<Map>", map_binding_id)
             stop_startup_monitor_if_complete()
 

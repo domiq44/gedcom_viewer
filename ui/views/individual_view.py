@@ -7,6 +7,7 @@ from tkinter import ttk
 from ui.views.link_utils import configure_label
 from ui.themes import FONTS
 from ui.i18n import Translator
+from ui.startup_diagnostics import measure_startup_callback
 
 logger = logging.getLogger(__name__)
 
@@ -308,11 +309,20 @@ class IndividualView(ttk.Frame):
             (0, 0), window=self.events_container, anchor="nw"
         )
         self.events_container.bind(
-            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            "<Configure>",
+            measure_startup_callback(
+                self,
+                "IndividualView.event_content_configure",
+                lambda event: canvas.configure(scrollregion=canvas.bbox("all")),
+            ),
         )
         canvas.bind(
             "<Configure>",
-            lambda e: canvas.itemconfigure(canvas_window, width=e.width),
+            measure_startup_callback(
+                self,
+                "IndividualView.event_canvas_configure",
+                lambda event: canvas.itemconfigure(canvas_window, width=event.width),
+            ),
         )
 
     def set_family_name_resolver(self, resolver):
