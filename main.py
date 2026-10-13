@@ -1,5 +1,6 @@
 import logging
 import os
+import faulthandler
 import time
 
 _startup_started_at = time.perf_counter()
@@ -12,6 +13,12 @@ if __name__ == "__main__":
         handlers=[logging.FileHandler(log_path, encoding="utf-8")],
     )
     logger = logging.getLogger(__name__)
+    startup_log_handler = next(
+        handler
+        for handler in logging.getLogger().handlers
+        if isinstance(handler, logging.FileHandler)
+    )
+    faulthandler.dump_traceback_later(5, repeat=True, file=startup_log_handler.stream)
     logger.info("Démarrage de GEDCOM Viewer")
 
     imports_started_at = time.perf_counter()
@@ -56,6 +63,7 @@ if __name__ == "__main__":
         if event.widget is root:
             startup_state["mapped"] = True
             root._startup_diagnostics_enabled = False
+            faulthandler.cancel_dump_traceback_later()
             logger.info(
                 "Fenêtre affichée après %.3f s (%d événements Configure)",
                 time.perf_counter() - _startup_started_at,
