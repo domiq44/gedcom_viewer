@@ -287,9 +287,10 @@ Le résultat est placé dans `dist/`.
 
 ## Données utilisateur
 
-L'application conserve les préférences, la taille de la fenêtre, le dernier
-répertoire et la liste des fichiers récents dans `~/.gedcom_viewer.json`. Les
-journaux sont écrits dans `~/.gedcom_viewer.log`.
+L'application conserve dans `~/.gedcom_viewer.json` la taille de la fenêtre,
+l'état des cases « Indenter » et « Montrer la vue », le dernier répertoire et la
+liste des fichiers récents. Les journaux sont écrits dans
+`~/.gedcom_viewer.log`.
 
 ## Structure du dépôt
 

@@ -12,10 +12,19 @@ class TestRecentFilesStore(unittest.TestCase):
             settings_path = os.path.join(directory, "settings.json")
             store = RecentFilesStore(settings_path)
 
-            store.save(["/tmp/example.ged"], "/tmp", "fr", window_size=(1280, 800))
+            store.save(
+                ["/tmp/example.ged"],
+                "/tmp",
+                "fr",
+                window_size=(1280, 800),
+                view_preferences={"indent": False, "show_entity_view": True},
+            )
             recent_files, last_directory, language = store.load(directory)
 
             self.assertEqual(recent_files, ["/tmp/example.ged"])
+            self.assertEqual(
+                store.view_preferences, {"indent": False, "show_entity_view": True}
+            )
             self.assertEqual(last_directory, "/tmp")
             self.assertEqual(language, "fr")
             self.assertEqual(store.window_size, (1280, 800))
@@ -30,6 +39,26 @@ class TestRecentFilesStore(unittest.TestCase):
             store.load(directory)
 
             self.assertIsNone(store.window_size)
+
+    def test_load_filters_invalid_view_preferences(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings_path = os.path.join(directory, "settings.json")
+            with open(settings_path, "w", encoding="utf-8") as handle:
+                json.dump(
+                    {
+                        "view_preferences": {
+                            "indent": "false",
+                            "show_entity_view": True,
+                            "unknown": True,
+                        }
+                    },
+                    handle,
+                )
+
+            store = RecentFilesStore(settings_path)
+            store.load(directory)
+
+            self.assertEqual(store.view_preferences, {"show_entity_view": True})
 
     def test_load_filters_invalid_recent_files(self):
         with tempfile.TemporaryDirectory() as directory:

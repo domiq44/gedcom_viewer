@@ -829,6 +829,8 @@ class TestGedcomViewer(unittest.TestCase):
     def test_save_recent_files_writes_settings_and_last_directory(self):
         self.viewer.recent_files = ["/tmp/example.ged"]
         self.viewer.last_directory = "/tmp"
+        self.viewer.detail_panel.indent_var.set(False)
+        self.viewer.detail_panel.show_entity_view_var.set(True)
 
         with patch.object(self.viewer.root, "winfo_width", return_value=1280):
             with patch.object(self.viewer.root, "winfo_height", return_value=800):
@@ -840,6 +842,10 @@ class TestGedcomViewer(unittest.TestCase):
         self.assertIn('"recent_files": ["/tmp/example.ged"]', written)
         self.assertIn('"last_directory": "/tmp"', written)
         self.assertIn('"window_size": {"width": 1280, "height": 800}', written)
+        self.assertIn(
+            '"view_preferences": {"indent": false, "show_entity_view": true}',
+            written,
+        )
 
     def test_load_recent_files_restores_window_size(self):
         with patch("ui.main_window.RecentFilesStore") as store_factory:
@@ -851,6 +857,23 @@ class TestGedcomViewer(unittest.TestCase):
                 self.viewer._load_recent_files()
 
         set_geometry.assert_called_once_with("1280x800")
+
+    def test_view_preferences_restore_checkbox_states(self):
+        self.viewer.view_preferences = {
+            "indent": False,
+            "show_entity_view": True,
+        }
+
+        self.viewer._apply_view_preferences()
+
+        self.assertFalse(self.viewer.detail_panel.indent_var.get())
+        self.assertTrue(self.viewer.detail_panel.show_entity_view_var.get())
+        self.assertEqual(
+            self.viewer.detail_panel.split_pane.paneconfigure(
+                self.viewer.entity_detail_frame, "hide"
+            )[-1],
+            0,
+        )
 
     def test_save_recent_files_logs_write_errors(self):
         self.viewer.recent_files = ["/tmp/example.ged"]

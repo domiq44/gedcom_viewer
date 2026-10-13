@@ -11,6 +11,7 @@ class RecentFilesStore:
         self.file_opener = file_opener
         self.logger = log
         self.window_size = None
+        self.view_preferences = {}
 
     @staticmethod
     def _parse_window_size(value):
@@ -26,8 +27,19 @@ class RecentFilesStore:
             return width, height
         return None
 
+    @staticmethod
+    def _parse_view_preferences(value):
+        if not isinstance(value, dict):
+            return {}
+        return {
+            key: value[key]
+            for key in ("indent", "show_entity_view")
+            if type(value.get(key)) is bool
+        }
+
     def load(self, default_directory):
         self.window_size = None
+        self.view_preferences = {}
         if not os.path.isfile(self.settings_path):
             return [], default_directory, None
 
@@ -41,6 +53,9 @@ class RecentFilesStore:
                 language = data.get("language")
                 last_directory = data.get("last_directory", default_directory)
                 self.window_size = self._parse_window_size(data.get("window_size"))
+                self.view_preferences = self._parse_view_preferences(
+                    data.get("view_preferences")
+                )
                 data = data.get("recent_files", [])
 
             if not isinstance(last_directory, str) or not os.path.isdir(last_directory):
@@ -63,7 +78,14 @@ class RecentFilesStore:
             )
             return [], default_directory, None
 
-    def save(self, recent_files, last_directory, language, window_size=None):
+    def save(
+        self,
+        recent_files,
+        last_directory,
+        language,
+        window_size=None,
+        view_preferences=None,
+    ):
         try:
             settings = {
                 "recent_files": recent_files[:10],
@@ -76,6 +98,9 @@ class RecentFilesStore:
                     "width": parsed_window_size[0],
                     "height": parsed_window_size[1],
                 }
+            parsed_view_preferences = self._parse_view_preferences(view_preferences)
+            if parsed_view_preferences:
+                settings["view_preferences"] = parsed_view_preferences
 
             with self.file_opener(self.settings_path, "w", encoding="utf-8") as handle:
                 json.dump(settings, handle)

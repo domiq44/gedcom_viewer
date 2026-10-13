@@ -282,6 +282,7 @@ class GedcomViewer:
         right_content.grid(row=1, column=0, sticky="nsew")
 
         self.detail_panel = DetailPanel(right_content, self.translator)
+        self._apply_view_preferences()
         right_content.add(self.detail_panel, minsize=300, width=370)
         right_content.paneconfigure(self.detail_panel, stretch="always")
 
@@ -318,6 +319,7 @@ class GedcomViewer:
         recent_files, last_directory, language = store.load(self.last_directory)
         self.last_directory = last_directory
         self.window_size = store.window_size
+        self.view_preferences = store.view_preferences
         if self.window_size is not None:
             self.root.geometry(f"{self.window_size[0]}x{self.window_size[1]}")
         if isinstance(language, str):
@@ -329,6 +331,14 @@ class GedcomViewer:
                 )
         return recent_files
 
+    def _apply_view_preferences(self):
+        preferences = getattr(self, "view_preferences", {})
+        if "indent" in preferences:
+            self.detail_panel.indent_var.set(preferences["indent"])
+        if "show_entity_view" in preferences:
+            self.detail_panel.show_entity_view_var.set(preferences["show_entity_view"])
+            self.detail_panel._toggle_entity_view()
+
     def _save_recent_files(self):
         self.file_manager.last_directory = self.last_directory
         self.file_manager.recent_files = self.recent_files
@@ -338,6 +348,10 @@ class GedcomViewer:
             self.last_directory,
             self.translator.language,
             window_size=(self.root.winfo_width(), self.root.winfo_height()),
+            view_preferences={
+                "indent": self.detail_panel.indent_var.get(),
+                "show_entity_view": self.detail_panel.show_entity_view_var.get(),
+            },
         )
 
     def set_language(self, language):
