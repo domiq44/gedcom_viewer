@@ -261,6 +261,37 @@ class TestGedcomViewer(unittest.TestCase):
             self.viewer.translator.get("menu.close_file"),
         )
 
+    def test_file_menu_states_follow_loaded_file(self):
+        menu = self.viewer.menu_bar
+        self.viewer.controller.is_loaded.return_value = False
+        menu.refresh_state()
+
+        self.assertEqual(menu.file_menu.entrycget(0, "state"), "normal")
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.close_file_index, "state"), "disabled"
+        )
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.inspect_index, "state"), "disabled"
+        )
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.navigation_index, "state"), "disabled"
+        )
+
+        self.viewer.controller.is_loaded.return_value = True
+        menu.refresh_state()
+
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.close_file_index, "state"), "normal"
+        )
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.inspect_index, "state"), "normal"
+        )
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.navigation_index, "state"), "normal"
+        )
+        self.assertEqual(menu.navigation_menu.entrycget(0, "state"), "disabled")
+        self.assertEqual(menu.navigation_menu.entrycget(1, "state"), "disabled")
+
     def test_entity_navigator_tracks_history_and_display(self):
         class DummyEntity:
             pointer = "@I1@"

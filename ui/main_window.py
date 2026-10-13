@@ -466,6 +466,7 @@ class GedcomViewer:
             current,
             total,
         )
+        self.menu_bar.refresh_state()
 
     def on_entity_type_change(self, *args):
         entity_type = self.entity_type_var.get()

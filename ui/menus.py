@@ -26,16 +26,21 @@ class MenuBar:
         file_menu.add_command(
             label=tr("menu.close_file"),
             command=self.app.close_file,
+            state=tk.DISABLED,
         )
         self.file_menu = file_menu
+        self.close_file_index = file_menu.index("end")
 
         self.recent_menu = tk.Menu(file_menu, tearoff=0)
         file_menu.add_cascade(label=tr("menu.recent"), menu=self.recent_menu)
+        self.recent_index = file_menu.index("end")
         self.refresh_recent_menu()
         file_menu.add_command(
             label=tr("menu.clear_recent"),
             command=self.clear_recent_files,
+            state=tk.DISABLED,
         )
+        self.clear_recent_index = file_menu.index("end")
 
         file_menu.add_separator()
 
@@ -45,12 +50,22 @@ class MenuBar:
             label=tr("menu.trailer"), command=self.app.show_trailer
         )
         file_menu.add_cascade(label=tr("menu.inspect"), menu=inspect_menu)
+        self.inspect_menu = inspect_menu
+        self.inspect_index = file_menu.index("end")
+        self.file_menu.entryconfigure(self.inspect_index, state=tk.DISABLED)
 
         file_menu.add_separator()
         navigation_menu = tk.Menu(file_menu, tearoff=0)
-        navigation_menu.add_command(label=tr("menu.previous"), command=self.app.go_back)
-        navigation_menu.add_command(label=tr("menu.next"), command=self.app.go_forward)
+        navigation_menu.add_command(
+            label=tr("menu.previous"), command=self.app.go_back, state=tk.DISABLED
+        )
+        navigation_menu.add_command(
+            label=tr("menu.next"), command=self.app.go_forward, state=tk.DISABLED
+        )
         file_menu.add_cascade(label=tr("menu.navigation"), menu=navigation_menu)
+        self.navigation_menu = navigation_menu
+        self.navigation_index = file_menu.index("end")
+        self.file_menu.entryconfigure(self.navigation_index, state=tk.DISABLED)
 
         file_menu.add_separator()
         file_menu.add_command(label=tr("menu.quit"), command=self.quit_app)
@@ -75,17 +90,53 @@ class MenuBar:
 
     def refresh_recent_menu(self):
         self.recent_menu.delete(0, "end")
-        if not getattr(self.app, "recent_files", None):
+        recent_files = getattr(self.app, "recent_files", None)
+        if not recent_files:
             self.recent_menu.add_command(
                 label=self.app.translator.get("menu.no_recent")
             )
-            return
+        else:
+            for filename in recent_files:
+                self.recent_menu.add_command(
+                    label=filename,
+                    command=lambda path=filename: self.app.open_recent_file(path),
+                )
+        self._update_recent_menu_state()
 
-        for filename in self.app.recent_files:
-            self.recent_menu.add_command(
-                label=filename,
-                command=lambda path=filename: self.app.open_recent_file(path),
-            )
+    def _update_recent_menu_state(self):
+        enabled = bool(getattr(self.app, "recent_files", None))
+        state = tk.NORMAL if enabled else tk.DISABLED
+        if hasattr(self, "recent_index"):
+            self.file_menu.entryconfigure(self.recent_index, state=state)
+        if hasattr(self, "clear_recent_index"):
+            self.file_menu.entryconfigure(self.clear_recent_index, state=state)
+
+    def refresh_state(self):
+        controller = getattr(self.app, "controller", None)
+        is_loaded = controller is not None and controller.is_loaded()
+        state = tk.NORMAL if is_loaded else tk.DISABLED
+        self.file_menu.entryconfigure(self.close_file_index, state=state)
+        self.file_menu.entryconfigure(self.inspect_index, state=state)
+        self.file_menu.entryconfigure(self.navigation_index, state=state)
+
+        history = getattr(self.app, "_navigation_history", None)
+        self.navigation_menu.entryconfigure(
+            0,
+            state=(
+                tk.NORMAL
+                if is_loaded and history and history.can_go_back
+                else tk.DISABLED
+            ),
+        )
+        self.navigation_menu.entryconfigure(
+            1,
+            state=(
+                tk.NORMAL
+                if is_loaded and history and history.can_go_forward
+                else tk.DISABLED
+            ),
+        )
+        self._update_recent_menu_state()
 
     def clear_recent_files(self):
         if not getattr(self.app, "recent_files", None):
