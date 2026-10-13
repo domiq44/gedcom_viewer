@@ -77,8 +77,11 @@ Pour lancer les tests Tkinter sans session graphique, installe Xvfb, qui fournit
 la commande `xvfb-run` :
 
 ```bash
-sudo dnf install xorg-x11-server-Xvfb
+sudo dnf install xvfb-run
 ```
+
+Sur Fedora, cette commande installe le paquet RPM `xorg-x11-server-Xvfb`,
+fournisseur de l'exécutable `xvfb-run`.
 
 `ripgrep` (`rg`) est facultatif; il permet de rechercher rapidement dans le
 code, mais n'est requis ni par l'application ni par les tests :
