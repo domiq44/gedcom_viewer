@@ -49,7 +49,45 @@ pas modifiés ni sauvegardés.
 - Python 3 et Tkinter.
 - `make` pour utiliser les commandes du projet.
 
-Sous Debian ou Ubuntu, installe Tkinter si nécessaire :
+### Dépendances par usage
+
+| Usage | Dépendance | Source / rôle |
+| --- | --- | --- |
+| Application | `Pillow>=12.0` | `requirements.txt`; prévisualisation des images |
+| Interface | Tkinter | Module Python avec dépendance système possible; non installé par `pip` |
+| Tests | `unittest` | Bibliothèque standard Python; aucun paquet `pytest` requis |
+| Tests sans affichage | Xvfb (`xvfb-run`) | Paquet système facultatif pour exécuter les tests Tkinter en mode headless |
+| Développement | `black>=26.0` | Formatage du code, dans `requirements-dev.txt` |
+| Génération | `pyinstaller>=6.0` | Création de l'exécutable, dans `requirements-dev.txt` |
+
+`requirements-dev.txt` inclut `requirements.txt`, Black et PyInstaller. Pour
+installer uniquement la dépendance Python de l'application :
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Sous Fedora Linux 44, installe les prérequis système de base avec :
+
+```bash
+sudo dnf install python3 python3-pip python3-tkinter make
+```
+
+Pour lancer les tests Tkinter sans session graphique, installe Xvfb, qui fournit
+la commande `xvfb-run` :
+
+```bash
+sudo dnf install xorg-x11-server-Xvfb
+```
+
+`ripgrep` (`rg`) est facultatif; il permet de rechercher rapidement dans le
+code, mais n'est requis ni par l'application ni par les tests :
+
+```bash
+sudo dnf install ripgrep
+```
+
+Sous Debian ou Ubuntu, le paquet Tkinter s'installe avec :
 
 ```bash
 sudo apt install python3-tk
