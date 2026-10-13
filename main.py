@@ -29,6 +29,45 @@ if __name__ == "__main__":
     root = tk.Tk()
     logger.info("Fenêtre Tk créée en %.3f s", time.perf_counter() - tk_started_at)
 
+    startup_state = {"configure_events": 0, "mapped": False, "idle": False}
+
+    def count_configure_events(event):
+        startup_state["configure_events"] += 1
+
+    root.bind_all("<Configure>", count_configure_events, add="+")
+
+    def stop_startup_monitor_if_complete():
+        if startup_state["mapped"] and startup_state["idle"]:
+            root.unbind_all("<Configure>")
+
+    def log_window_mapped(event):
+        if event.widget is root:
+            startup_state["mapped"] = True
+            logger.info(
+                "Fenêtre affichée après %.3f s (%d événements Configure)",
+                time.perf_counter() - _startup_started_at,
+                startup_state["configure_events"],
+            )
+            root.unbind("<Map>", map_binding_id)
+            stop_startup_monitor_if_complete()
+
+    map_binding_id = root.bind("<Map>", log_window_mapped, add="+")
+
+    def report_startup_progress():
+        if startup_state["mapped"] and startup_state["idle"]:
+            return
+        logger.info(
+            "Attente démarrage Tk après %.3f s: %d événements Configure, "
+            "fenêtre mappée=%s, idle=%s",
+            time.perf_counter() - _startup_started_at,
+            startup_state["configure_events"],
+            startup_state["mapped"],
+            startup_state["idle"],
+        )
+        root.after(2000, report_startup_progress)
+
+    root.after(2000, report_startup_progress)
+
     theme_started_at = time.perf_counter()
     apply_modern_theme(root)
     logger.info("Thème appliqué en %.3f s", time.perf_counter() - theme_started_at)
@@ -39,10 +78,21 @@ if __name__ == "__main__":
         "Interface construite en %.3f s",
         time.perf_counter() - window_started_at,
     )
-    root.after_idle(
+    root.after(
+        0,
         lambda: logger.info(
-            "Interface prête pour interaction après %.3f s",
+            "Boucle d'événements Tk active après %.3f s",
+            time.perf_counter() - _startup_started_at,
+        ),
+    )
+
+    def log_first_idle():
+        startup_state["idle"] = True
+        logger.info(
+            "Premier état idle Tk après %.3f s",
             time.perf_counter() - _startup_started_at,
         )
-    )
+        stop_startup_monitor_if_complete()
+
+    root.after_idle(log_first_idle)
     root.mainloop()
