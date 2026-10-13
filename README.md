@@ -2,342 +2,264 @@
 
 ![Interface de GEDCOM Viewer](docs/screenshots/gedcom-viewer-overview.png)
 
-GEDCOM Viewer est une application de bureau Python/Tkinter pour ouvrir et
-explorer des fichiers GEDCOM.
+GEDCOM Viewer est une application de bureau Python/Tkinter pour lire et explorer
+des fichiers GEDCOM. Elle fonctionne en lecture seule : les fichiers ne sont
+pas modifiés ni sauvegardés.
 
-## Documentation
+## Sommaire
 
-Le dépôt conserve une documentation minimale et ciblée :
-
-- [README.md](README.md) : vue d’ensemble, installation, lancement, tests et
-  utilisation quotidienne.
-- [docs/architecture.md](docs/architecture.md) : description technique de
-  l’architecture, des flux et des composants.
-- [docs/analysis.md](docs/analysis.md) : analyse du projet, limites connues,
-  points de vigilance et recommandations.
-- [docs/roadmap.md](docs/roadmap.md) : priorités d’évolution et plan de refonte / consolidation.
+- [Fonctionnalités](#fonctionnalités)
+- [Installation et lancement](#installation-et-lancement)
+- [Utilisation](#utilisation)
+- [Recherche](#recherche)
+- [Formats et limites](#formats-et-limites)
+- [Développement](#développement)
+- [Tests](#tests)
+- [Benchmarks](#benchmarks)
+- [Exécutable](#exécutable)
+- [Données utilisateur](#données-utilisateur)
+- [Structure du dépôt](#structure-du-dépôt)
+- [Licence](#licence)
 
 ## Fonctionnalités
 
-- Ouverture de fichiers GEDCOM `.ged`.
-- Deux modes d'ouverture : tolérant ou strict avec validation structurelle.
-- Liste des entités par type : `INDI`, `FAM`, `SOUR`, `REPO`, `NOTE`, `OBJE` et
-  `SUBM`.
-- Recherche réactive dans les entités avec debounce pour limiter les recalculs.
-- Bouton d'effacement rapide du filtre de recherche.
-- Bouton d'effacement intégré à la palette visuelle de l'application.
-- Tri par nom, titre ou identifiant, avec tri numérique des pointeurs.
-- Navigation entre les pointeurs GEDCOM tels que `@I1@` ou `@F1@`.
-- Historique de navigation précédent/suivant.
-- Affichage du bloc GEDCOM brut avec coloration syntaxique.
-- Affichage des blocs `HEAD` et `TRLR`.
-- Gestion des fichiers récemment ouverts.
-- Vues détaillées pour les individus, familles, sources, dépôts, notes, médias
-  et submitters.
-- Formulaire Individu avec onglets « Familles (parent) » (liste à deux colonnes
-  nom/identifiant) et « Enfants ».
-- Panneau de détail (bloc GEDCOM brut / formulaire d'entité) redimensionnable
-  via un séparateur déplaçable.
-- Prévisualisation des images locales dans l'onglet multimédia avec Pillow.
-- Chargement des fichiers en arrière-plan afin de maintenir l'interface réactive,
-  avec publication atomique du contrôleur après succès.
-- Conservation de l'état chargé en cas d'échec et arrêt propre du polling lors de
-  la fermeture de la fenêtre.
-- Journalisation dans `~/.gedcom_viewer.log`.
-- Affichage du temps de chargement dans la barre de statut.
-- Signalement dans le journal des lignes malformées et des caractères remplacés
-  lors de la lecture.
-- Préservation des espaces répétés à l’intérieur des valeurs GEDCOM.
-- Validation structurelle et cohérence des types de références GEDCOM reconnues
-  disponibles en mode strict via `load(..., strict=True)`, y compris le rejet des
-  pointeurs mal formés ou manquants pour les tags qui exigent une référence et
-  les contextes invalides pour les références GEDCOM reconnues, ainsi que les
-  pointeurs requis des enregistrements indexés; vérification du contexte de
-  `GEDC`, `VERS` et `FORM` dans `HEAD`, avec `VERS` et `FORM` obligatoires dans
-  tout bloc `HEAD.GEDC` déclaré, rejet des valeurs vides et détection des tags
-  `GEDC`, `VERS` et `FORM` dupliqués; pour GEDCOM 5.5.1, `HEAD.SOUR` et
-  `HEAD.CHAR` sont obligatoires, non vides et uniques, et `HEAD.SUBM` doit être
-  unique et référencer un submitter valide.
-- Infrastructure d'internationalisation avec l'anglais comme langue par défaut.
+- Ouverture de fichiers `.ged` et affichage des entités `INDI`, `FAM`, `SOUR`,
+  `REPO`, `NOTE`, `OBJE` et `SUBM`.
+- Recherche filtrée, insensible à la casse et aux accents, avec tri par nom,
+  titre ou identifiant.
+- Navigation par pointeurs GEDCOM (`@I1@`, `@F1@`, etc.) et historique
+  précédent/suivant.
+- Vues détaillées des entités, avec liens entre les références reconnues.
+- Fiches Individu avec événements, familles parentes, enfants, notes et galerie
+  multimédia; fiche Famille avec enfants, sources, notes et événements.
+- Affichage du bloc GEDCOM brut avec coloration syntaxique, indentation
+  optionnelle et copie dans le presse-papiers; accès aux blocs `HEAD` et `TRLR`.
+- Prévisualisation des images locales avec Pillow.
+- Chargement en arrière-plan : une nouvelle session remplace la session active
+  uniquement après un chargement réussi.
+- Historique des fichiers récents et mémorisation du dernier répertoire utilisé.
 - Interface disponible en anglais, français, espagnol, allemand, italien et
-  portugais.
-- Le changement de langue est appliqué au redémarrage.
+  portugais. L'anglais est la langue par défaut; un changement de langue prend
+  effet au redémarrage.
 
-L'application est en lecture seule : elle n'édite ni ne sauvegarde les fichiers GEDCOM.
+## Installation et lancement
 
-## Champs utilisés par la recherche
+### Prérequis
 
-La recherche porte sur les champs GEDCOM suivants :
+- Python 3 et Tkinter.
+- `make` pour utiliser les commandes du projet.
 
-| Type | Champs recherchés |
-| --- | --- |
-| `INDI` | Pointeur de l'individu et `NAME` |
-| `FAM` | Pointeur de la famille et `NAME` des individus référencés par `HUSB`, `WIFE` ou `CHIL` |
-| `SOUR` | Pointeur de la source et `TITL` |
-| `REPO` | Pointeur du dépôt et `NAME` |
-| `NOTE` | Pointeur de la note et texte de la note |
-| `OBJE` | Pointeur du média, `TITL` et `FILE` |
-| `SUBM` | Pointeur du submitter, `NAME` et `EMAIL` |
-
-La recherche est insensible à la casse et aux accents pour tous ces champs :
-`cretel` trouve notamment `crétel`, `Crétel` et `Cretel`, quel que soit le type
-d'entité recherché.
-
-## Architecture
-
-```text
-UI Tkinter (ui/)
-  -> contrôleurs (controllers/) [thread principal]
-        -> service GEDCOM
-            -> parser et modèles métier (gedcom/)
-```
-
-Le chargement et la construction des modèles sont exécutés dans un thread de
-travail. Les résultats et les erreurs sont ensuite appliqués à l'interface dans
-le thread Tkinter principal.
-
-- `gedcom/` contient le parser et les modèles métier.
-- `controllers/` coordonne le chargement, la recherche, le tri et la résolution des pointeurs.
-- `ui/` contient la fenêtre principale, les menus, le thème et les vues spécialisées.
-- `ui/i18n.py` charge les traductions depuis les catalogues JSON de `ui/locales/`.
-- `tests/` contient les tests unitaires et les tests UI Tkinter.
-
-## Prérequis
-
-- Python 3.x
-- Tkinter
-- Accès à `pip` pour installer Pillow, PyInstaller et Black
-
-Sur Debian ou Ubuntu, Tkinter peut être installé avec :
+Sous Debian ou Ubuntu, installe Tkinter si nécessaire :
 
 ```bash
 sudo apt install python3-tk
 ```
 
-## Installation
+### Démarrage rapide
 
-Le `Makefile` crée automatiquement `.venv` si nécessaire et installe les outils
-requis :
-
-```bash
-make install
-```
-
-Cette commande installe :
-
-- Pillow pour la prévisualisation des images ;
-- PyInstaller pour la génération de l'exécutable ;
-- Black pour le formatage du code.
-
-Les dépendances runtime sont listées dans `requirements.txt` et les outils de
-développement dans `requirements-dev.txt`. La cible `make run` vérifie
-l'environnement virtuel et installe ou met à jour les dépendances avant le
-lancement.
-
-## Lancement
-
-Avec le script fourni :
+La commande crée `.venv` si nécessaire, installe les dépendances de
+`requirements-dev.txt`, puis lance l'application :
 
 ```bash
-./run.sh
+make run
 ```
 
-Ou directement avec Python :
-
-```bash
-python3 main.py
-```
-
-Avec l'environnement virtuel du projet :
+Le script `run.sh` lance l'application avec `.venv/bin/python` si cet
+environnement existe, sinon avec `python3` ou `python`. Il ne procède pas à
+l'installation des dépendances. Après installation, l'application peut aussi
+être lancée directement :
 
 ```bash
 .venv/bin/python main.py
 ```
 
-Au démarrage, l'application tente de recharger le dernier fichier GEDCOM récent
-lorsqu'il existe encore.
+Au démarrage, le dernier fichier récent est rouvert s'il existe toujours.
 
-Dans le menu `Fichier`, `Ouvrir un fichier GEDCOM` conserve le mode tolérant.
-`Ouvrir et valider un fichier GEDCOM` utilise le mode strict et refuse les
-anomalies détectées, notamment les erreurs structurelles et certaines références
-inconnues ou incompatibles. Les fichiers récents sont rechargés en mode tolérant.
+## Utilisation
 
-## Tests et vérifications
+Dans le menu **Fichier**, **Ouvrir un fichier GEDCOM** charge le fichier en mode
+tolérant. **Ouvrir et valider un fichier GEDCOM** active le mode strict et refuse
+le fichier si les anomalies prises en charge par le validateur sont détectées.
+Les fichiers ouverts depuis la liste des récents sont chargés en mode tolérant.
 
-Exécuter les tests :
+La fenêtre permet de sélectionner un type d'entité, d'ouvrir sa fiche, puis de
+suivre les pointeurs cliquables. Le panneau de détail est redimensionnable entre
+la fiche et le bloc GEDCOM brut. L'application affiche le temps de chargement et
+les messages de journalisation dans son interface.
+
+## Recherche
+
+La recherche s'applique au type d'entité sélectionné. Elle ignore la casse et
+les accents : `cretel` trouve aussi `crétel`, `Crétel` et `Cretel`. La liste est
+mise à jour après une courte temporisation afin d'éviter les recalculs à chaque
+frappe.
+
+| Type | Champs recherchés |
+| --- | --- |
+| `INDI` | Pointeur et `NAME` |
+| `FAM` | Pointeur et noms des individus `HUSB`, `WIFE` et `CHIL` référencés |
+| `SOUR` | Pointeur et `TITL` |
+| `REPO` | Pointeur et `NAME` |
+| `NOTE` | Pointeur et texte |
+| `OBJE` | Pointeur, `TITL` et `FILE` |
+| `SUBM` | Pointeur, `NAME` et `EMAIL` |
+
+Les pointeurs sont triés numériquement lorsque c'est possible. Le tri par nom ou
+titre dépend des données de l'entité et de ses références.
+
+## Formats et limites
+
+### Lecture et encodage
+
+Les fichiers sont décodés en UTF-8, avec ou sans BOM. La valeur `HEAD.CHAR` est
+vérifiée en mode strict pour les règles GEDCOM prises en charge, mais ne choisit
+pas le décodeur. Les séquences qui ne sont pas valides en UTF-8 sont remplacées;
+leur nombre est signalé dans le journal. Les espaces répétés dans les valeurs
+sont préservés.
+
+### Validation stricte
+
+Le mode strict contrôle notamment la structure des lignes et des enregistrements,
+les pointeurs requis, les références connues et certains contextes de tags. Pour
+un en-tête déclaré GEDCOM 5.5.1, il vérifie aussi la présence, l'unicité et la
+validité de `HEAD.SOUR`, `HEAD.CHAR` et `HEAD.SUBM`, ainsi que plusieurs règles
+sur `HEAD.GEDC`, `VERS` et `FORM`.
+
+Cette validation est ciblée et ne garantit pas la conformité complète au
+standard GEDCOM. En mode tolérant, les anomalies sont signalées dans le journal
+et le chargement continue lorsque c'est possible.
+
+### Mémoire
+
+Le fichier est chargé intégralement en mémoire. Les données optionnelles et
+certains arbres d'événements sont construits à la demande pour réduire les
+allocations initiales, mais la mémoire nécessaire augmente avec la taille du
+GEDCOM. Utilise le benchmark ci-dessous sur tes propres fichiers pour mesurer
+leur coût dans ton environnement.
+
+## Développement
+
+Créer l'environnement virtuel et installer Pillow, PyInstaller et Black :
+
+```bash
+make install
+```
+
+Les dépendances d'exécution sont dans `requirements.txt`; les dépendances de
+développement sont dans `requirements-dev.txt`.
+
+Commandes disponibles :
+
+| Commande | Action |
+| --- | --- |
+| `make run` | Installer les dépendances et lancer l'application |
+| `make test` | Installer les dépendances et exécuter les tests |
+| `make lint` | Compiler les fichiers Python pour vérifier leur syntaxe |
+| `make format` | Formater les sources Python avec Black |
+| `make dist` | Construire l'application avec PyInstaller |
+| `make clean` | Supprimer `.venv`, `build`, `dist` et les `__pycache__` |
+
+## Tests
+
+Sur une machine avec un affichage disponible :
 
 ```bash
 make test
 ```
 
-Ou directement :
+Ou, après installation des dépendances :
 
 ```bash
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Dernière validation locale : 177 tests passent dans la suite complète.
+En environnement Linux sans affichage, exécute la suite Tkinter sous Xvfb :
 
-Mesurer le chargement, la mémoire et la recherche sur des fichiers synthétiques :
+```bash
+xvfb-run --auto-servernum .venv/bin/python -m unittest discover -s tests
+```
+
+La CI compile les sources, vérifie le format avec Black, exécute les tests sous
+Xvfb et construit l'application PyInstaller.
+
+## Benchmarks
+
+Le benchmark mesure le temps de chargement, la recherche et les allocations
+Python suivies par `tracemalloc`. Ces allocations ne représentent pas toute la
+mémoire résidente du processus et les temps dépendent de la machine.
+
+Lancer les scénarios synthétiques par défaut (10 000, 50 000 et 100 000
+individus) :
 
 ```bash
 python3 benchmarks/benchmark_search.py
 ```
 
-Mesurer un GEDCOM existant sans afficher son chemin ni ses valeurs :
+Mesurer un fichier existant sans afficher son chemin ni ses valeurs GEDCOM :
 
 ```bash
 python3 benchmarks/benchmark_search.py --file /path/to/family.ged --repeats 1
 ```
 
-Le rapport indique les lignes et entités comptées, puis la mémoire du parser,
-des modèles et des données différées après consultation.
-
-Les tailles par défaut sont 10 000, 50 000 et 100 000 individus. Le benchmark
-compare la normalisation Unicode complète à chaque requête au fast path ASCII.
-L’option `--families` ajoute des familles liées aux individus pour mesurer aussi
-leur coût mémoire, par exemple :
+Ajouter des familles ou des enregistrements auxiliaires :
 
 ```bash
 python3 benchmarks/benchmark_search.py --sizes 100000 --families 50000 --repeats 1
-```
-
-L’option `--other-entities` ajoute ce nombre d’enregistrements pour chacun des
-types `NOTE`, `SOUR`, `REPO`, `SUBM` et `OBJE`; `--events-per-family` ajoute des
-événements `MARR` sans sous-tags à chaque famille. L’option
-`--events-per-source` ajoute des événements `DATA/EVEN` à chaque source créée
-par `--other-entities`, par exemple :
-
-```bash
 python3 benchmarks/benchmark_search.py --sizes 10000 --other-entities 10000 --events-per-source 2 --repeats 1
 ```
 
-`--metadata-per-source` ajoute à chaque source une note continuée, une référence
-`SOUR` et une référence `REFN` pour mesurer ces listes différées.
-Le benchmark ventile la mémoire retenue par le parser et l’incrément des modèles,
-puis mesure l’allocation supplémentaire quand les données optionnelles sont
-toutes consultées. Le parser stocke les lignes brutes dans un tampon texte unique
-avec offsets compacts.
-L’option `--texts-per-individual` ajoute des tags `TEXT` avec continuation à
-chaque individu afin de mesurer les données textuelles différées :
+Options de données synthétiques :
 
-```bash
-python3 benchmarks/benchmark_search.py --sizes 100000 --texts-per-individual 2 --repeats 1
-```
+| Option | Données ajoutées |
+| --- | --- |
+| `--families` | Nombre de familles reliées aux individus |
+| `--other-entities` | Ce nombre d'enregistrements `NOTE`, `SOUR`, `REPO`, `SUBM` et `OBJE` |
+| `--texts-per-individual`, `--notes-per-individual` | Textes ou notes avec continuation |
+| `--occupations-per-individual`, `--properties-per-individual` | Occupations datées ou tags `PROP` |
+| `--fams-per-individual`, `--obje-per-individual` | Références aux familles ou médias; nécessitent respectivement `--families` ou `--other-entities` |
+| `--events-per-family`, `--events-per-source` | Événements familiaux `MARR` ou événements `DATA/EVEN` dans les sources |
+| `--metadata-per-source` | Notes, références `SOUR` et `REFN`; nécessite `--other-entities` |
 
-Les options `--occupations-per-individual` et `--properties-per-individual`
-ajoutent respectivement des événements `OCCU` datés et des tags `PROP` à chaque
-individu pour mesurer ces listes différées :
+`--file` ne peut pas être combiné avec les options qui génèrent des données
+synthétiques. `--query` et `--repeats` permettent de régler la recherche
+mesurée; consulte `python3 benchmarks/benchmark_search.py --help` pour la liste
+complète des paramètres.
 
-```bash
-python3 benchmarks/benchmark_search.py --sizes 100000 --occupations-per-individual 2 --properties-per-individual 1 --repeats 1
-```
+## Exécutable
 
-`--notes-per-individual` ajoute des notes `NOTE` avec continuation, par exemple :
-
-```bash
-python3 benchmarks/benchmark_search.py --sizes 100000 --notes-per-individual 2 --repeats 1
-```
-
-`--fams-per-individual` et `--obje-per-individual` ajoutent des références aux
-familles et médias synthétiques; ils nécessitent respectivement `--families` et
-`--other-entities` :
-
-```bash
-python3 benchmarks/benchmark_search.py --sizes 100000 --families 50000 --other-entities 50000 --fams-per-individual 1 --obje-per-individual 1 --repeats 1
-```
-
-Vérifier la syntaxe Python :
-
-```bash
-make lint
-```
-
-Formater le code avec Black :
-
-```bash
-make format
-```
-
-## Génération de l'exécutable
-
-Créer une version autonome avec PyInstaller :
+Construire une version autonome avec PyInstaller :
 
 ```bash
 make dist
 ```
 
-L'exécutable est généré dans :
+Le résultat est placé dans `dist/`.
 
-```text
-dist/gedcom_viewer
-```
+## Données utilisateur
 
-Nettoyer les artefacts de build et l'environnement virtuel :
+L'application conserve les préférences, le dernier répertoire et la liste des
+fichiers récents dans `~/.gedcom_viewer.json`. Les journaux sont écrits dans
+`~/.gedcom_viewer.log`.
 
-```bash
-make clean
-```
-
-Cette commande supprime `build/`, `dist/`, `.venv/` et les répertoires `__pycache__/`.
-
-## Fichiers utilisateur
-
-Les journaux sont écrits dans :
-
-```text
-~/.gedcom_viewer.log
-```
-
-Les préférences, le répertoire du dernier GEDCOM chargé et la liste des fichiers
-récents sont enregistrés dans :
-
-```text
-~/.gedcom_viewer.json
-```
-
-## Limites connues
-
-- Les gros fichiers sont toujours chargés entièrement en mémoire. Sur le jeu
-  synthétique de 100 000 individus du benchmark, les arbres d’événements et les
-  listes optionnelles des individus sont construits à la demande; `Individual`
-  utilise des slots. Le pic mesuré est de 67,3 MiB, contre 99,3 MiB auparavant.
-  Des mesures synthétiques séparées de 50 000 familles, sources, notes, dépôts
-  et submitters épars donnent respectivement 19,6 MiB (contre 41,0), 16,5 MiB
-  (contre 32,5), 13,6 MiB (contre 26,5), 15,2 MiB (contre 25,9) et 12,2 MiB
-  (contre 19,9) après slots et listes paresseuses. Cent mille objets `Event`
-  sans détails passent de 15,3 à 6,1 MiB avec slots et détails paresseux;
-  50 000 objets multimédias passent de 15,7 à 13,8 MiB avec slots. Avec
-  `--families 50000`, le jeu combiné de 100 000 individus et 50 000 familles
-  mesure 103,4 MiB. Ces mesures dépendent de l’environnement; les lignes brutes
-  restent chargées intégralement.
-- Les événements familiaux sont représentés par le modèle `Event`, mais leur
-  structure reste volontairement simple : un tag, une valeur et une liste de
-  sous-tags.
-- Les événements de mariage multiples sont affichés dans la vue famille, mais
-  ne disposent pas encore d'une présentation détaillée dédiée.
-- Le parser signale les anomalies, mais ne réalise pas une validation complète de conformité GEDCOM.
-- L'ouverture standard reste tolérante ; le mode strict est également accessible
-  dans le menu `Fichier` et via l'API Python.
-
-## Structure du projet
+## Structure du dépôt
 
 ```text
 .
-├── controllers/
-├── gedcom/
-│   └── models/
-├── ui/
-│   └── views/
-├── tests/
-├── main.py
-├── Makefile
-├── gedcom_viewer.spec
-└── run.sh
+├── benchmarks/   mesures de recherche et de mémoire
+├── controllers/  orchestration et logique applicative
+├── gedcom/       parser et modèles métier
+├── tests/        tests unitaires et tests Tkinter
+├── ui/           interface, traductions et vues
+├── main.py       point d'entrée
+└── Makefile      commandes de développement et de build
 ```
 
-## Licence et contributions
+Le chargement est coordonné par `ui/load_coordinator.py`. Un thread de travail
+construit un nouvel `AppController` via les contrôleurs et le service GEDCOM;
+la nouvelle session est publiée dans Tkinter uniquement après succès. En cas
+d'erreur, la session courante reste disponible.
 
-Aucun fichier de licence n'est fourni dans le dépôt. Les contributions peuvent
-être proposées via une branche dédiée et une pull request, accompagnées de tests
-pour les changements de comportement.
+## Licence
+
+Aucun fichier de licence n'est présent dans le dépôt. Aucune licence n'est donc
+déclarée pour le moment.
