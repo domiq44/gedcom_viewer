@@ -12,7 +12,7 @@ class DetailPanel(tk.Frame):
         self.translator = translator
         self.highlighter = None
         self._raw_content = ""
-        self.indent_var = tk.BooleanVar(value=False)
+        self.indent_var = tk.BooleanVar(value=True)
         self._copy_reset_after_id = None
         self._build()
 

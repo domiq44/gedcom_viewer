@@ -125,6 +125,13 @@ class TestGedcomViewer(unittest.TestCase):
 
         self.assertEqual(panel.text_area.get("1.0", tk.END).strip(), "0 @I1@ INDI")
 
+    def test_detail_panel_indents_gedcom_by_default(self):
+        panel = DetailPanel(self.root, self.viewer.translator)
+        panel.display_raw("0 @I1@ INDI\n1 NAME John /DOE/")
+
+        self.assertTrue(panel.indent_var.get())
+        self.assertIn("  1 NAME John /DOE/", panel.text_area.get("1.0", tk.END))
+
     def test_detail_panel_can_indent_gedcom_by_level(self):
         panel = DetailPanel(self.root, self.viewer.translator)
         panel.indent_var.set(True)
@@ -314,7 +321,7 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.show_header()
 
         content = self.viewer.text_area.get("1.0", tk.END).strip()
-        self.assertEqual(content, "0 HEAD\n1 SOUR GEDCOM")
+        self.assertEqual(content, "0 HEAD\n  1 SOUR GEDCOM")
         self.viewer.highlighter.highlight.assert_called_once()
 
     def test_show_header_shows_error_when_missing(self):
