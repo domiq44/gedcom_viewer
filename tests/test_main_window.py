@@ -68,6 +68,15 @@ class TestGedcomViewer(unittest.TestCase):
             else:
                 root.destroy()
 
+    def test_startup_logs_when_no_recent_file_is_available(self):
+        with self.assertLogs("ui.main_window", level="INFO") as logs:
+            self.viewer._open_recent_file_on_startup()
+
+        self.assertIn(
+            "Aucun fichier GEDCOM récent à charger au démarrage",
+            logs.output[0],
+        )
+
     def test_open_validated_file_uses_strict_loading(self):
         with patch(
             "ui.main_window.filedialog.askopenfilename",

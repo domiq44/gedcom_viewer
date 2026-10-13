@@ -177,11 +177,18 @@ class GedcomViewer:
         self._navigation_history.index = value
 
     def _open_recent_file_on_startup(self):
-        if self.recent_files:
-            startup_file = self.recent_files[0]
-            if os.path.isfile(startup_file):
-                self.status_var.set(self.translator.get("ui.loading_last_file"))
-                self.root.after(50, self._load_file_async, startup_file)
+        if not self.recent_files:
+            logger.info("Aucun fichier GEDCOM récent à charger au démarrage")
+            return
+
+        startup_file = self.recent_files[0]
+        if not os.path.isfile(startup_file):
+            logger.info("Le dernier fichier récent n'est pas disponible au démarrage")
+            return
+
+        logger.info("Rechargement automatique du dernier GEDCOM récent programmé")
+        self.status_var.set(self.translator.get("ui.loading_last_file"))
+        self.root.after(50, self._load_file_async, startup_file)
 
     def _build_app_header(self, root, tr):
         self.app_header = AppHeader(root, self.translator)
