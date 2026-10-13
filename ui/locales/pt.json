@@ -9,6 +9,7 @@
   "ui.log_status": "Último erro do registo",
   "ui.raw_content": "Conteúdo bruto do ficheiro:",
   "ui.indent": "Indentar",
+  "ui.show_entity_view": "Mostrar vista da entidade",
   "ui.copy_to_clipboard": "Copiar",
   "ui.copied": "Copiado",
   "ui.entity_view": "Vista da entidade",

@@ -132,6 +132,27 @@ class TestGedcomViewer(unittest.TestCase):
         self.assertTrue(panel.indent_var.get())
         self.assertIn("  1 NAME John /DOE/", panel.text_area.get("1.0", tk.END))
 
+    def test_entity_view_is_hidden_by_default_and_toggleable(self):
+        panel = DetailPanel(self.root, self.viewer.translator)
+        self.assertFalse(panel.show_entity_view_var.get())
+        self.assertEqual(
+            panel.split_pane.paneconfigure(panel.entity_detail_frame, "hide")[-1], 1
+        )
+
+        panel.show_entity_view_checkbox.invoke()
+
+        self.assertTrue(panel.show_entity_view_var.get())
+        self.assertEqual(
+            panel.split_pane.paneconfigure(panel.entity_detail_frame, "hide")[-1], 0
+        )
+
+        panel.show_entity_view_checkbox.invoke()
+
+        self.assertFalse(panel.show_entity_view_var.get())
+        self.assertEqual(
+            panel.split_pane.paneconfigure(panel.entity_detail_frame, "hide")[-1], 1
+        )
+
     def test_detail_panel_can_indent_gedcom_by_level(self):
         panel = DetailPanel(self.root, self.viewer.translator)
         panel.indent_var.set(True)

@@ -9,6 +9,7 @@
   "ui.log_status": "Ultimo errore del registro",
   "ui.raw_content": "Contenuto grezzo del file:",
   "ui.indent": "Indentare",
+  "ui.show_entity_view": "Mostra vista entità",
   "ui.copy_to_clipboard": "Copia",
   "ui.copied": "Copiato",
   "ui.entity_view": "Vista entità",

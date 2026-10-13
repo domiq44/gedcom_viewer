@@ -13,6 +13,7 @@ class DetailPanel(tk.Frame):
         self.highlighter = None
         self._raw_content = ""
         self.indent_var = tk.BooleanVar(value=True)
+        self.show_entity_view_var = tk.BooleanVar(value=False)
         self._copy_reset_after_id = None
         self._build()
 
@@ -89,6 +90,15 @@ class DetailPanel(tk.Frame):
             bg=COLORS["background"],
             activebackground=COLORS["background"],
         ).pack(anchor="e", side="right", padx=(0, 8))
+        self.show_entity_view_checkbox = tk.Checkbutton(
+            toolbar,
+            text=self.translator.get("ui.show_entity_view"),
+            variable=self.show_entity_view_var,
+            command=self._toggle_entity_view,
+            bg=COLORS["background"],
+            activebackground=COLORS["background"],
+        )
+        self.show_entity_view_checkbox.pack(anchor="e", side="right", padx=(0, 8))
 
         self.copy_button = tk.Button(
             toolbar,
@@ -131,6 +141,7 @@ class DetailPanel(tk.Frame):
         self.split_pane.add(
             self.entity_detail_frame, minsize=300, width=370, stretch="always"
         )
+        self.split_pane.paneconfigure(self.entity_detail_frame, hide=True)
 
         self.entity_detail_container = tk.Frame(
             self.entity_detail_frame, bg=COLORS["surface"], bd=1, relief="solid"
@@ -141,6 +152,11 @@ class DetailPanel(tk.Frame):
 
         self.entity_detail_frame.grid_columnconfigure(0, weight=1)
         self.entity_detail_frame.grid_rowconfigure(0, weight=1)
+
+    def _toggle_entity_view(self):
+        self.split_pane.paneconfigure(
+            self.entity_detail_frame, hide=not self.show_entity_view_var.get()
+        )
 
     def display_raw(self, content):
         self._raw_content = content or ""

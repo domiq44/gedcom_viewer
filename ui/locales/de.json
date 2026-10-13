@@ -9,6 +9,7 @@
   "ui.log_status": "Letzter Protokollfehler",
   "ui.raw_content": "Rohinhalt der Datei:",
   "ui.indent": "Einrücken",
+  "ui.show_entity_view": "Entitätsansicht anzeigen",
   "ui.copy_to_clipboard": "Kopieren",
   "ui.copied": "Kopiert",
   "ui.entity_view": "Entitätsansicht",

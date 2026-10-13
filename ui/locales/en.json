@@ -11,6 +11,7 @@
   "ui.gedcom": "GEDCOM",
   "ui.raw_content": "Raw file content:",
   "ui.indent": "Indent",
+  "ui.show_entity_view": "Show entity view",
   "ui.copy_to_clipboard": "Copy",
   "ui.copied": "Copied",
   "ui.entity_view": "Entity view",
