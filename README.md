@@ -290,7 +290,9 @@ Le résultat est placé dans `dist/`.
 L'application conserve dans `~/.gedcom_viewer.json` la taille de la fenêtre,
 l'état des cases « Indenter » et « Montrer la vue », le dernier répertoire et la
 liste des fichiers récents. Les journaux sont écrits dans
-`~/.gedcom_viewer.log`.
+`~/.gedcom_viewer.log`. Les états des cases sont restaurés au lancement suivant;
+si aucune préférence n'a encore été enregistrée, « Indenter » est coché et
+« Montrer la vue » est décoché par défaut.
 
 ## Structure du dépôt
 
