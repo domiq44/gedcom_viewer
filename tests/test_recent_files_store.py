@@ -12,12 +12,24 @@ class TestRecentFilesStore(unittest.TestCase):
             settings_path = os.path.join(directory, "settings.json")
             store = RecentFilesStore(settings_path)
 
-            store.save(["/tmp/example.ged"], "/tmp", "fr")
+            store.save(["/tmp/example.ged"], "/tmp", "fr", window_size=(1280, 800))
             recent_files, last_directory, language = store.load(directory)
 
             self.assertEqual(recent_files, ["/tmp/example.ged"])
             self.assertEqual(last_directory, "/tmp")
             self.assertEqual(language, "fr")
+            self.assertEqual(store.window_size, (1280, 800))
+
+    def test_load_ignores_invalid_window_size(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings_path = os.path.join(directory, "settings.json")
+            with open(settings_path, "w", encoding="utf-8") as handle:
+                json.dump({"window_size": {"width": "1280", "height": 800}}, handle)
+
+            store = RecentFilesStore(settings_path)
+            store.load(directory)
+
+            self.assertIsNone(store.window_size)
 
     def test_load_filters_invalid_recent_files(self):
         with tempfile.TemporaryDirectory() as directory:

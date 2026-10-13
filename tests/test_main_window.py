@@ -687,12 +687,14 @@ class TestGedcomViewer(unittest.TestCase):
         root_logger = logging.getLogger()
         self.assertIn(ui_log_handler, root_logger.handlers)
 
-        with patch.object(self.viewer.root, "destroy") as destroy:
-            self.viewer._on_close()
+        with patch.object(self.viewer, "_save_recent_files") as save_settings:
+            with patch.object(self.viewer.root, "destroy") as destroy:
+                self.viewer._on_close()
 
         self.assertTrue(self.viewer.load_coordinator.is_closing)
         self.assertFalse(self.viewer.load_coordinator.is_loading)
         self.assertNotIn(ui_log_handler, root_logger.handlers)
+        save_settings.assert_called_once_with()
         destroy.assert_called_once_with()
 
     def test_clear_recent_files_removes_all_entries(self):
@@ -707,13 +709,27 @@ class TestGedcomViewer(unittest.TestCase):
         self.viewer.recent_files = ["/tmp/example.ged"]
         self.viewer.last_directory = "/tmp"
 
-        with patch("ui.main_window.open", create=True) as open_file:
-            self.viewer._save_recent_files()
+        with patch.object(self.viewer.root, "winfo_width", return_value=1280):
+            with patch.object(self.viewer.root, "winfo_height", return_value=800):
+                with patch("ui.main_window.open", create=True) as open_file:
+                    self.viewer._save_recent_files()
 
         write_mock = open_file.return_value.__enter__.return_value.write
         written = "".join(call_args.args[0] for call_args in write_mock.call_args_list)
         self.assertIn('"recent_files": ["/tmp/example.ged"]', written)
         self.assertIn('"last_directory": "/tmp"', written)
+        self.assertIn('"window_size": {"width": 1280, "height": 800}', written)
+
+    def test_load_recent_files_restores_window_size(self):
+        with patch("ui.main_window.RecentFilesStore") as store_factory:
+            store = store_factory.return_value
+            store.load.return_value = ([], self.viewer.last_directory, None)
+            store.window_size = (1280, 800)
+
+            with patch.object(self.viewer.root, "geometry") as set_geometry:
+                self.viewer._load_recent_files()
+
+        set_geometry.assert_called_once_with("1280x800")
 
     def test_save_recent_files_logs_write_errors(self):
         self.viewer.recent_files = ["/tmp/example.ged"]

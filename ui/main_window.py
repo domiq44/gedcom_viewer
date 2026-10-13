@@ -309,6 +309,9 @@ class GedcomViewer:
         store = RecentFilesStore(self.SETTINGS_PATH, file_opener=open, log=logger)
         recent_files, last_directory, language = store.load(self.last_directory)
         self.last_directory = last_directory
+        self.window_size = store.window_size
+        if self.window_size is not None:
+            self.root.geometry(f"{self.window_size[0]}x{self.window_size[1]}")
         if isinstance(language, str):
             try:
                 self.translator.set_language(language)
@@ -326,6 +329,7 @@ class GedcomViewer:
             self.recent_files,
             self.last_directory,
             self.translator.language,
+            window_size=(self.root.winfo_width(), self.root.winfo_height()),
         )
 
     def set_language(self, language):
@@ -383,6 +387,7 @@ class GedcomViewer:
         self._apply_loaded_file(filename, load_started_at)
 
     def _on_close(self):
+        self._save_recent_files()
         self.load_coordinator.close()
         self.entity_list_panel.cancel_pending_search()
         ui_log_handler = getattr(self, "_ui_log_handler", None)
