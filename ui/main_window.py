@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import sys
@@ -490,6 +491,21 @@ class GedcomViewer:
 
     def open_recent_file(self, filename):
         self._load_file_async(filename)
+
+    def close_file(self):
+        if self.load_coordinator.is_loading or not self.controller.is_loaded():
+            return
+
+        self.controller = AppController(translator=self.translator)
+        self.entity_navigator.controller = self.controller
+        self.entity_list_panel.clear()
+        self._clear_entity_views()
+        self._display_raw_text("")
+        self.object_view.set_base_path("")
+        self._navigation_history.reset()
+        self._update_navigation_buttons()
+        self.status_var.set(self.translator.get("ui.ready"))
+        gc.collect()
 
     def open_validated_file(self):
         filename = filedialog.askopenfilename(

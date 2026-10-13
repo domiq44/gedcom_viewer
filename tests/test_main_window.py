@@ -1,9 +1,11 @@
+import gc
 import logging
 import os
 import tempfile
 import threading
 import tkinter as tk
 import unittest
+import weakref
 from unittest.mock import Mock, patch, call
 
 from ui.app_header import AppHeader
@@ -250,6 +252,14 @@ class TestGedcomViewer(unittest.TestCase):
         menu = MenuBar(self.root, self.viewer)
 
         self.assertEqual(menu.recent_menu.entrycget(0, "label"), "/tmp/recent.ged")
+
+    def test_file_menu_contains_close_file_command(self):
+        menu = self.viewer.menu_bar
+
+        self.assertEqual(
+            menu.file_menu.entrycget(menu.close_file_index, "label"),
+            self.viewer.translator.get("menu.close_file"),
+        )
 
     def test_entity_navigator_tracks_history_and_display(self):
         class DummyEntity:
@@ -696,6 +706,52 @@ class TestGedcomViewer(unittest.TestCase):
         self.assertNotIn(ui_log_handler, root_logger.handlers)
         save_settings.assert_called_once_with()
         destroy.assert_called_once_with()
+
+    def test_close_file_releases_loaded_models_and_keeps_recent_files(self):
+        controller = Mock()
+        controller.is_loaded.return_value = True
+        controller_reference = weakref.ref(controller)
+        self.viewer.controller = controller
+        self.viewer.entity_navigator.controller = controller
+
+        entity = Mock(pointer="@I1@")
+        entity_reference = weakref.ref(entity)
+        self.viewer.entity_list_panel._entity_by_item_id["0"] = entity
+        self.viewer.entity_list_panel.filtered_entities.append(entity)
+        self.viewer.entity_tree.insert(
+            "", "end", iid="0", values=("Test person", "@I1@")
+        )
+        self.viewer._navigation_history.entries = [{"entity": entity}]
+        self.viewer._navigation_history.index = 0
+        self.viewer._display_raw_text("0 @I1@ INDI")
+        self.viewer.recent_files = ["/tmp/example.ged"]
+        self.viewer.search_var.set("person")
+
+        preview = Mock()
+        preview_reference = weakref.ref(preview)
+        self.viewer.object_view._preview_photo = preview
+        self.viewer.object_view.preview_label.image = preview
+
+        del controller
+        del entity
+        del preview
+        self.viewer.close_file()
+        gc.collect()
+
+        self.assertIsNone(controller_reference())
+        self.assertIsNone(entity_reference())
+        self.assertIsNone(preview_reference())
+        self.assertFalse(self.viewer.controller.is_loaded())
+        self.assertIs(self.viewer.entity_navigator.controller, self.viewer.controller)
+        self.assertEqual(self.viewer.entity_tree.get_children(), ())
+        self.assertEqual(self.viewer.filtered_entities, [])
+        self.assertEqual(self.viewer.search_var.get(), "")
+        self.assertIsNone(self.viewer._search_after_id)
+        self.assertEqual(self.viewer._navigation_history.entries, [])
+        self.assertIsNone(self.viewer.object_view._preview_photo)
+        self.assertIsNone(self.viewer.object_view.preview_label.image)
+        self.assertEqual(self.viewer.text_area.get("1.0", tk.END).strip(), "")
+        self.assertEqual(self.viewer.recent_files, ["/tmp/example.ged"])
 
     def test_clear_recent_files_removes_all_entries(self):
         self.viewer.recent_files = ["/tmp/one.ged", "/tmp/two.ged"]

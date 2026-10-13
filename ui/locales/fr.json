@@ -128,6 +128,7 @@
   "menu.about": "À propos",
   "menu.open": "Ouvrir un fichier GEDCOM",
   "menu.open_validate": "Ouvrir et valider un fichier GEDCOM",
+  "menu.close_file": "Fermer le fichier",
   "menu.recent": "Récents",
   "menu.no_recent": "Aucun fichier récent",
   "menu.clear_recent": "Effacer la liste des fichiers récents",

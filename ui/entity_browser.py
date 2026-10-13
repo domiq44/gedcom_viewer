@@ -65,6 +65,13 @@ class EntityBrowser(ttk.Frame):
             self._scheduler.after_cancel(self._search_after_id)
             self._search_after_id = None
 
+    def clear(self):
+        self.cancel_pending_search()
+        self.reset_search()
+        self.entity_tree.delete(*self.entity_tree.get_children())
+        self._entity_by_item_id.clear()
+        self.filtered_entities.clear()
+
     def filter_entities(self, *args):
         if not self.controller.is_loaded():
             return

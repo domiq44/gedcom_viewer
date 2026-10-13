@@ -37,6 +37,9 @@ pas modifiés ni sauvegardés.
 - Prévisualisation des images locales avec Pillow.
 - Chargement en arrière-plan : une nouvelle session remplace la session active
   uniquement après un chargement réussi.
+- Fermeture du fichier courant sans quitter l'application; les données de la
+  session et l'historique de navigation sont libérés, mais le fichier reste
+  dans la liste des récents.
 - Historique des fichiers récents et mémorisation du dernier répertoire utilisé.
 - Interface disponible en anglais, français, espagnol, allemand, italien et
   portugais. L'anglais est la langue par défaut; un changement de langue prend

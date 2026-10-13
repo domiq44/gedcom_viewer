@@ -24,6 +24,12 @@ class ApplicationMenu:
             label=tr("menu.open_validate"),
             command=self.app.open_validated_file,
         )
+        file_menu.add_command(
+            label=tr("menu.close_file"),
+            command=self.app.close_file,
+        )
+        self.file_menu = file_menu
+        self.close_file_index = file_menu.index("end")
 
         self.recent_menu = tk.Menu(file_menu, tearoff=0)
         file_menu.add_cascade(label=tr("menu.recent"), menu=self.recent_menu)

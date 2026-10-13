@@ -128,6 +128,7 @@ class MultimediaView(ttk.Frame):
             logger.info("Prévisualisation non disponible")
         self.preview_label.config(text=reason)
         self.preview_label.configure(image="")
+        self.preview_label.image = None
         self._preview_photo = None
 
     def _show_preview(self, file_path):

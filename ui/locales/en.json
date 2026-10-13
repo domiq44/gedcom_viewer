@@ -123,6 +123,7 @@
   "menu.about": "About",
   "menu.open": "Open a GEDCOM file",
   "menu.open_validate": "Open and validate a GEDCOM file",
+  "menu.close_file": "Close file",
   "menu.recent": "Recent",
   "menu.no_recent": "No recent file",
   "menu.clear_recent": "Clear recent files",

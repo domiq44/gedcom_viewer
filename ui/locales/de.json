@@ -72,6 +72,7 @@
   "menu.about": "Über",
   "menu.open": "GEDCOM-Datei öffnen",
   "menu.open_validate": "GEDCOM-Datei öffnen und validieren",
+  "menu.close_file": "Datei schließen",
   "menu.recent": "Zuletzt verwendet",
   "menu.no_recent": "Keine zuletzt verwendete Datei",
   "menu.clear_recent": "Liste zuletzt verwendeter Dateien löschen",
