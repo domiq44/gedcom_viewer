@@ -1,0 +1,47 @@
+0 HEAD
+1 SOUR GEDCOM_VIEWER
+2 VERS 5.5.1
+1 SUBM @SUB1@
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @SUB1@ SUBM
+1 NAME Synthetic User
+0 @I1@ INDI
+1 NAME Synthetic /Person/
+1 SEX M
+1 BIRT
+2 DATE 1 JAN 1900
+2 PLAC Anytown
+1 FAMS @F1@
+1 NOTE Synthetic note
+2 CONT continued
+0 @I2@ INDI
+1 NAME Other /Person/
+1 SEX F
+1 BIRT
+2 DATE 2 FEB 1902
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Child /Person/
+1 SEX M
+1 BIRT
+2 DATE 3 MAR 1925
+1 FAMC @F1@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 MARR
+2 DATE 12 JUN 1920
+2 PLAC Anytown
+0 @S1@ SOUR
+1 TITL Synthetic Source
+1 DATA
+2 TEXT Source text
+3 CONT continued
+1 REPO @R1@
+0 @R1@ REPO
+1 NAME Synthetic Repository
+0 TRLR

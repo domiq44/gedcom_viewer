@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    name: Test and build (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install virtual display dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xauth xvfb
+
+      - name: Create virtual environment
+        shell: bash
+        run: |
+          python -m venv .venv
+          echo "VENV_PYTHON=.venv/bin/python" >> "$GITHUB_ENV"
+
+      - name: Cache pip
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-lock.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install locked Python dependencies
+        shell: bash
+        run: |
+          "$VENV_PYTHON" -m pip install --upgrade pip
+          "$VENV_PYTHON" -m pip install -r requirements-lock.txt
+
+      - name: Check dependency consistency
+        shell: bash
+        run: $VENV_PYTHON -m pip check
+
+      - name: Audit locked dependencies
+        shell: bash
+        run: $VENV_PYTHON -m pip_audit --strict
+
+      - name: Run lint
+        shell: bash
+        run: make lint
+
+      - name: Type-check
+        shell: bash
+        run: $VENV_PYTHON -m mypy
+
+      - name: Run tests
+        shell: bash
+        run: xvfb-run --auto-servernum "$VENV_PYTHON" -m unittest discover -s tests -t .
+
+      - name: Run tests under coverage
+        shell: bash
+        run: xvfb-run --auto-servernum make coverage
+
+      - name: Generate benchmark GEDCOM
+        run: |
+          "$VENV_PYTHON" benchmarks/generate_gedcom.py \
+            --output /tmp/gedcom-benchmark.ged \
+            --individuals 2000
+
+      - name: Smoke-test real GEDCOM benchmark
+        run: $VENV_PYTHON benchmarks/benchmark_search.py --file /tmp/gedcom-benchmark.ged --repeats 3 --max-load-seconds 10 --max-search-median-ms 500 --max-rss-mib 512
+
+      - name: Run synthetic benchmark with thresholds
+        run: |
+          "$VENV_PYTHON" benchmarks/benchmark_search.py \
+            --sizes 20000 50000 100000 \
+            --repeats 3 \
+            --max-load-seconds 30 \
+            --max-search-median-ms 2000 \
+            --max-rss-mib 2048
+
+      - name: Build application
+        shell: bash
+        run: $VENV_PYTHON -m PyInstaller --clean gedcom_viewer.spec
+
+      - name: Smoke-test PyInstaller artefact
+        shell: bash
+        run: xvfb-run --auto-servernum "$VENV_PYTHON" scripts/smoke_test_dist.py --require-artifact
+
+      - name: Upload PyInstaller artefact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: gedcom-viewer-py${{ matrix.python-version }}
+          path: dist/
+          if-no-files-found: error
+
+  domain-tests:
+    name: Domain tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15]
+        python-version: ["3.12"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run domain tests
+        run: python -m unittest discover -s tests/gedcom -t .
